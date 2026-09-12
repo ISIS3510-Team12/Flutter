@@ -1,0 +1,38 @@
+name: Android chore
+description: Track Android repository, dependency, tooling, or configuration maintenance.
+title: "[chore]: "
+labels:
+  - chore
+projects:
+  - ISIS3510-Team12/4
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Title example: `[chore]: Update Flutter dependencies`
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Maintenance task
+      description: Optional. Add more detail if the title does not fully explain the task.
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: List the configs, dependencies, scripts, docs, or workflows expected to change.
+      placeholder: "Example: pubspec.yaml, GitHub Actions, lint config, project setup files."
+    validations:
+      required: false
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Explain how to confirm the maintenance change works.
+      placeholder: "Example: flutter analyze, flutter test, CI workflow run."
+    validations:
+      required: false

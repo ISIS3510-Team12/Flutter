@@ -1,0 +1,29 @@
+name: Android ui
+description: Track a UI change to implement for a screen, component, or state.
+title: "[ui](ComponentName): "
+labels:
+  - ui
+projects:
+  - ISIS3510-Team12/4
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Title example: `[ui](HomeView): Improve search result spacing`
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: UI change to implement
+      description: Optional. Add more detail if the title does not fully explain the UI change.
+    validations:
+      required: false
+
+  - type: textarea
+    id: changes
+    attributes:
+      label: Visual details
+      description: Add design context if you have it. Screenshots are welcome.
+      placeholder: Spacing, layout, color, copy, animation, accessibility, screenshots, or design links.
+    validations:
+      required: false

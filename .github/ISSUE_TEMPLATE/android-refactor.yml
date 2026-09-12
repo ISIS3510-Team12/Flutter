@@ -1,0 +1,38 @@
+name: Android refactor
+description: Track a code structure improvement with no intended behavior change.
+title: "[refactor](ComponentName): "
+labels:
+  - refactor
+projects:
+  - ISIS3510-Team12/4
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Title example: `[refactor](AuthService): Extract token refresh handling`
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Refactor to implement
+      description: Optional. Add more detail if the title does not fully explain the code improvement.
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: List the files, classes, services, or modules expected to change.
+      placeholder: "Example: AuthService, LoginViewModel, AuthRepository, shared network helpers."
+    validations:
+      required: false
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Explain how to confirm existing behavior still works after the refactor.
+      placeholder: "Example: flutter analyze, flutter test, manual login flow check."
+    validations:
+      required: false

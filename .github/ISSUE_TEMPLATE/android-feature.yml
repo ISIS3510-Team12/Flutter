@@ -1,0 +1,39 @@
+name: Android feat
+description: Track a feature to implement; add extra context only when needed.
+title: "[feat](ComponentName): "
+labels:
+  - feature
+projects:
+  - ISIS3510-Team12/4
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Title example: `[feat](HomeView): Add recent searches`
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Functionality to implement
+      description: Optional. Add more detail if the title does not fully explain the functionality.
+    validations:
+      required: false
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation resources
+      description: List the views, services, files, APIs, dependencies, or other pieces needed to build this.
+      placeholder: |
+        Example: HomeView, SearchViewModel, SearchRepository, /search API, Room database, Firebase, or design assets.
+    validations:
+      required: false
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Images
+      description: Add screenshots, mockups, or reference images if they help explain the feature.
+      placeholder: Drag and drop images here, or paste links to screenshots, mockups, or references.
+    validations:
+      required: false

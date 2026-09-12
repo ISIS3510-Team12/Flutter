@@ -1,0 +1,23 @@
+name: Documentation
+description: Track documentation updates for the team.
+title: "[docs]: "
+labels:
+  - documentation
+projects:
+  - ISIS3510-Team12/4
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Documentation to update
+      description: Optional. Add more detail if the title does not fully explain the documentation update.
+    validations:
+      required: false
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation location
+      placeholder: README, setup guide, code comments, wiki, or another file.
+    validations:
+      required: false

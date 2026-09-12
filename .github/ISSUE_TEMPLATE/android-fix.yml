@@ -1,0 +1,20 @@
+name: Android fix
+description: Track a focused correction to implement.
+title: "[fix](ComponentName): "
+labels:
+  - fix
+projects:
+  - ISIS3510-Team12/4
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Title example: `[fix](AuthService): Refresh token before retrying request`
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Correction to implement
+      description: Optional. Add more detail if the title does not fully explain the correction.
+    validations:
+      required: false

@@ -1,0 +1,42 @@
+name: Android bug
+description: Track a bug with reproduction details and expected behavior.
+title: "[bug](ComponentName): "
+labels:
+  - bug
+projects:
+  - ISIS3510-Team12/4
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Title example: `[bug](LoginView): Infinite loader after valid login`
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Broken behavior
+      description: Optional. Add more detail if the title does not fully explain the broken behavior.
+    validations:
+      required: false
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Clear steps help another teammate confirm the issue quickly.
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. See ...
+
+        Device/emulator, screenshots, logs, or branch if relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "Example: The app should navigate to HomeView after a successful login."
+    validations:
+      required: true

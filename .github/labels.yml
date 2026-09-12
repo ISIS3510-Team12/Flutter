@@ -1,0 +1,39 @@
+- name: bug
+  description: Something is broken or behaves incorrectly.
+  color: "D73A4A"
+
+- name: feature
+  description: New Android functionality to implement.
+  color: "A2EEEF"
+
+- name: fix
+  description: Focused correction for an existing Android behavior.
+  color: "0E8A16"
+
+- name: ui
+  description: Android screen, component, layout, or visual state change.
+  color: "7057FF"
+
+- name: documentation
+  description: Documentation, setup notes, wiki, README, or code comment updates.
+  color: "0075CA"
+
+- name: task
+  description: General implementation work that does not fit another change type.
+  color: "D4C5F9"
+
+- name: analytics
+  description: Tracking, measurement, event logging, or product usage analysis.
+  color: "5319E7"
+
+- name: refactor
+  description: Code structure improvement with no intended behavior change.
+  color: "1D76DB"
+
+- name: chore
+  description: Android repository, dependency, tooling, or configuration maintenance.
+  color: "C5DEF5"
+
+- name: project-maintenance
+  description: Contribution metrics, planning, or project administration updates.
+  color: "FBCA04"
