@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 
 
 class App extends StatefulWidget {
@@ -36,6 +37,7 @@ class _MainScreenState extends State<MainScreen> {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),
+      bottomNavigationBar: CustomNavigationBar(),
       resizeToAvoidBottomInset: false,
     );
   }
