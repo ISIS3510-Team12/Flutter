@@ -20,7 +20,7 @@ class _AppState extends State<App> {
 }
 
 class MainScreen extends StatefulWidget {
-  const new({super.key});
+  const MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
