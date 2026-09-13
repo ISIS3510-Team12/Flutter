@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/themes/app_theme.dart';
 
 
 class App extends StatefulWidget {
@@ -14,12 +16,13 @@ class _AppState extends State<App> {
     return MaterialApp(
       title: 'Juggle',
       home: MainScreen(),
+      theme: AppTheme.light,
     );
   }
 }
 
 class MainScreen extends StatefulWidget {
-  const new({super.key});
+  const MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -33,9 +36,10 @@ class _MainScreenState extends State<MainScreen> {
       body: Center(
         child: Text(
           'Hello, World!',
-          style: Theme.of(context).textTheme.headlineMedium,
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
       ),
+      bottomNavigationBar: CustomNavigationBar(),
       resizeToAvoidBottomInset: false,
     );
   }
