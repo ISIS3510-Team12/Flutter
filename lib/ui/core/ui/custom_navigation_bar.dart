@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 class CustomNavigationBar extends StatefulWidget {
-  const new({super.key});
+  const CustomNavigationBar({super.key});
 
   @override
   State<CustomNavigationBar> createState() => _CustomNavigationBarState();
