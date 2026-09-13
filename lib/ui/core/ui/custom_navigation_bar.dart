@@ -20,11 +20,12 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
         margin: EdgeInsets.only(left: 16, right: 16, bottom: 16),
         height: 80,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainer,
+          color: theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(80),
         ),
         child: Padding(
@@ -40,7 +41,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                     padding: const .symmetric(horizontal: 17, vertical: 4),
                     decoration: BoxDecoration(
                       color: selectedIndex == index
-                          ? Theme.of(context).colorScheme.secondaryContainer
+                          ? theme.colorScheme.primaryContainer
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(32),
                     ),
@@ -52,8 +53,10 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       },
                       child: Icon(
                         items[index].$1,
-                        fill: selectedIndex == index ? 1 : 0,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: selectedIndex == index
+                            ? theme.colorScheme.onPrimaryContainer
+                            : theme.colorScheme.onSurfaceVariant,
+                        fill: index == selectedIndex ? 1 : 0,
                         weight: 700,
                       ),
                     ),
@@ -61,7 +64,12 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                   SizedBox(height: 4),
                   Text(
                     items[index].$2,
-                    style: Theme.of(context).textTheme.labelMedium,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                          color: selectedIndex == index
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                    
                   ),
                 ],
               ),
