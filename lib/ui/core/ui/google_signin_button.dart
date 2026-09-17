@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class GoogleSigninButton extends StatelessWidget {
   const GoogleSigninButton({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SizedBox(
       width: double.infinity,
       height: 44,
@@ -17,14 +20,16 @@ class GoogleSigninButton extends StatelessWidget {
             side: const BorderSide(color: Colors.black, width: 0.5),
           ),
         ),
-        icon: Icon(Icons.star_outline, color: Colors.black),
+        icon: SvgPicture.asset(
+          'assets/google_icon.svg',
+          fit: BoxFit.contain,
+        ),
         label: Text(
           'Sign in with Google',
-          style: TextStyle(
-            color: Colors.black,
+          style: theme.textTheme.labelMedium!.copyWith(
+            fontFamily: GoogleFonts.googleSans().fontFamily,
             fontWeight: .bold,
-            fontSize: 14,
-          ),
+          )
         ),
       ),
     );

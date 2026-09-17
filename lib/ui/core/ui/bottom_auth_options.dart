@@ -9,6 +9,9 @@ class BottomAuthOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
+
     return Container(
       margin: .only(right: 25, left: 25),
       child: Column(
@@ -19,10 +22,8 @@ class BottomAuthOptions extends StatelessWidget {
               Divider(color: Colors.grey[400], thickness: 1),
               Text(
                 'OR',
-                style: TextStyle(
-                  color: Colors.black,
+                style: theme.textTheme.bodySmall!.copyWith(
                   fontWeight: .bold,
-                  fontSize: 14,
                 ),
               ),
             ],
@@ -33,18 +34,14 @@ class BottomAuthOptions extends StatelessWidget {
           Center(
             child: Text(
               label,
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: .w500,
-                fontSize: 14,
-              ),
+              style: theme.textTheme.bodySmall,
             ),
           ),
           Center(
             child: FilledButton(
               onPressed: () {},
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF585992),
+                backgroundColor: theme.primaryColor,
                 fixedSize: const Size(100, 40),
               ),
               child: Text(

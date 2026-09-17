@@ -10,17 +10,20 @@ class SigninScreen extends StatefulWidget {
 
 class _SigninScreenState extends State<SigninScreen> {
 
+
   final formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         backgroundColor: Colors.white,
-        title: Text('Sign In'),
+        title: Text('Sign Up', style: theme.textTheme.titleMedium),
         leading: BackButton(
           onPressed: () {
             Navigator.pop(context);

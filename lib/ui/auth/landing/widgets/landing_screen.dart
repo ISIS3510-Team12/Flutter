@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 // TODO: Replace both containers with the corresponding svg using Image.asset('assets/image_name.svg', fit: BoxFit.cover).
 // TODO: Install flutter_svg package using flutter pub add flutter_svg
@@ -12,9 +13,11 @@ class LandingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Size screenSize = MediaQuery.of(context).size;
+    final theme = Theme.of(context);
 
     double width = screenSize.width;
     double height = screenSize.height;
+
 
     return Scaffold(
       body: Stack(
@@ -32,11 +35,7 @@ class LandingScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 const SizedBox(height: 80),
-                Container(
-                  width: 300,
-                  height: 160,
-                  color: Colors.grey[200],
-                ),
+                SvgPicture.asset('assets/juggle_logo.svg', fit: BoxFit.contain),
               ],
             ),
           ),
@@ -52,10 +51,10 @@ class LandingScreen extends StatelessWidget {
               ),
             ),
             child: Container(
-              margin: EdgeInsets.only(top: 40, right: 20, left: 20),
+              margin: EdgeInsets.only(top: 35, right: 20, left: 20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
-                spacing: 16,
+                spacing: height <= 914 ? 12 : 30, 
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 30, right: 30),
@@ -68,32 +67,40 @@ class LandingScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
+
                   Container(
                     margin: EdgeInsets.only(top: 20),
-                    width: 255,
-                    height: 255,
-                    color: Colors.grey[200],
+                    child: SvgPicture.asset(
+                      'assets/landing_icon.svg',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                   Column(
-                    children: const [
+                    children: [
                       Text(
                         'Worried about your tasks?',
-                        style: TextStyle(fontSize: 16),
+                        style: theme.textTheme.bodyMedium,
                       ),
                       Text(
                         'Manage them all in one place.',
-                        style: TextStyle(fontSize: 16),
+                        style: theme.textTheme.bodyMedium,
                       ),
                       SizedBox(height: 5),
                     ],
                   ),
                   FilledButton(
-                    onPressed: () {},
+                    onPressed: () {
+                    },
                     style: FilledButton.styleFrom(
                       fixedSize: Size(251, 40),
-                      backgroundColor: Color(0xFF585992),
+                      backgroundColor: theme.primaryColor,
                     ),
-                    child: Text('Get started'),
+                    child: Text(
+                      'Get started',
+                      style: theme.textTheme.labelMedium!.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -10,17 +10,17 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final formKey = GlobalKey<FormState>();
-  
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: theme.canvasColor,
         elevation: 0,
         backgroundColor: Colors.white,
-        title: Text('Sign Up'),
+        title: Text('Sign Up', style: theme.textTheme.titleMedium),
         leading: BackButton(
           onPressed: () {
             Navigator.pop(context);
@@ -28,9 +28,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       ),
       backgroundColor: Colors.white,
-      body: SignupForm(
-        formKey: formKey,
-      ),
+      body: SignupForm(formKey: formKey),
     );
   }
 }

@@ -10,9 +10,11 @@ class InputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return TextFormField(
       decoration: InputDecoration(
         labelText: labelText,
+        labelStyle: theme.textTheme.bodyMedium,
         border: OutlineInputBorder(),
         prefixIcon: Icon(icon),
         floatingLabelBehavior: FloatingLabelBehavior.always,
