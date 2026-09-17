@@ -23,7 +23,7 @@ class _SigninScreenState extends State<SigninScreen> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         backgroundColor: Colors.white,
-        title: Text('Sign Up', style: theme.textTheme.titleMedium),
+        title: Text('Sign In', style: theme.textTheme.titleMedium),
         leading: BackButton(
           onPressed: () {
             Navigator.pop(context);
