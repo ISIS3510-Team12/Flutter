@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-// TODO: Replace both containers with the corresponding svg using Image.asset('assets/image_name.svg', fit: BoxFit.cover).
-// TODO: Install flutter_svg package using flutter pub add flutter_svg
-// TODO: Replace progress indicator with two sepated lines
-
-//TODO: use mediaquery to addapt the size of the screen to the containers and the progress indicator
-
 class LandingScreen extends StatelessWidget {
   const LandingScreen({super.key});
 

@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 
-// TODO: Import Google Icon
-// TODO: Refactor this component to make it more readable
-
 class SignupForm extends StatefulWidget {
   const SignupForm({
     super.key,
