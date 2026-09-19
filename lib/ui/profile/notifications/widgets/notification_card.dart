@@ -64,12 +64,14 @@ class NotificationCard extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              icon: Icon(
-                Symbols.delete,
-                color: theme.colorScheme.onSurfaceVariant,
+            Center(
+              child: IconButton(
+                icon: Icon(
+                  Symbols.delete,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                onPressed: onDelete,
               ),
-              onPressed: onDelete,
             ),
           ],
         ),
