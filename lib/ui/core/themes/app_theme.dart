@@ -14,5 +14,10 @@ class AppTheme {
      textTheme: AppTypography.textTheme,
      scaffoldBackgroundColor: colorScheme.surface,
      canvasColor: colorScheme.surface,
+     appBarTheme: AppBarTheme(
+       titleTextStyle: AppTypography.textTheme.titleSmall?.copyWith(
+         color: colorScheme.onSurface,
+       ),
+     ),
   );
 }

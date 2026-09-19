@@ -12,7 +12,6 @@ class LandingScreen extends StatelessWidget {
     double width = screenSize.width;
     double height = screenSize.height;
 
-
     return Scaffold(
       body: Stack(
         children: [
@@ -29,7 +28,10 @@ class LandingScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 const SizedBox(height: 80),
-                SvgPicture.asset('assets/juggle_logo.svg', fit: BoxFit.contain),
+                SvgPicture.asset(
+                  'assets/juggle_logo_light.svg',
+                  fit: BoxFit.contain,
+                ),
               ],
             ),
           ),
@@ -48,7 +50,7 @@ class LandingScreen extends StatelessWidget {
               margin: EdgeInsets.only(top: 35, right: 20, left: 20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
-                spacing: height <= 914 ? 12 : 30, 
+                spacing: height <= 914 ? 12 : 30,
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 30, right: 30),
@@ -83,8 +85,7 @@ class LandingScreen extends StatelessWidget {
                     ],
                   ),
                   FilledButton(
-                    onPressed: () {
-                    },
+                    onPressed: () {},
                     style: FilledButton.styleFrom(
                       fixedSize: Size(251, 40),
                       backgroundColor: theme.primaryColor,
