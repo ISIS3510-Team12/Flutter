@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/google_signin_button.dart';
 
 class BottomAuthOptions extends StatelessWidget {
-  const BottomAuthOptions({super.key, required this.label, required this.buttonText});
+  const BottomAuthOptions({super.key, required this.label, required this.buttonText, required this.onPressed});
 
   final String label;
   final String buttonText;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +40,7 @@ class BottomAuthOptions extends StatelessWidget {
           ),
           Center(
             child: FilledButton(
-              onPressed: () {},
+              onPressed: onPressed,
               style: FilledButton.styleFrom(
                 backgroundColor: theme.primaryColor,
                 fixedSize: const Size(100, 40),

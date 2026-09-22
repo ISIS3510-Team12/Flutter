@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
+import 'package:go_router/go_router.dart';
 
 class SigninForm extends StatefulWidget {
   const new({super.key, required this.formKey});
@@ -81,6 +82,7 @@ class _SigninFormState extends State<SigninForm> {
               BottomAuthOptions(
                 label: 'Dont have an account?',
                 buttonText: 'Sign up',
+                onPressed: () => context.go('/signup'),
               ),
             ],
           ),

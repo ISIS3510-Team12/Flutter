@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
+import 'package:go_router/go_router.dart';
 
 class SignupForm extends StatefulWidget {
   const SignupForm({
@@ -104,6 +105,7 @@ class _SignupFormState extends State<SignupForm> {
               BottomAuthOptions(
                 label: 'Already have an account?',
                 buttonText: 'Sign in',
+                onPressed: () => context.go('/signin'),
               ),
             ],
           ),

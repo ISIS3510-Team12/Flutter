@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/auth/signup/widgets/signup_form.dart';
+import 'package:go_router/go_router.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -11,6 +12,10 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final formKey = GlobalKey<FormState>();
 
+  void navigateToLanding() {
+    context.go('/');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -21,11 +26,7 @@ class _SignupScreenState extends State<SignupScreen> {
         elevation: 0,
         backgroundColor: Colors.white,
         title: Text('Sign Up', style: theme.textTheme.titleMedium),
-        leading: BackButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        leading: BackButton(onPressed: navigateToLanding),
       ),
       backgroundColor: Colors.white,
       body: SignupForm(formKey: formKey),

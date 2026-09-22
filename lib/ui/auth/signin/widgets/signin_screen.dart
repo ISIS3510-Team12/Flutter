@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/auth/signin/widgets/signin_form.dart';
+import 'package:go_router/go_router.dart';
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -10,12 +11,12 @@ class SigninScreen extends StatefulWidget {
 
 class _SigninScreenState extends State<SigninScreen> {
 
-
   final formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
 
     return Scaffold(
       appBar: AppBar(
@@ -25,9 +26,7 @@ class _SigninScreenState extends State<SigninScreen> {
         backgroundColor: Colors.white,
         title: Text('Sign In', style: theme.textTheme.titleMedium),
         leading: BackButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => context.go('/signup'),
         ),
       ),
       backgroundColor: Colors.white,

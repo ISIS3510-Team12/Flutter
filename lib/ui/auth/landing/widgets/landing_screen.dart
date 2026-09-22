@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({super.key});
@@ -11,6 +12,7 @@ class LandingScreen extends StatelessWidget {
 
     double width = screenSize.width;
     double height = screenSize.height;
+
 
     return Scaffold(
       body: Stack(
@@ -85,7 +87,7 @@ class LandingScreen extends StatelessWidget {
                     ],
                   ),
                   FilledButton(
-                    onPressed: () {},
+                    onPressed: () => context.go('/signup'),
                     style: FilledButton.styleFrom(
                       fixedSize: Size(251, 40),
                       backgroundColor: theme.primaryColor,

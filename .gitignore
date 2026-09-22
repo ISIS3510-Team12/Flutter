@@ -49,3 +49,9 @@ app.*.map.json
 
 # Lock
 pubspec.lock
+
+# Environment files
+.env
+
+# Firebase related
+google-services.json
