@@ -4,7 +4,6 @@ import 'package:team12_flutter_juggle/domain/models/profile/app_settings.dart';
 class SettingsLocalService {
   AppSettings _storedSettings = const AppSettings(
     themeMode: AppThemeMode.system,
-    languageCode: 'en',
     soundAndVibrationEnabled: true,
   );
 
