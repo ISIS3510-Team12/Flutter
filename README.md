@@ -1,6 +1,6 @@
 # Juggle Flutter App
 
-![Logo](./assets/banner.svg)
+![Logo](./assets/appbanner.svg)
 
 ## Introduction
 Juggle is a smart task coordination platform for university students, especially those working on group projects. It helps organize tasks, assign responsibilities, track progress, and manage deadlines in one place, reducing the need to use multiple communication platforms.
