@@ -1,17 +1,25 @@
-# team12_flutter_juggle
+# Juggle Flutter App
 
-A new Flutter project.
+![Logo](./assets/banner.svg)
 
-## Getting Started
+## Introduction
+Juggle is a smart task coordination platform for university students, especially those working on group projects. It helps organize tasks, assign responsibilities, track progress, and manage deadlines in one place, reducing the need to use multiple communication platforms.
 
-This project is a starting point for a Flutter application.
+## Setup
 
-A few resources to get you started if this is your first Flutter project:
+1. Setup Flutter dependencies by running the following command in the terminal:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+2. Create a `.env` file in the root directory of the project and add the following environment variables with the Firebase project credentials:
+
+```
+APIKEY=
+APPID=
+MESSAGINGSENDERID=
+PROJECTID=
+STORAGEBUCKET=
+```
+
