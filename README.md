@@ -9,6 +9,7 @@ Juggle is a smart task coordination platform for university students, especially
 
 1. Setup Flutter dependencies by running the following command in the terminal:
 
+
 ```bash
 flutter pub get
 ```
