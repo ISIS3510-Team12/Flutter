@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 
 typedef SigninCallback = Future<void> Function({
   required String email,
@@ -9,10 +10,11 @@ typedef SigninCallback = Future<void> Function({
 });
 
 class SigninForm extends StatefulWidget {
-  const SigninForm({super.key, required this.isLoading, required this.onSubmit});
+  const SigninForm({super.key, required this.isLoading, required this.onSubmit, required this.onGoogleSignIn});
 
   final bool isLoading;
   final SigninCallback onSubmit;
+  final GoogleSignInCallback onGoogleSignIn;
 
   @override
   State<SigninForm> createState() => _SigninFormState();
@@ -23,6 +25,8 @@ class _SigninFormState extends State<SigninForm> {
   final formKey = GlobalKey<FormState>();
   String? email;
   String? password;
+  bool? obscureText = true;
+  
 
   Future<void> _submit() async {
     final form = formKey.currentState;
@@ -36,6 +40,12 @@ class _SigninFormState extends State<SigninForm> {
       email: email!,
       password: password!,
     );
+  }
+
+  void togglePasswordVisibility() {
+    setState(() {
+      obscureText = !(obscureText ?? true);
+    });
   }
 
 
@@ -57,6 +67,7 @@ class _SigninFormState extends State<SigninForm> {
                 onSaved: (email) {
                   this.email = email;
                 },
+                validator: Validators.email,
               ),
               InputField(
                 labelText: 'Password',
@@ -64,6 +75,9 @@ class _SigninFormState extends State<SigninForm> {
                 onSaved: (password) {
                   this.password = password;
                 },
+                obscureText: obscureText,
+                validator: Validators.password,
+                onTogglePasswordVisibility: togglePasswordVisibility,
               ),
               Center(
                 child: FilledButton(
@@ -96,6 +110,7 @@ class _SigninFormState extends State<SigninForm> {
                 label: 'Dont have an account?',
                 buttonText: 'Sign up',
                 onPressed: () => context.go('/signup'),
+                onGoogleSignIn: widget.onGoogleSignIn,
               ),
             ],
           ),

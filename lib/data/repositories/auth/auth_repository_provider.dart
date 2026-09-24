@@ -6,6 +6,7 @@ import './auth_repository.dart';
 final authRepositoryProvider = Provider((ref) {
   final firebaseAuth = ref.watch(firebaseAuthProvider);
   final dio = ref.watch(dioProvider);
-  return AuthRepository(firebaseAuth: firebaseAuth, dio: dio);
+  final googleSignIn = ref.watch(googleSignInProvider);
+  return AuthRepository(firebaseAuth: firebaseAuth, dio: dio, googleSignIn: googleSignIn);
 });
 

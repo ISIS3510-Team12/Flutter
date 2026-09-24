@@ -51,6 +51,9 @@ class SignupScreen extends ConsumerWidget {
                     password: password,
                   );
             },
+        onGoogleSignIn: () {
+          return ref.read(authViewModelProvider.notifier).signInWithGoogle();
+        },
       ),
     );
   }

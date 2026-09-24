@@ -54,18 +54,6 @@ class LandingScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.start,
                 spacing: height <= 914 ? 12 : 30,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 30, right: 30),
-                    child: LinearProgressIndicator(
-                      value: 0.5,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF585992),
-                      ),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-
                   Container(
                     margin: EdgeInsets.only(top: 20),
                     child: SvgPicture.asset(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 
 typedef SignupCallback = Future<void> Function({
   required String firstName,
@@ -15,10 +16,12 @@ class SignupForm extends StatefulWidget {
     super.key,
     required this.isLoading,
     required this.onSubmit,
+    required this.onGoogleSignIn,
   });
 
   final bool isLoading;
   final SignupCallback onSubmit;
+  final GoogleSignInCallback onGoogleSignIn;
 
   @override
   State<SignupForm> createState() => _SignupFormState();
@@ -30,6 +33,9 @@ class _SignupFormState extends State<SignupForm> {
   String? lastName;
   String? email;
   String? password;
+  String? confirmPassword;
+  bool? obscurePassword = true;
+  bool? obscureConfirmPassword = true;
 
   Future<void> _submit() async {
     final form = formKey.currentState;
@@ -45,6 +51,18 @@ class _SignupFormState extends State<SignupForm> {
       email: email!,
       password: password!,
     );
+  }
+
+  void togglePasswordVisibility() {
+    setState(() {
+      obscurePassword = !obscurePassword!;
+    });
+  }
+
+  void toggleConfirmPasswordVisibility() {
+    setState(() {
+      obscureConfirmPassword = !obscureConfirmPassword!;
+    });
   }
 
   @override
@@ -63,8 +81,8 @@ class _SignupFormState extends State<SignupForm> {
                 icon: Icons.person_outline,
                 onSaved: (firstName) {
                   this.firstName = firstName;
-                  print('First Name: $firstName');
                 },
+                validator: Validators.name,
               ),
               InputField(
                 labelText: 'Last Name',
@@ -72,15 +90,16 @@ class _SignupFormState extends State<SignupForm> {
                 onSaved: (lastName) {
                   this.lastName = lastName;
                 },
+                validator: Validators.name,
               ),
               const SizedBox(height: 5),
-
               InputField(
                 labelText: 'Email',
                 icon: Icons.email_outlined,
                 onSaved: (email) {
                   this.email = email;
                 },
+                validator: Validators.email,
               ),
               InputField(
                 labelText: 'Password',
@@ -88,6 +107,16 @@ class _SignupFormState extends State<SignupForm> {
                 onSaved: (password) {
                   this.password = password;
                 },
+                validator: Validators.password,
+                obscureText: obscurePassword,
+                onTogglePasswordVisibility: togglePasswordVisibility,
+              ),
+              InputField(
+                labelText: 'Confirm Password',
+                icon: Icons.lock_outline,
+                validator: (confirmPassword) => Validators.confirmPassword(confirmPassword, password),
+                obscureText: obscureConfirmPassword,
+                onTogglePasswordVisibility: toggleConfirmPasswordVisibility,
               ),
               Center(
                 child: FilledButton(
@@ -109,7 +138,8 @@ class _SignupFormState extends State<SignupForm> {
               BottomAuthOptions(
                 label: 'Already have an account?',
                 buttonText: 'Sign in',
-                onPressed: () => context.go('/signin'),
+                onPressed: () => context.go('/signin'), 
+                onGoogleSignIn: widget.onGoogleSignIn,
               ),
             ],
           ),

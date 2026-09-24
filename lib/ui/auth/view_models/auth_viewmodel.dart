@@ -36,6 +36,13 @@ class AuthViewModel extends AsyncNotifier<void> {
     });
   }
 
+  Future<void> signInWithGoogle() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await repository.signInWithGoogle();
+    });
+  }
+
   Future<void> signOut() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {

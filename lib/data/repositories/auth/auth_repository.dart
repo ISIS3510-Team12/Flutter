@@ -1,14 +1,20 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:team12_flutter_juggle/domain/models/auth/app_user.dart';
 
 class AuthRepository {
-  AuthRepository({required FirebaseAuth firebaseAuth, required Dio dio})
-    : _firebaseAuth = firebaseAuth,
-      _dio = dio;
+  AuthRepository({
+    required FirebaseAuth firebaseAuth,
+    required Dio dio,
+    required GoogleSignIn googleSignIn,
+  }) : _firebaseAuth = firebaseAuth,
+       _dio = dio,
+       _googleSignIn = googleSignIn;
 
   final FirebaseAuth _firebaseAuth;
   final Dio _dio;
+  final GoogleSignIn _googleSignIn;
 
   Stream<User?> get authState => _firebaseAuth.authStateChanges();
 
@@ -38,16 +44,47 @@ class AuthRepository {
       try {
         await _dio.post(
           '/users/create_user',
-          data: {
-            'first_name': firstName,
-            'last_name': lastName,
-          },
+          data: {'first_name': firstName, 'last_name': lastName},
         );
       } catch (e) {
         throw Exception('Failed to create user profile: $e');
       }
     } on FirebaseAuthException catch (e) {
       throw Exception('Failed to sign up: ${e.message}');
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    try {
+      await _googleSignIn.signOut();
+
+      GoogleSignInAccount? gUser;
+
+      gUser = await _googleSignIn.authenticate();
+
+      final gAuth = gUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(idToken: gAuth.idToken);
+
+      final userCredential = await _firebaseAuth.signInWithCredential(
+        credential,
+      );
+
+      try {
+        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+          await _dio.post(
+            '/users/create_user',
+            data: {
+              'first_name': userCredential.user?.displayName?.split(' ').first ?? '',
+              'last_name': userCredential.user?.displayName?.split(' ').last ?? '',
+            },
+          );
+        }
+      } catch (e) {
+        throw Exception('Failed to create user profile: $e');
+      }
+    } on FirebaseAuthException catch (e) {
+      throw Exception('Failed to sign in with Google: ${e.message}');
     }
   }
 
@@ -62,4 +99,3 @@ class AuthRepository {
     return _firebaseAuth.signOut();
   }
 }
-

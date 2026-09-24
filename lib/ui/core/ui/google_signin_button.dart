@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 
 class GoogleSigninButton extends StatelessWidget {
-  const GoogleSigninButton({super.key});
+  const GoogleSigninButton({super.key, required this.onPressed});
+  final GoogleSignInCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +13,7 @@ class GoogleSigninButton extends StatelessWidget {
       width: double.infinity,
       height: 44,
       child: FilledButton.icon(
-        onPressed: () {},
+        onPressed: onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: const Color(0xFFFFFFFF),
           shape: RoundedRectangleBorder(
