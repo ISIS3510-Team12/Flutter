@@ -67,11 +67,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onTap: () => _pickThemeMode(context),
                     ),
                     SettingsMenuTile(
-                      title: 'Language',
-                      subtitle: _languageName(settings.languageCode),
-                      showChevron: false,
-                    ),
-                    SettingsMenuTile(
                       title: 'Sound & vibration',
                       subtitle: 'Control app sounds and haptics',
                       showChevron: false,
@@ -112,12 +107,3 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 String _capitalize(String value) =>
     value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
-
-String _languageName(String languageCode) {
-  switch (languageCode) {
-    case 'en':
-      return 'English';
-    default:
-      return languageCode.toUpperCase();
-  }
-}
