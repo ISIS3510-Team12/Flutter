@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class GoogleSigninButton extends StatelessWidget {
@@ -20,9 +19,11 @@ class GoogleSigninButton extends StatelessWidget {
             side: const BorderSide(color: Colors.black, width: 0.5),
           ),
         ),
-        icon: SvgPicture.asset(
-          'assets/google_icon.svg',
+        icon: Image.asset(
+          'assets/google_icon.png',
           fit: BoxFit.contain,
+          height: 20,
+          width: 20,
         ),
         label: Text(
           'Sign in with Google',

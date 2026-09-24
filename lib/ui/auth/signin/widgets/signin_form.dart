@@ -3,34 +3,47 @@ import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:go_router/go_router.dart';
 
-class SigninForm extends StatefulWidget {
-  const new({super.key, required this.formKey});
+typedef SigninCallback = Future<void> Function({
+  required String email,
+  required String password,
+});
 
-  final GlobalKey<FormState> formKey;
+class SigninForm extends StatefulWidget {
+  const SigninForm({super.key, required this.isLoading, required this.onSubmit});
+
+  final bool isLoading;
+  final SigninCallback onSubmit;
 
   @override
   State<SigninForm> createState() => _SigninFormState();
 }
 
 class _SigninFormState extends State<SigninForm> {
-  String? username;
+  
+  final formKey = GlobalKey<FormState>();
+  String? email;
   String? password;
 
-  void _submit() {
-    if (!widget.formKey.currentState!.validate()) {
+  Future<void> _submit() async {
+    final form = formKey.currentState;
+    if (form == null || !form.validate()) {
       return;
     }
 
-    widget.formKey.currentState!.save();
+    form.save();
 
-    print('Username: $username');
-    print('Password: $password');
+    await widget.onSubmit(
+      email: email!,
+      password: password!,
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
+    
     return Form(
-      key: widget.formKey,
+      key: formKey,
       child: SafeArea(
         child: SingleChildScrollView(
           padding: .only(left: 15, right: 15, top: 20),
@@ -39,10 +52,10 @@ class _SigninFormState extends State<SigninForm> {
             spacing: 18,
             children: [
               InputField(
-                labelText: 'Username',
+                labelText: 'Email',
                 icon: Icons.mood_outlined,
-                onSaved: (username) {
-                  this.username = username;
+                onSaved: (email) {
+                  this.email = email;
                 },
               ),
               InputField(

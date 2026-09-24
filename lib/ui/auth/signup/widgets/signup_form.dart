@@ -3,38 +3,54 @@ import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:go_router/go_router.dart';
 
+typedef SignupCallback = Future<void> Function({
+  required String firstName,
+  required String lastName,
+  required String email,
+  required String password,
+});
+
 class SignupForm extends StatefulWidget {
   const SignupForm({
     super.key,
-    required this.formKey,
+    required this.isLoading,
+    required this.onSubmit,
   });
 
-  final GlobalKey<FormState> formKey;
+  final bool isLoading;
+  final SignupCallback onSubmit;
 
   @override
   State<SignupForm> createState() => _SignupFormState();
 }
 
 class _SignupFormState extends State<SignupForm> {
+  final formKey = GlobalKey<FormState>();
   String? firstName;
   String? lastName;
-  String? username;
   String? email;
   String? password;
-  String? confirmPassword;
 
-  void _submit() {
-    if (!widget.formKey.currentState!.validate()) {
+  Future<void> _submit() async {
+    final form = formKey.currentState;
+    if (form == null || !form.validate()) {
       return;
     }
 
-    widget.formKey.currentState!.save();
+    form.save();
+
+    await widget.onSubmit(
+      firstName: firstName!,
+      lastName: lastName!,
+      email: email!,
+      password: password!,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: widget.formKey,
+      key: formKey,
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(left: 15, right: 15, top: 20),
@@ -47,6 +63,7 @@ class _SignupFormState extends State<SignupForm> {
                 icon: Icons.person_outline,
                 onSaved: (firstName) {
                   this.firstName = firstName;
+                  print('First Name: $firstName');
                 },
               ),
               InputField(
@@ -57,13 +74,7 @@ class _SignupFormState extends State<SignupForm> {
                 },
               ),
               const SizedBox(height: 5),
-              InputField(
-                labelText: 'Username',
-                icon: Icons.mood_outlined,
-                onSaved: (username) {
-                  this.username = username;
-                },
-              ),
+
               InputField(
                 labelText: 'Email',
                 icon: Icons.email_outlined,
@@ -78,16 +89,9 @@ class _SignupFormState extends State<SignupForm> {
                   this.password = password;
                 },
               ),
-              InputField(
-                labelText: 'Confirm Password',
-                icon: Icons.lock_outline,
-                onSaved: (confirmPassword) {
-                  this.confirmPassword = confirmPassword;
-                },
-              ),
               Center(
                 child: FilledButton(
-                  onPressed: _submit,
+                  onPressed: widget.isLoading ? null : _submit,
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF585992),
                     fixedSize: const Size(100, 40),
