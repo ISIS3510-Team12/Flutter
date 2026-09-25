@@ -1,35 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
+import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
+
+
+typedef SigninCallback = Future<void> Function({
+  required String email,
+  required String password,
+});
 
 class SigninForm extends StatefulWidget {
-  const new({super.key, required this.formKey});
+  const SigninForm({super.key, required this.isLoading, required this.onSubmit, required this.onGoogleSignIn});
 
-  final GlobalKey<FormState> formKey;
+  final bool isLoading;
+  final SigninCallback onSubmit;
+  final GoogleSignInCallback onGoogleSignIn;
 
   @override
   State<SigninForm> createState() => _SigninFormState();
 }
 
 class _SigninFormState extends State<SigninForm> {
-  String? username;
+  
+  final formKey = GlobalKey<FormState>();
+  String? email;
   String? password;
+  bool? obscureText = true;
+  
 
-  void _submit() {
-    if (!widget.formKey.currentState!.validate()) {
+  Future<void> _submit() async {
+    final form = formKey.currentState;
+    if (form == null || !form.validate()) {
       return;
     }
 
-    widget.formKey.currentState!.save();
+    form.save();
 
-    print('Username: $username');
-    print('Password: $password');
+    await widget.onSubmit(
+      email: email!,
+      password: password!,
+    );
   }
+
+  void togglePasswordVisibility() {
+    setState(() {
+      obscureText = !(obscureText ?? true);
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
+    
     return Form(
-      key: widget.formKey,
+      key: formKey,
       child: SafeArea(
         child: SingleChildScrollView(
           padding: .only(left: 15, right: 15, top: 20),
@@ -38,11 +63,13 @@ class _SigninFormState extends State<SigninForm> {
             spacing: 18,
             children: [
               InputField(
-                labelText: 'Username',
+                labelText: 'Email',
                 icon: Icons.mood_outlined,
-                onSaved: (username) {
-                  this.username = username;
+                onSaved: (email) {
+                  this.email = email;
                 },
+                validator: Validators.email,
+                keyboardType: TextInputType.emailAddress,
               ),
               InputField(
                 labelText: 'Password',
@@ -50,6 +77,10 @@ class _SigninFormState extends State<SigninForm> {
                 onSaved: (password) {
                   this.password = password;
                 },
+                obscureText: obscureText,
+                validator: Validators.password,
+                onTogglePasswordVisibility: togglePasswordVisibility,
+                keyboardType: TextInputType.visiblePassword,
               ),
               Center(
                 child: FilledButton(
@@ -81,6 +112,8 @@ class _SigninFormState extends State<SigninForm> {
               BottomAuthOptions(
                 label: 'Dont have an account?',
                 buttonText: 'Sign up',
+                onPressed: () => context.go('/signup'),
+                onGoogleSignIn: widget.onGoogleSignIn,
               ),
             ],
           ),
