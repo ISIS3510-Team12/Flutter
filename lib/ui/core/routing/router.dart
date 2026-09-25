@@ -3,6 +3,8 @@ import 'package:team12_flutter_juggle/ui/core/app/app.dart';
 import 'package:team12_flutter_juggle/ui/landing/widgets/landing_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signin/widgets/signin_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signup/widgets/signup_screen.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/tasks_screen.dart';
+
 import './routes.dart';
 
 final routes = <RouteBase>[
@@ -19,4 +21,5 @@ final routes = <RouteBase>[
     builder: (context, state) => const SignupScreen(),
   ),
   GoRoute(path: Routes.home, builder: (context, state) => const MainScreen()),
+  GoRoute(path: Routes.tasks, builder: (context, state) => const TasksScreen()),
 ];
