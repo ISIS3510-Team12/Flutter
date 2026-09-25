@@ -3,6 +3,7 @@ import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
+import 'package:flutter/services.dart';
 
 typedef SignupCallback = Future<void> Function({
   required String firstName,
@@ -39,11 +40,11 @@ class _SignupFormState extends State<SignupForm> {
 
   Future<void> _submit() async {
     final form = formKey.currentState;
-    if (form == null || !form.validate()) {
+    if (form == null) {
       return;
     }
-
     form.save();
+    if (!form.validate()) return;
 
     await widget.onSubmit(
       firstName: firstName!,
@@ -83,6 +84,10 @@ class _SignupFormState extends State<SignupForm> {
                   this.firstName = firstName;
                 },
                 validator: Validators.name,
+                keyboardType: TextInputType.name,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]')),
+                ],
               ),
               InputField(
                 labelText: 'Last Name',
@@ -91,6 +96,10 @@ class _SignupFormState extends State<SignupForm> {
                   this.lastName = lastName;
                 },
                 validator: Validators.name,
+                keyboardType: TextInputType.name,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]')),
+                ],
               ),
               const SizedBox(height: 5),
               InputField(
@@ -100,6 +109,10 @@ class _SignupFormState extends State<SignupForm> {
                   this.email = email;
                 },
                 validator: Validators.email,
+                keyboardType: TextInputType.emailAddress,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]')),
+                ],
               ),
               InputField(
                 labelText: 'Password',
@@ -110,13 +123,18 @@ class _SignupFormState extends State<SignupForm> {
                 validator: Validators.password,
                 obscureText: obscurePassword,
                 onTogglePasswordVisibility: togglePasswordVisibility,
+                keyboardType: TextInputType.visiblePassword,
               ),
               InputField(
                 labelText: 'Confirm Password',
                 icon: Icons.lock_outline,
+                onSaved: (confirmPassword) {
+                  this.confirmPassword = confirmPassword;
+                },
                 validator: (confirmPassword) => Validators.confirmPassword(confirmPassword, password),
                 obscureText: obscureConfirmPassword,
                 onTogglePasswordVisibility: toggleConfirmPasswordVisibility,
+                keyboardType: TextInputType.visiblePassword,
               ),
               Center(
                 child: FilledButton(

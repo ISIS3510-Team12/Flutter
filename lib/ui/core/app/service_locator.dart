@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import './firebase_options.dart';
 
 Future<void> setupDependencies() async {
@@ -19,5 +18,5 @@ Future<void> setupDependencies() async {
 }
 
 final googleSignInProvider = Provider((ref) => GoogleSignIn.instance);
-
 final firebaseAuthProvider = Provider((ref) => FirebaseAuth.instance);
+

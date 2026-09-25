@@ -4,6 +4,7 @@ import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 
+
 typedef SigninCallback = Future<void> Function({
   required String email,
   required String password,
@@ -68,6 +69,7 @@ class _SigninFormState extends State<SigninForm> {
                   this.email = email;
                 },
                 validator: Validators.email,
+                keyboardType: TextInputType.emailAddress,
               ),
               InputField(
                 labelText: 'Password',
@@ -78,6 +80,7 @@ class _SigninFormState extends State<SigninForm> {
                 obscureText: obscureText,
                 validator: Validators.password,
                 onTogglePasswordVisibility: togglePasswordVisibility,
+                keyboardType: TextInputType.visiblePassword,
               ),
               Center(
                 child: FilledButton(
