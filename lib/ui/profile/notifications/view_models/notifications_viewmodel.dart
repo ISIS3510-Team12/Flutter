@@ -1,30 +1,18 @@
-import 'package:flutter/foundation.dart';
-import 'package:team12_flutter_juggle/data/repositories/profile/notifications_repository.dart';
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/repositories/profile/notifications_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_notification.dart';
 
-class NotificationsViewModel extends ChangeNotifier {
-  NotificationsViewModel({
-    required NotificationsRepository notificationsRepository,
-  }) : _notificationsRepository = notificationsRepository {
-    _load();
-  }
-
-  final NotificationsRepository _notificationsRepository;
-
-  bool isLoading = true;
-
-  List<AppNotification> _notifications = const [];
-  List<AppNotification> get notifications => _notifications;
-
-  Future<void> _load() async {
-    _notifications = await _notificationsRepository.getNotifications();
-    isLoading = false;
-    notifyListeners();
+class NotificationsViewModel extends AsyncNotifier<List<AppNotification>> {
+  @override
+  Future<List<AppNotification>> build() {
+    return ref.read(notificationsRepositoryProvider).getNotifications();
   }
 
   Future<void> deleteNotification(String id) async {
-    await _notificationsRepository.deleteNotification(id);
-    _notifications = _notifications.where((n) => n.id != id).toList();
-    notifyListeners();
+    await ref.read(notificationsRepositoryProvider).deleteNotification(id);
+    final current = state.value ?? const [];
+    state = AsyncData(current.where((n) => n.id != id).toList());
   }
 }

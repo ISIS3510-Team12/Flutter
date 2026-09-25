@@ -1,42 +1,50 @@
-import 'package:flutter/foundation.dart';
-import 'package:team12_flutter_juggle/data/repositories/profile/profile_repository.dart';
-import 'package:team12_flutter_juggle/domain/models/profile/user_profile.dart';
+import 'dart:async';
 
-class InformationViewModel extends ChangeNotifier {
-  InformationViewModel({required ProfileRepository profileRepository})
-    : _profileRepository = profileRepository {
-    _load();
-  }
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 
-  final ProfileRepository _profileRepository;
-  UserProfile? _profile;
+class InformationState {
+  const InformationState({
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+  });
 
-  bool isLoading = true;
-
-  String firstName = '';
-  String lastName = '';
-  String username = '';
-  String email = '';
+  final String firstName;
+  final String lastName;
+  final String email;
 
   String get initial => firstName.isEmpty ? '' : firstName[0].toUpperCase();
 
+  InformationState copyWith({String? firstName, String? lastName}) {
+    return InformationState(
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      email: email,
+    );
+  }
+}
+
+class InformationViewModel extends AsyncNotifier<InformationState> {
+  @override
+  Future<InformationState> build() async {
+    final user = await ref.watch(currentUserProvider.future);
+    return InformationState(
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      email: user?.email ?? '',
+    );
+  }
+
   void updateFirstName(String value) {
-    firstName = value;
-    notifyListeners();
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(firstName: value));
   }
 
   void updateLastName(String value) {
-    lastName = value;
-    notifyListeners();
-  }
-
-  Future<void> _load() async {
-    _profile = await _profileRepository.getProfile();
-    firstName = _profile!.firstName;
-    lastName = _profile!.lastName;
-    username = _profile!.username;
-    email = _profile!.email;
-    isLoading = false;
-    notifyListeners();
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(lastName: value));
   }
 }

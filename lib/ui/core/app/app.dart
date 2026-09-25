@@ -5,7 +5,6 @@ import 'package:team12_flutter_juggle/ui/core/themes/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/router_provider.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
-import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -28,7 +27,7 @@ class MainScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     return Scaffold(
-      appBar: CustomAppBar(),
+      appBar: const CustomAppBar(),
       body: user.when(
         data: (user) {
           if (user == null) {
@@ -42,13 +41,7 @@ class MainScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ref.read(firebaseAuthProvider).signOut();
-        },
-        child: const Icon(Icons.logout),
-      ),
-      bottomNavigationBar: CustomNavigationBar(),
+      bottomNavigationBar: const CustomNavigationBar(),
       resizeToAvoidBottomInset: false,
     );
   }

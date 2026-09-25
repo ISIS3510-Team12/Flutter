@@ -1,34 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:team12_flutter_juggle/ui/profile/notifications/view_models/notifications_viewmodel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/ui/profile/notifications/view_models/notifications_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/notifications/widgets/notification_card.dart';
 
-class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key, required this.viewModel});
-
-  final NotificationsViewModel viewModel;
+class NotificationsScreen extends ConsumerWidget {
+  const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
-}
-
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  @override
-  void dispose() {
-    widget.viewModel.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(notificationsViewModelProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Notifications')),
-      body: ListenableBuilder(
-        listenable: widget.viewModel,
-        builder: (context, _) {
-          if (widget.viewModel.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final notifications = widget.viewModel.notifications;
+      body: state.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        data: (notifications) {
           if (notifications.isEmpty) {
             return const Center(child: Text('No notifications yet'));
           }
@@ -39,9 +25,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             itemBuilder: (context, index) {
               return NotificationCard(
                 notification: notifications[index],
-                onDelete: () => widget.viewModel.deleteNotification(
-                  notifications[index].id,
-                ),
+                onDelete: () => ref
+                    .read(notificationsViewModelProvider.notifier)
+                    .deleteNotification(notifications[index].id),
               );
             },
           );
