@@ -7,7 +7,7 @@ class AuthViewModel extends AsyncNotifier<void> {
 
   final Provider<AuthRepository> _authRepository;
 
-  AuthRepository get repository => ref.watch(_authRepository);
+  AuthRepository get repository => ref.read(_authRepository);
 
   @override
   FutureOr<void> build() {}

@@ -45,8 +45,8 @@ class Validators {
     if (requiredError != null) {
       return requiredError;
     }
-    if (value!.length < 6) {
-      return 'Name must be at least 6 characters long';
+    if (value!.length < 3) {
+      return 'Name must be at least 3 characters long';
     }
     return null;
   }
