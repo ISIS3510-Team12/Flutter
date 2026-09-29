@@ -77,42 +77,44 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
   ) {
     return Padding(
       padding: const EdgeInsets.only(right: 30, left: 30),
-      child: Row(
-        spacing: 10,
-        children: [
-          Icon(
-            icon,
-            fill: 1,
-            size: 28,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                  fontWeight: .bold,
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 16,
+      child: TextButton(
+        onPressed: onPressed,
+        child: Row(
+          spacing: 10,
+          children: [
+            Icon(
+              icon,
+              fill: 1,
+              size: 28,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                    fontWeight: .bold,
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 14,
+                Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Spacer(),
-          IconButton(
-            icon: Icon(Icons.arrow_forward),
-            onPressed: onPressed,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ],
+              ],
+            ),
+            Spacer(),
+            Icon(
+              Icons.arrow_forward,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ],
+        ),
       ),
     );
   }
