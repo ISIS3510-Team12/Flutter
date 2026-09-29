@@ -22,7 +22,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-        margin: EdgeInsets.only(left: 16, right: 16, bottom: 16),
+        margin: EdgeInsets.only(left: 26, right: 26, bottom: 16),
         height: 80,
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainer,
