@@ -5,7 +5,7 @@ class InputField extends StatelessWidget {
   const InputField({
     super.key,
     required this.labelText,
-    required this.icon,
+    this.icon,
     this.validator,
     this.obscureText,
     this.onSaved,
@@ -15,7 +15,7 @@ class InputField extends StatelessWidget {
   });
 
   final String labelText;
-  final IconData icon;
+  final IconData? icon;
   final String? Function(String?)? validator;
   final void Function(String?)? onSaved;
   final bool? obscureText;
@@ -31,14 +31,14 @@ class InputField extends StatelessWidget {
         labelText: labelText,
         labelStyle: theme.textTheme.bodyMedium,
         border: OutlineInputBorder(),
-        prefixIcon: Icon(icon),
+        prefixIcon: icon != null ? Icon(icon) : null,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         suffixIcon: onTogglePasswordVisibility != null
             ? IconButton(
                 icon: Icon(
-                  obscureText == true ? Icons.visibility_off : Icons.visibility,
+                  obscureText == true ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                 ),
-                color: obscureText == true ? Colors.grey : theme.colorScheme.primary,
+                color: obscureText == true ? Colors.grey : Colors.grey[700],
                 onPressed: onTogglePasswordVisibility,
               )
             : null,

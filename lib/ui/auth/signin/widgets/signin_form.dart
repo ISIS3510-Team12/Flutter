@@ -64,7 +64,6 @@ class _SigninFormState extends State<SigninForm> {
             children: [
               InputField(
                 labelText: 'Email',
-                icon: Icons.mood_outlined,
                 onSaved: (email) {
                   this.email = email;
                 },
@@ -73,7 +72,6 @@ class _SigninFormState extends State<SigninForm> {
               ),
               InputField(
                 labelText: 'Password',
-                icon: Icons.lock_outline,
                 onSaved: (password) {
                   this.password = password;
                 },
@@ -96,16 +94,6 @@ class _SigninFormState extends State<SigninForm> {
                       fontWeight: .bold,
                       fontSize: 14,
                     ),
-                  ),
-                ),
-              ),
-              Center(
-                child: Text(
-                  'Forgot your password?',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: .w500,
-                    fontSize: 14,
                   ),
                 ),
               ),
