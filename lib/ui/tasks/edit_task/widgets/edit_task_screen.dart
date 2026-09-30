@@ -4,80 +4,68 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
-import 'package:team12_flutter_juggle/ui/tasks/create_task/view_models/create_task_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/tasks/edit_task/view_models/edit_task_viewmodel_provider.dart';
 
-class CreateTaskScreen extends ConsumerStatefulWidget {
-  const CreateTaskScreen({super.key});
+class EditTaskScreen extends ConsumerStatefulWidget {
+  const EditTaskScreen({super.key, required this.taskId});
+
+  final String taskId;
 
   @override
-  ConsumerState<CreateTaskScreen> createState() => _CreateTaskScreenState();
+  ConsumerState<EditTaskScreen> createState() => _EditTaskScreenState();
 }
 
-class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
-  final _titleController = TextEditingController();
+class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
   final _notesController = TextEditingController();
   final _deadlineController = TextEditingController();
-  final _timeController = TextEditingController();
 
-  Future<void> _pickDeadline() async {
+  bool _controllersFilled = false;
+
+  Future<void> _pickDeadline(DateTime initialDate) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: initialDate,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) {
-      ref.read(createTaskViewModelProvider.notifier).updateDeadline(picked);
+      final provider = editTaskViewModelProvider(widget.taskId);
+      ref.read(provider.notifier).updateDeadline(picked);
       _deadlineController.text = deadlineDate(picked);
     }
   }
 
-  Future<void> _pickTimeRange() async {
-    final notifier = ref.read(createTaskViewModelProvider.notifier);
-    final start = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (start == null || !mounted) return;
-    notifier.updateStartTime(start);
-
-    final end = await showTimePicker(
-      context: context,
-      initialTime: start.replacing(hour: (start.hour + 1) % 24),
-    );
-    if (end == null) return;
-    notifier.updateEndTime(end);
-
-    final form = ref.read(createTaskViewModelProvider).value;
-    _timeController.text = form?.timeRangeLabel ?? '';
-  }
-
   Future<void> _submit() async {
-    await ref.read(createTaskViewModelProvider.notifier).submit();
+    final provider = editTaskViewModelProvider(widget.taskId);
+    await ref.read(provider.notifier).submit();
     if (mounted) Navigator.of(context).pop();
   }
 
   @override
   void dispose() {
-    _titleController.dispose();
     _notesController.dispose();
     _deadlineController.dispose();
-    _timeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final state = ref.watch(createTaskViewModelProvider);
+    final provider = editTaskViewModelProvider(widget.taskId);
+    final state = ref.watch(provider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Task')),
+      appBar: AppBar(title: const Text('Edit Task')),
       bottomNavigationBar: const CustomNavigationBar(),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
         data: (form) {
-          final notifier = ref.read(createTaskViewModelProvider.notifier);
+          if (!_controllersFilled) {
+            _notesController.text = form.notes;
+            _deadlineController.text = deadlineDate(form.deadline);
+            _controllersFilled = true;
+          }
+          final notifier = ref.read(provider.notifier);
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -94,19 +82,29 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                       borderRadius: BorderRadius.circular(32),
                     ),
                     child: Text(
-                      'Current Group: ${form.groupName}',
+                      'Current Group: ${form.task.groupName}',
                       style: theme.textTheme.labelMedium,
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('TASK TITLE *', style: theme.textTheme.labelMedium),
+                Text('SELECTED TASK *', style: theme.textTheme.labelMedium),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: _titleController,
-                  onChanged: notifier.updateTitle,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Symbols.star),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(form.task.title)),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -138,36 +136,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                       .toList(),
                 ),
                 const SizedBox(height: 16),
-                Text('ASSOCIATED PROJECT', style: theme.textTheme.labelMedium),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: form.selectedProject,
-                  hint: const Text('Select a project'),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  onChanged: (value) {
-                    if (value != null) notifier.updateSelectedProject(value);
-                  },
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Symbols.star),
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerLow,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  items: form.projects
-                      .map(
-                        (project) => DropdownMenuItem(
-                          value: project,
-                          child: Text(project),
-                        ),
-                      )
-                      .toList(),
+                Text(
+                  'CURRENT ASSIGNED MEMBERS',
+                  style: theme.textTheme.labelMedium,
                 ),
-                const SizedBox(height: 16),
-                Text('ASSIGNED MEMBERS', style: theme.textTheme.labelMedium),
                 const SizedBox(height: 8),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -200,26 +172,18 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text('DEADLINE & TIMING *', style: theme.textTheme.labelMedium),
+                Text(
+                  'CURRENT DEADLINE & TIMING *',
+                  style: theme.textTheme.labelMedium,
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   readOnly: true,
-                  onTap: _pickDeadline,
+                  onTap: () => _pickDeadline(form.deadline),
                   controller: _deadlineController,
                   decoration: InputDecoration(
                     hintText: 'MM/DD/YYYY',
                     suffixIcon: const Icon(Symbols.calendar_today),
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  readOnly: true,
-                  onTap: _pickTimeRange,
-                  controller: _timeController,
-                  decoration: InputDecoration(
-                    hintText: 'HH:MM - HH:MM',
-                    suffixIcon: const Icon(Symbols.schedule),
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -258,43 +222,25 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     border: OutlineInputBorder(),
                   ),
                 ),
-                if (form.candidateTasks.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text('RELATED TASKS', style: theme.textTheme.labelMedium),
-                  const SizedBox(height: 8),
-                  for (final candidate in form.candidateTasks)
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      controlAffinity: ListTileControlAffinity.trailing,
-                      secondary: CircleAvatar(
-                        backgroundColor: theme.colorScheme.secondaryContainer,
-                        child: Text(
-                          candidate.assigneeInitial,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSecondaryContainer,
-                          ),
-                        ),
-                      ),
-                      title: Text(candidate.title),
-                      subtitle: Text(
-                        'Due date: ${deadlineDate(candidate.deadline)}',
-                      ),
-                      value: form.relatedTaskIds.contains(candidate.id),
-                      onChanged: (_) =>
-                          notifier.toggleRelatedTask(candidate.id),
-                    ),
-                ],
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(56),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _submit,
+                        icon: const Icon(Symbols.check),
+                        label: const Text('Edit task'),
+                      ),
                     ),
-                    onPressed: form.canSubmit ? _submit : null,
-                    icon: const Icon(Symbols.add),
-                    label: const Text('Create Task'),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Symbols.close),
+                        label: const Text('Cancel'),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
               ],

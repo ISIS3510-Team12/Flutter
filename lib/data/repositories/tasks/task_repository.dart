@@ -1,92 +1,110 @@
+import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 
 class TaskRepository {
-  final List<Task> _tasks = [
-    Task(
-      id: 't-1',
-      title: 'Do the design of the app',
-      description: 'Design the main screens of the app in Figma.',
-      type: TaskType.design,
-      status: TaskStatus.inProgress,
-      groupName: 'App Devs',
-      assignees: const ['Cristian'],
-      deadline: DateTime.now().add(const Duration(hours: 12)),
-      isMine: true,
-      isPriority: true,
-      needsHelp: false,
-      notes: '',
-    ),
-    Task(
-      id: 't-2',
-      title: 'Get a 5/5 (hopefully)',
-      description: 'Finish the project with a perfect grade.',
-      type: TaskType.writing,
-      status: TaskStatus.pending,
-      groupName: 'App Devs',
-      assignees: const ['Cristian'],
-      deadline: DateTime.now().add(const Duration(hours: 12)),
-      isMine: true,
-      isPriority: false,
-      needsHelp: false,
-      notes: '',
-    ),
-    Task(
-      id: 't-3',
-      title: 'Finish the figma',
-      description: 'Create the figma for small class exercise and upcoming MS for sprint 2.',
-      type: TaskType.design,
-      status: TaskStatus.inProgress,
-      groupName: 'App Devs',
-      assignees: const ['Diego'],
-      deadline: DateTime.now().add(const Duration(days: 1, hours: 12)),
-      isMine: false,
-      isPriority: true,
-      needsHelp: true,
-      notes: '',
-    ),
-    Task(
-      id: 't-4',
-      title: 'Learn how to Figma',
-      description: 'Watch the tutorials shared in the group chat.',
-      type: TaskType.design,
-      status: TaskStatus.pending,
-      groupName: 'App Devs',
-      assignees: const ['Diego'],
-      deadline: DateTime.now().add(const Duration(days: 1, hours: 12)),
-      isMine: false,
-      isPriority: false,
-      needsHelp: false,
-      notes: '',
-    ),
-    Task(
-      id: 't-5',
-      title: 'Learn how to align components',
-      description: 'Practice alignment and spacing in Flutter widgets.',
-      type: TaskType.coding,
-      status: TaskStatus.pending,
-      groupName: 'App Devs',
-      assignees: const ['Manuela'],
-      deadline: DateTime.now().add(const Duration(days: 1, hours: 12)),
-      isMine: false,
-      isPriority: false,
-      needsHelp: false,
-      notes: '',
-    ),
-  ];
+  TaskRepository(this._dio);
+
+  final Dio _dio;
 
   Future<List<Task>> getTasks() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return List.unmodifiable(_tasks);
+    final groupName = await getCurrentGroupName();
+    try {
+      final response = await _dio.get<List<dynamic>>('/tasks');
+      return response.data!
+          .map(
+            (json) => Task.fromJson(
+              json as Map<String, dynamic>,
+              groupName: groupName,
+            ),
+          )
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to load tasks: $e');
+    }
   }
 
   Future<Task> getTask(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return _tasks.firstWhere((task) => task.id == id);
+    final groupName = await getCurrentGroupName();
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/tasks/$id');
+      return Task.fromJson(response.data!, groupName: groupName);
+    } catch (e) {
+      throw Exception('Failed to load task: $e');
+    }
   }
 
-  Future<void> createTask(Task task) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _tasks.add(task);
+  Future<Task> createTask(Task task) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/tasks',
+        data: task.toCreateJson(),
+      );
+      final fromServer = Task.fromJson(
+        response.data!,
+        groupName: task.groupName,
+      );
+      return fromServer.copyWith(
+        assignees: task.assignees,
+        notes: task.notes,
+        description: task.description,
+        projectName: task.projectName,
+        relatedTaskIds: task.relatedTaskIds,
+      );
+    } catch (e) {
+      throw Exception('Failed to create task: $e');
+    }
+  }
+
+  Future<Task> updateTask(Task updated) async {
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        '/tasks/${updated.id}',
+        data: updated.toUpdateJson(),
+      );
+      final fromServer = Task.fromJson(
+        response.data!,
+        groupName: updated.groupName,
+      );
+      return fromServer.copyWith(
+        assignees: updated.assignees,
+        notes: updated.notes,
+        description: updated.description,
+        projectName: updated.projectName,
+        relatedTaskIds: updated.relatedTaskIds,
+      );
+    } catch (e) {
+      throw Exception('Failed to update task: $e');
+    }
+  }
+
+  Future<Task> updateTaskStatus(Task current, TaskStatus status) async {
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        '/tasks/${current.id}/status',
+        queryParameters: {'status': taskStatusToJson(status)},
+      );
+      final fromServer = Task.fromJson(
+        response.data!,
+        groupName: current.groupName,
+      );
+      return fromServer.copyWith(
+        assignees: current.assignees,
+        notes: current.notes,
+        description: current.description,
+        projectName: current.projectName,
+        relatedTaskIds: current.relatedTaskIds,
+      );
+    } catch (e) {
+      throw Exception('Failed to update task status: $e');
+    }
+  }
+
+  Future<void> deleteTask(String id) async {
+    try {
+      await _dio.delete('/tasks/$id');
+    } catch (e) {
+      throw Exception('Failed to delete task: $e');
+    }
   }
 
   Future<String> getCurrentGroupName() async {
@@ -95,5 +113,20 @@ class TaskRepository {
 
   Future<List<String>> getGroupMembers() async {
     return const ['Cristian', 'Diego', 'Shaiel', 'Manuela'];
+  }
+
+  Future<List<String>> getProjects() async {
+    return const ['Project #1', 'Project #2'];
+  }
+
+  final List<String> _groups = ['App Devs', 'Group 1', 'Group 2'];
+
+  Future<List<String>> getGroups() async {
+    return List.unmodifiable(_groups);
+  }
+
+  Future<void> addGroup(String name) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    _groups.add(name);
   }
 }

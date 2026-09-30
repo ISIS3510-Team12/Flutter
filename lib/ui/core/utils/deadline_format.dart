@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 String deadlineText(DateTime deadline) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -21,4 +23,11 @@ String deadlineDate(DateTime date) {
   final month = date.month.toString().padLeft(2, '0');
   final day = date.day.toString().padLeft(2, '0');
   return '$month/$day/${date.year}';
+}
+
+String timeOfDayLabel(TimeOfDay time) {
+  final hour12 = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+  final minute = time.minute.toString().padLeft(2, '0');
+  final period = time.period == DayPeriod.am ? 'am' : 'pm';
+  return '$hour12:$minute$period';
 }

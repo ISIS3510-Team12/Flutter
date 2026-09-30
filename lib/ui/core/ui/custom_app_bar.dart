@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 
@@ -20,7 +21,16 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
       context.push(Routes.profile);
     }
 
+    final hasDrawer = Scaffold.of(context).hasDrawer;
+
     return AppBar(
+      centerTitle: hasDrawer,
+      leading: hasDrawer
+          ? IconButton(
+              icon: const Icon(Symbols.groups),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            )
+          : null,
       title: SvgPicture.asset('assets/juggle_logo.svg', height: 42),
       actions: [
         Padding(
