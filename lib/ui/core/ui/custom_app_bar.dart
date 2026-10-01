@@ -23,6 +23,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
     username: 'a',
   );
 
+  // TODO: Update onTap to navigate to the profile screen
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

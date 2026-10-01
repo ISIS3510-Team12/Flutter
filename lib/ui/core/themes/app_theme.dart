@@ -17,6 +17,10 @@ class AppTheme {
       titleTextStyle: AppTypography.textTheme.titleSmall?.copyWith(
         color: colorScheme.onSurface,
       ),
+      backgroundColor: colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
+      shadowColor: Colors.transparent,
     ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: Color(0xFFE5E1E2),

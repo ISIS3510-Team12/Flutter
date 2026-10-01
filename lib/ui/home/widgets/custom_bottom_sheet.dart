@@ -25,6 +25,7 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
     ),
   ];
 
+  // TODO: Update with actual navigation logic for each item
   void _onPressed(BuildContext context, int id) {
     Navigator.of(context).pop();
     switch (id) {
@@ -76,7 +77,7 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
     VoidCallback onPressed,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(right: 30, left: 30),
+      padding: const EdgeInsets.only(right: 20, left: 20),
       child: TextButton(
         onPressed: onPressed,
         child: Row(
@@ -96,14 +97,14 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
                     fontWeight: .bold,
                     color: Theme.of(context).colorScheme.primary,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
                 Text(
                   description,
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 14,
+                    fontSize: 12,
                   ),
                 ),
               ],

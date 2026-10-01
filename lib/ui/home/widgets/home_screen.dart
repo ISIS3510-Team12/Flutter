@@ -7,12 +7,23 @@ import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/custom_bottom_sheet.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_cards.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_tabs.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final homeState = ref.watch(homeViewModelProvider);
+    return homeState.when(
+      data: (data) => _buildHomeScreen(context, data),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stackTrace) => Center(child: Text('Error: $error')),
+    );
+  }
+
+  Widget _buildHomeScreen(BuildContext context, HomeState data) {
     return Scaffold(
       appBar: CustomAppBar(),
       body: Padding(
@@ -22,8 +33,15 @@ class HomeScreen extends ConsumerWidget {
             spacing: 20,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              userSection(context, 'Victoria'),
-              overviewSection(context, numTasks: 9, numNotifications: 5),
+              userSection(context, data.user),
+              overviewSection(
+                context,
+                data.selectedTab,
+                data.upcomingTasks,
+                data.recentActivity,
+                numTasks: data.numTasks,
+                numNotifications: data.numNotifications,
+              ),
             ],
           ),
         ),
@@ -51,7 +69,13 @@ class HomeScreen extends ConsumerWidget {
         ),
         Row(
           children: [
-            Text('$day, $month $date, $year', style: TextStyle(fontSize: 14)),
+            Expanded(
+              child: Text(
+                '$day, $month $date, $year',
+                style: TextStyle(fontSize: 14),
+                softWrap: true,
+              ),
+            ),
             Spacer(),
             OutlinedButton(
               onPressed: () => _showBottomSheet(context),
@@ -73,7 +97,10 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget overviewSection(
-    BuildContext context, {
+    BuildContext context,
+    int selectedTab,
+    List<Map<String, dynamic>> upcomingTasks,
+    List<Map<String, dynamic>> recentActivity, {
     numTasks = 9,
     numNotifications = 5,
   }) {
@@ -86,7 +113,12 @@ class HomeScreen extends ConsumerWidget {
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         OverviewCards(numTasks: numTasks, numNotifications: numNotifications),
-        OverviewTabs(),
+        OverviewTabs(
+          upcomingTasks: upcomingTasks,
+          recentActivity: recentActivity,
+          selectedTab: selectedTab,
+        ),
+        SizedBox(height: 10),
       ],
     );
   }

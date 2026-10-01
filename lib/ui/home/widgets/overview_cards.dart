@@ -70,7 +70,7 @@ class OverviewCards extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: .bold,
                 color: Colors.white,
               ),
