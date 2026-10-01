@@ -7,7 +7,7 @@ import 'package:team12_flutter_juggle/domain/models/profile/app_settings.dart';
 class SettingsViewModel extends AsyncNotifier<AppSettings> {
   @override
   Future<AppSettings> build() {
-    return ref.read(settingsRepositoryProvider).getSettings();
+    return ref.watch(settingsRepositoryProvider).getSettings();
   }
 
   Future<void> updateThemeMode(AppThemeMode mode) async {

@@ -108,12 +108,12 @@ class CreateTaskFormState {
 class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
   @override
   Future<CreateTaskFormState> build() async {
-    final repository = ref.read(taskRepositoryProvider);
+    final repository = ref.watch(taskRepositoryProvider);
+    final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
+    final currentUser = ref.watch(currentUserProvider.future);
     final groups = await repository.getTaskGroups();
-    final group = ref
-        .read(selectedTaskGroupIdProvider.notifier)
-        .resolve(groups);
-    final me = (await ref.read(currentUserProvider.future))!;
+    final group = selectedGroup.resolve(groups);
+    final me = (await currentUser)!;
     final members = membersWithYou(group, me);
     final projects = group == null
         ? <String>[]
@@ -135,16 +135,16 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     final current = state.value;
     if (current == null || current.group?.id == group.id) return;
     final repository = ref.read(taskRepositoryProvider);
-    final projects = await repository.getProjects(group);
-    final candidateTasks = await repository.getGroupTasks(group);
-    final you = current.members.first;
-    final members = [
-      you,
-      ...group.members.where((member) => member.id != you.id),
-    ];
-    final memberIds = members.map((member) => member.id).toSet();
-    state = AsyncData(
-      current.copyWith(
+    final result = await AsyncValue.guard(() async {
+      final projects = await repository.getProjects(group);
+      final candidateTasks = await repository.getGroupTasks(group);
+      final you = current.members.first;
+      final members = [
+        you,
+        ...group.members.where((member) => member.id != you.id),
+      ];
+      final memberIds = members.map((member) => member.id).toSet();
+      return current.copyWith(
         group: group,
         projects: projects,
         candidateTasks: candidateTasks,
@@ -154,8 +154,10 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
         selectedMemberIds: current.selectedMemberIds
             .where(memberIds.contains)
             .toSet(),
-      ),
-    );
+      );
+    });
+    if (!ref.mounted) return;
+    state = result;
   }
 
   void updateTitle(String value) => _update((s) => s.copyWith(title: value));
@@ -239,19 +241,20 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       relatedTaskIds: current.relatedTaskIds.toList(),
     );
     final repository = ref.read(taskRepositoryProvider);
+    final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
     final created = await repository.createTask(task);
     final group = current.group;
-    if (group != null) {
-      ref.read(selectedTaskGroupIdProvider.notifier).select(group.id);
-    }
+    if (group != null) selectedGroup.select(group.id);
     try {
       final photoPath = current.photoPath;
       if (photoPath != null) {
         await repository.uploadTaskPhoto(created.id, photoPath);
       }
     } finally {
-      ref.invalidate(tasksViewModelProvider);
-      ref.invalidate(tasksOverviewProvider);
+      if (ref.mounted) {
+        ref.invalidate(tasksViewModelProvider);
+        ref.invalidate(tasksOverviewProvider);
+      }
     }
   }
 }

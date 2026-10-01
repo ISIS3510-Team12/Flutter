@@ -87,7 +87,8 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
 
   @override
   Future<EditTaskFormState> build() async {
-    final repository = ref.read(taskRepositoryProvider);
+    final repository = ref.watch(taskRepositoryProvider);
+    final currentUser = ref.watch(currentUserProvider.future);
     final task = await repository.getTask(taskId);
     final photo = task.hasPhoto ? await repository.getTaskPhoto(taskId) : null;
     final groups = await repository.getTaskGroups();
@@ -99,7 +100,7 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     final projects = group == null
         ? <String>[]
         : await repository.getProjects(group);
-    final me = (await ref.read(currentUserProvider.future))!;
+    final me = (await currentUser)!;
     final members = membersWithYou(group, me);
     return EditTaskFormState(
       task: task,
@@ -121,15 +122,16 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
   Future<void> updateGroup(TaskGroup group) async {
     final current = state.value;
     if (current == null || current.group?.id == group.id) return;
-    final projects = await ref.read(taskRepositoryProvider).getProjects(group);
-    final you = current.members.first;
-    final members = [
-      you,
-      ...group.members.where((member) => member.id != you.id),
-    ];
-    final memberIds = members.map((member) => member.id).toSet();
-    state = AsyncData(
-      current.copyWith(
+    final repository = ref.read(taskRepositoryProvider);
+    final result = await AsyncValue.guard(() async {
+      final projects = await repository.getProjects(group);
+      final you = current.members.first;
+      final members = [
+        you,
+        ...group.members.where((member) => member.id != you.id),
+      ];
+      final memberIds = members.map((member) => member.id).toSet();
+      return current.copyWith(
         group: group,
         projects: projects,
         clearProject: true,
@@ -137,8 +139,10 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
         selectedMemberIds: current.selectedMemberIds
             .where(memberIds.contains)
             .toSet(),
-      ),
-    );
+      );
+    });
+    if (!ref.mounted) return;
+    state = result;
   }
 
   void updateSelectedProject(String value) =>
@@ -204,9 +208,11 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
         await repository.uploadTaskPhoto(taskId, photoPath);
       }
     } finally {
-      ref.invalidate(tasksViewModelProvider);
-      ref.invalidate(tasksOverviewProvider);
-      ref.invalidate(viewTaskViewModelProvider(taskId));
+      if (ref.mounted) {
+        ref.invalidate(tasksViewModelProvider);
+        ref.invalidate(tasksOverviewProvider);
+        ref.invalidate(viewTaskViewModelProvider(taskId));
+      }
     }
   }
 }

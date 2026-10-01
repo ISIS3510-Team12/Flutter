@@ -61,11 +61,10 @@ class TasksState {
 class TasksViewModel extends AsyncNotifier<TasksState> {
   @override
   Future<TasksState> build() async {
-    final repository = ref.read(taskRepositoryProvider);
+    final repository = ref.watch(taskRepositoryProvider);
+    final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
     final groups = await repository.getTaskGroups();
-    final group = ref
-        .read(selectedTaskGroupIdProvider.notifier)
-        .resolve(groups);
+    final group = selectedGroup.resolve(groups);
     final tasks = group == null
         ? <Task>[]
         : await repository.getGroupTasks(group);
@@ -81,13 +80,21 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
   Future<void> switchGroup(TaskGroup group) async {
     final current = state.value;
     if (current == null) return;
-    final tasks = await ref.read(taskRepositoryProvider).getGroupTasks(group);
-    ref.read(selectedTaskGroupIdProvider.notifier).select(group.id);
-    state = AsyncData(current.copyWith(group: group, tasks: tasks));
+    final repository = ref.read(taskRepositoryProvider);
+    final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
+    final result = await AsyncValue.guard(() async {
+      final tasks = await repository.getGroupTasks(group);
+      return current.copyWith(group: group, tasks: tasks);
+    });
+    if (!ref.mounted) return;
+    if (result.hasValue) selectedGroup.select(group.id);
+    state = result;
   }
 
   Future<void> createGroup(String name) async {
-    await ref.read(taskRepositoryProvider).addGroup(name);
+    final repository = ref.read(taskRepositoryProvider);
+    await repository.addGroup(name);
+    if (!ref.mounted) return;
     ref.invalidateSelf();
   }
 }

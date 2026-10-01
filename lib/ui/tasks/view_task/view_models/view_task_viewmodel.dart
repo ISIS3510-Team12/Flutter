@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
@@ -37,7 +38,7 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
 
   @override
   Future<ViewTaskState> build() async {
-    final repository = ref.read(taskRepositoryProvider);
+    final repository = ref.watch(taskRepositoryProvider);
     final task = await repository.getTask(taskId);
     final photo = task.hasPhoto ? await repository.getTaskPhoto(taskId) : null;
     return ViewTaskState(
@@ -58,39 +59,47 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
 
   Future<void> markStarted() => _changeStatus(TaskStatus.inProgress);
 
-  Future<void> _changeStatus(TaskStatus status) async {
-    final current = state.value;
-    if (current == null) return;
-    final updated = await ref
-        .read(taskRepositoryProvider)
-        .updateTaskStatus(current.task, status);
-    state = AsyncData(current.copyWith(task: updated));
-    ref.invalidate(tasksViewModelProvider);
-    ref.invalidate(tasksOverviewProvider);
+  Future<void> _changeStatus(TaskStatus status) {
+    return _applyUpdate(
+      (repository, task) => repository.updateTaskStatus(task, status),
+    );
   }
 
-  Future<void> toggleNeedsHelp() async {
+  Future<void> toggleNeedsHelp() {
+    return _applyUpdate(
+      (repository, task) =>
+          repository.updateTask(task.copyWith(needsHelp: !task.needsHelp)),
+    );
+  }
+
+  Future<void> updateDeadline(DateTime deadline) {
+    return _applyUpdate(
+      (repository, task) =>
+          repository.updateTask(task.copyWith(deadline: deadline)),
+    );
+  }
+
+  Future<void> _applyUpdate(
+    Future<Task> Function(TaskRepository repository, Task task) operation,
+  ) async {
     final current = state.value;
     if (current == null) return;
-    final edited = current.task.copyWith(needsHelp: !current.task.needsHelp);
-    final updated = await ref.read(taskRepositoryProvider).updateTask(edited);
-    state = AsyncData(current.copyWith(task: updated));
+    final repository = ref.read(taskRepositoryProvider);
+    final result = await AsyncValue.guard(() async {
+      final updated = await operation(repository, current.task);
+      return current.copyWith(task: updated);
+    });
+    if (!ref.mounted) return;
+    state = result;
+    if (result.hasError) return;
     ref.invalidate(tasksViewModelProvider);
     ref.invalidate(tasksOverviewProvider);
   }
 
   Future<void> deleteTask() async {
-    await ref.read(taskRepositoryProvider).deleteTask(taskId);
-    ref.invalidate(tasksViewModelProvider);
-    ref.invalidate(tasksOverviewProvider);
-  }
-
-  Future<void> updateDeadline(DateTime deadline) async {
-    final current = state.value;
-    if (current == null) return;
-    final edited = current.task.copyWith(deadline: deadline);
-    final updated = await ref.read(taskRepositoryProvider).updateTask(edited);
-    state = AsyncData(current.copyWith(task: updated));
+    final repository = ref.read(taskRepositoryProvider);
+    await repository.deleteTask(taskId);
+    if (!ref.mounted) return;
     ref.invalidate(tasksViewModelProvider);
     ref.invalidate(tasksOverviewProvider);
   }
