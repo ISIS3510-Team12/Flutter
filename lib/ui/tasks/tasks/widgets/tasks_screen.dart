@@ -4,7 +4,6 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
-import 'package:team12_flutter_juggle/ui/tasks/all_tasks/widgets/all_tasks_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/create_task/widgets/create_task_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/group_drawer.dart';
@@ -26,11 +25,6 @@ class TasksScreen extends ConsumerWidget {
     ).push(MaterialPageRoute(builder: (_) => ViewTaskScreen(taskId: taskId)));
   }
 
-  void _openAllTasks(BuildContext context) {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const AllTasksScreen()));
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -50,12 +44,8 @@ class TasksScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
         data: (data) {
-          const visibleCount = 3;
-          final visibleMyTasks = data.myTasks.take(visibleCount).toList();
-          final visibleGroupTasks = data.groupTasks.take(visibleCount).toList();
-          final hasMoreTasks =
-              data.myTasks.length > visibleCount ||
-              data.groupTasks.length > visibleCount;
+          final myTasks = data.myTasks;
+          final groupTasks = data.groupTasks;
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -98,7 +88,7 @@ class TasksScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              for (final task in visibleMyTasks) ...[
+              for (final task in myTasks) ...[
                 TaskCard(task: task, onTap: () => _openTask(context, task.id)),
                 const SizedBox(height: 12),
               ],
@@ -110,18 +100,10 @@ class TasksScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              for (final task in visibleGroupTasks) ...[
+              for (final task in groupTasks) ...[
                 TaskCard(task: task, onTap: () => _openTask(context, task.id)),
                 const SizedBox(height: 12),
               ],
-              if (hasMoreTasks)
-                Center(
-                  child: TextButton.icon(
-                    onPressed: () => _openAllTasks(context),
-                    icon: const Icon(Symbols.expand_more),
-                    label: const Text('View all tasks'),
-                  ),
-                ),
               const SizedBox(height: 96),
             ],
           );

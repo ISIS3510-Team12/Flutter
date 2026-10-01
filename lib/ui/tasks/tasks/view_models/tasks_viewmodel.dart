@@ -22,10 +22,21 @@ class TasksState {
   String get groupName => group?.name ?? 'No group';
 
   List<Task> get myTasks =>
-      tasks.where((task) => task.isMine && _matchesQuery(task)).toList();
+      _sorted(tasks.where((task) => task.isMine && _matchesQuery(task)));
 
   List<Task> get groupTasks =>
-      tasks.where((task) => !task.isMine && _matchesQuery(task)).toList();
+      _sorted(tasks.where((task) => !task.isMine && _matchesQuery(task)));
+
+  List<Task> _sorted(Iterable<Task> source) {
+    return source.toList()..sort((a, b) {
+      final byDeadline = a.deadline.compareTo(b.deadline);
+      if (byDeadline != 0) return byDeadline;
+      if (a.isPriority != b.isPriority) return a.isPriority ? -1 : 1;
+      final idA = int.tryParse(a.id) ?? 0;
+      final idB = int.tryParse(b.id) ?? 0;
+      return idA.compareTo(idB);
+    });
+  }
 
   bool _matchesQuery(Task task) {
     if (query.isEmpty) return true;
