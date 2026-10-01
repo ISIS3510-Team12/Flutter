@@ -13,7 +13,6 @@ class LandingScreen extends StatelessWidget {
     double width = screenSize.width;
     double height = screenSize.height;
 
-
     return Scaffold(
       body: Stack(
         children: [
@@ -29,7 +28,7 @@ class LandingScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const SizedBox(height: 80),
+                const SizedBox(height: 120),
                 SvgPicture.asset(
                   'assets/juggle_logo_light.svg',
                   fit: BoxFit.contain,
@@ -40,7 +39,7 @@ class LandingScreen extends StatelessWidget {
           Container(
             width: width,
             height: height,
-            margin: EdgeInsets.only(top: height / 2.8),
+            margin: EdgeInsets.only(top: height / 2.2),
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.only(
@@ -49,17 +48,14 @@ class LandingScreen extends StatelessWidget {
               ),
             ),
             child: Container(
-              margin: EdgeInsets.only(top: 35, right: 20, left: 20),
+              margin: EdgeInsets.only(right: 20, left: 20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
-                spacing: height <= 914 ? 12 : 30,
+                spacing: height <= 914 ? 14 : 20,
                 children: [
-                  Container(
-                    margin: EdgeInsets.only(top: 20),
-                    child: SvgPicture.asset(
-                      'assets/landing_icon.svg',
-                      fit: BoxFit.contain,
-                    ),
+                  SvgPicture.asset(
+                    'assets/landing_icon.svg',
+                    fit: BoxFit.contain,
                   ),
                   Column(
                     children: [

@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:team12_flutter_juggle/data/repositories/auth/auth_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/auth/app_user.dart';
 
-final authStateProvider = StreamProvider<User?>((ref) {
+final authStateProvider = StreamProvider.autoDispose<User?>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   return authRepository.authState;
 });
