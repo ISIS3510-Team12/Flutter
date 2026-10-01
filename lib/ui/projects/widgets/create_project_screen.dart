@@ -1,47 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:team12_flutter_juggle/data/repositories/project/project_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
-import 'package:team12_flutter_juggle/ui/projects/viewmodels/project_view_model.dart';
+import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
 
-class CreateProjectScreen extends StatefulWidget {
+class CreateProjectScreen extends ConsumerStatefulWidget {
   const CreateProjectScreen({
     super.key,
     required this.groupId,
-    required this.projectRepository,
   });
 
   final int groupId;
-  final ProjectRepository projectRepository;
 
   @override
-  State<CreateProjectScreen> createState() => _CreateProjectScreenState();
+  ConsumerState<CreateProjectScreen> createState() =>
+      _CreateProjectScreenState();
 }
 
-class _CreateProjectScreenState extends State<CreateProjectScreen> {
+class _CreateProjectScreenState
+    extends ConsumerState<CreateProjectScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController =
       TextEditingController();
-  final TextEditingController deadlineController = TextEditingController();
+  final TextEditingController deadlineController =
+      TextEditingController();
 
   DateTime? selectedDeadline;
-
-  late final ProjectViewModel viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-
-    viewModel = ProjectViewModel(
-      projectRepository: widget.projectRepository,
-    );
-  }
 
   @override
   void dispose() {
     nameController.dispose();
     descriptionController.dispose();
     deadlineController.dispose();
-    viewModel.dispose();
     super.dispose();
   }
 
@@ -60,38 +50,47 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       return;
     }
 
-    final createdProject = await viewModel.createProject(
-      name: name,
-      description: description,
-      deadline: selectedDeadline!,
-      groupId: widget.groupId,
-    );
+    final createdProject = await ref
+        .read(projectViewModelProvider.notifier)
+        .createProject(
+          name: name,
+          description: description,
+          deadline: selectedDeadline!,
+          groupId: widget.groupId,
+        );
 
     if (!mounted) return;
 
     if (createdProject != null) {
-      Navigator.pop(context, createdProject);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            viewModel.errorMessage ?? 'Failed to create project.',
-          ),
-        ),
-      );
+      context.pop(createdProject);
+      return;
     }
+
+    final state = ref.read(projectViewModelProvider);
+
+    final errorMessage = state.hasError
+        ? state.error.toString()
+        : 'Failed to create project.';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(errorMessage),
+      ),
+    );
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final projectState = ref.watch(projectViewModelProvider);
+
+    final isLoading = projectState.isLoading;
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => context.pop(),
         ),
         title: const Text('Create project'),
       ),
@@ -111,18 +110,14 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 4),
-
             Text(
               'Add the essentials now. You can update them later.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-
             const SizedBox(height: 24),
-
             TextField(
               controller: nameController,
               decoration: InputDecoration(
@@ -131,23 +126,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             TextField(
               controller: descriptionController,
               maxLines: 2,
@@ -157,42 +138,50 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             TextField(
               controller: deadlineController,
               readOnly: true,
-              onTap: () async {
-                final selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime(2030),
-                );
+              onTap: isLoading
+                  ? null
+                  : () async {
+                      final selectedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime(2030),
+                        builder: (context, child) {
+                          final theme = Theme.of(context);
+                          return Theme(
+                            data: theme.copyWith(
+                              datePickerTheme: theme.datePickerTheme.copyWith(
+                                headerHeadlineStyle:
+                                    theme.textTheme.headlineSmall?.copyWith(
+                                  fontSize: 24,
+                                  height: 1.0,
+                                ),
+                              ),
+                            ),
+                            child: MediaQuery(
+                              data: MediaQuery.of(context).copyWith(
+                                textScaler: const TextScaler.linear(1.0),
+                              ),
+                              child: child!,
+                            ),
+                          );
+                        },
+                      );
 
-                if (selectedDate != null) {
-                  setState(() {
-                    selectedDeadline = selectedDate;
-                    deadlineController.text =
-                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}';
-                  });
-                }
-              },
+                      if (selectedDate != null) {
+                        setState(() {
+                          selectedDeadline = selectedDate;
+                          deadlineController.text =
+                              '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}';
+                        });
+                      }
+                    },
               decoration: InputDecoration(
                 labelText: 'Deadline',
                 hintText: 'Select a date',
@@ -202,32 +191,16 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             Center(
               child: SizedBox(
                 width: 160,
                 height: 40,
                 child: FilledButton(
-                  onPressed: viewModel.isLoading
-                      ? null
-                      : _createProject,
-                  child: viewModel.isLoading
+                  onPressed: isLoading ? null : _createProject,
+                  child: isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,

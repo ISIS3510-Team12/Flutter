@@ -15,4 +15,12 @@ class ProjectApiClient {
 
     return Project.fromJson(response.data!);
   }
+
+  Future<Project> getProject(int projectId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/projects/$projectId',
+    );
+
+    return Project.fromJson(response.data!);
+  }
 }

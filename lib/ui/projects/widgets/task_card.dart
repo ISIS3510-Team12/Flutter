@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
-class TaskCard extends StatelessWidget {
+class ProjectTaskCard extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String? assigneeInitial;
 
-  const TaskCard({
+  const ProjectTaskCard({
     super.key,
     required this.title,
     required this.subtitle,
+    this.assigneeInitial,
   });
 
   @override
@@ -28,26 +30,23 @@ class TaskCard extends StatelessWidget {
           horizontal: 12,
           vertical: 4,
         ),
-
         leading: CircleAvatar(
           radius: 20,
           backgroundColor: theme.colorScheme.secondary,
           child: Text(
-            'D',
+            assigneeInitial ?? '?',
             style: TextStyle(
               color: theme.colorScheme.onSecondary,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-
         title: Text(
           title,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
           ),
         ),
-
         subtitle: Text(subtitle),
       ),
     );

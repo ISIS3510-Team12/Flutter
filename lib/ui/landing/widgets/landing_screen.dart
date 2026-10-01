@@ -48,42 +48,47 @@ class LandingScreen extends StatelessWidget {
               ),
             ),
             child: Container(
-              margin: EdgeInsets.only(right: 20, left: 20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                spacing: height <= 914 ? 14 : 20,
-                children: [
-                  SvgPicture.asset(
-                    'assets/landing_icon.svg',
-                    fit: BoxFit.contain,
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        'Worried about your tasks?',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      Text(
-                        'Manage them all in one place.',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      SizedBox(height: 5),
-                    ],
-                  ),
-                  FilledButton(
-                    onPressed: () => context.go('/signup'),
-                    style: FilledButton.styleFrom(
-                      fixedSize: Size(251, 40),
-                      backgroundColor: theme.primaryColor,
+              margin: const EdgeInsets.only(
+                right: 20,
+                left: 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  spacing: height <= 914 ? 14 : 20,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/landing_icon.svg',
+                      fit: BoxFit.contain,
                     ),
-                    child: Text(
-                      'Get started',
-                      style: theme.textTheme.labelMedium!.copyWith(
-                        color: Colors.white,
+                    Column(
+                      children: [
+                        Text(
+                          'Worried about your tasks?',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        Text(
+                          'Manage them all in one place.',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 5),
+                      ],
+                    ),
+                    FilledButton(
+                      onPressed: () => context.go('/signup'),
+                      style: FilledButton.styleFrom(
+                        fixedSize: const Size(251, 40),
+                        backgroundColor: theme.primaryColor,
+                      ),
+                      child: Text(
+                        'Get started',
+                        style: theme.textTheme.labelMedium!.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

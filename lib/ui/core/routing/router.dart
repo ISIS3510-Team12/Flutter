@@ -3,6 +3,8 @@ import 'package:team12_flutter_juggle/ui/home/widgets/home_screen.dart';
 import 'package:team12_flutter_juggle/ui/landing/widgets/landing_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signin/widgets/signin_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signup/widgets/signup_screen.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/create_project_screen.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/project_detail_screen.dart';
 import './routes.dart';
 
 final routes = <RouteBase>[
@@ -19,4 +21,26 @@ final routes = <RouteBase>[
     builder: (context, state) => const SignupScreen(),
   ),
   GoRoute(path: Routes.home, builder: (context, state) => const HomeScreen()),
+  GoRoute(
+    path: Routes.createProject,
+    builder: (context, state) {
+      final groupId = int.parse(state.pathParameters['groupId']!);
+
+      return CreateProjectScreen(
+        groupId: groupId,
+      );
+    },
+  ),
+  GoRoute(
+    path: Routes.projectDetail,
+    builder: (context, state) {
+        final projectId = int.parse(
+        state.pathParameters['projectId']!,
+      );
+
+      return ProjectDetailScreen(
+        projectId: projectId,
+      );
+    },
+  ),
 ];

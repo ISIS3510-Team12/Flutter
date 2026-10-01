@@ -10,4 +10,8 @@ class ProjectRepository {
   Future<Project> createProject(ProjectCreate project) {
     return _apiClient.createProject(project);
   }
+
+  Future<Project> getProject(int projectId) {
+    return _apiClient.getProject(projectId);
+  }
 }
