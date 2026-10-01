@@ -131,7 +131,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                 DropdownButtonFormField<String>(
                   key: ValueKey(form.group?.id),
                   initialValue: form.selectedProject,
-                  hint: const Text('Select a project'),
+                  hint: Text('Select a project', style: taskHintStyle(theme)),
                   style: taskMenuTextStyle(theme),
                   icon: const Icon(Symbols.arrow_right, size: 20),
                   decoration: taskMenuDecoration(theme),

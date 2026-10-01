@@ -6,6 +6,11 @@ const taskOutlineColor = Color(0xFF737878);
 const taskOnSurfaceVariantColor = Color(0xFF434848);
 const taskFieldLabelColor = Color(0xFF525252);
 const taskRequiredColor = Color(0xFFEC4899);
+const taskHintColor = Color(0xFF8F9393);
+
+TextStyle? taskHintStyle(ThemeData theme) {
+  return theme.textTheme.bodyLarge?.copyWith(color: taskHintColor);
+}
 
 TextStyle? taskMenuTextStyle(ThemeData theme) {
   return theme.textTheme.bodyLarge?.copyWith(
@@ -43,6 +48,7 @@ InputDecoration taskTimingDecoration(
     floatingLabelStyle: TextStyle(color: accent),
     floatingLabelBehavior: FloatingLabelBehavior.always,
     hintText: hint,
+    hintStyle: taskHintStyle(theme),
     helperText: helper,
     suffixIcon: Padding(
       padding: const EdgeInsets.all(4),

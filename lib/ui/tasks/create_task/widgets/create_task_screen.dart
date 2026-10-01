@@ -116,7 +116,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 DropdownButtonFormField<String>(
                   key: ValueKey(form.group?.id),
                   initialValue: form.selectedProject,
-                  hint: const Text('Select a project'),
+                  hint: Text('Select a project', style: taskHintStyle(theme)),
                   style: taskMenuTextStyle(theme),
                   icon: const Icon(Symbols.arrow_right, size: 20),
                   decoration: taskMenuDecoration(theme),
@@ -139,6 +139,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   controller: _titleController,
                   onChanged: notifier.updateTitle,
                   decoration: InputDecoration(
+                    hintText: 'Enter the task title',
+                    hintStyle: taskHintStyle(theme),
                     suffixIcon: IconButton(
                       icon: const Icon(Symbols.cancel),
                       onPressed: () {
@@ -264,6 +266,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     onChanged: notifier.updateRelatedQuery,
                     decoration: InputDecoration(
                       hintText: 'Search for a task...',
+                      hintStyle: taskHintStyle(theme),
                       suffixIcon: const Icon(Symbols.search),
                       filled: true,
                       fillColor: theme.colorScheme.surfaceContainerHigh,

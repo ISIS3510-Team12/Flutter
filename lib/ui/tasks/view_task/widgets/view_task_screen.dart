@@ -107,16 +107,16 @@ class ViewTaskScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   _TaskChip(label: _statusLabel(task.status)),
-                  if (task.isPriority) ...[
-                    const SizedBox(width: 8),
+                  if (task.isPriority)
                     _TaskChip(
                       label: 'High priority',
                       color: theme.colorScheme.error,
                     ),
-                  ],
                 ],
               ),
               const SizedBox(height: 16),

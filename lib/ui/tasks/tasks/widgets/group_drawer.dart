@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
 
 class GroupDrawer extends ConsumerWidget {
   const GroupDrawer({super.key});
@@ -14,7 +15,10 @@ class GroupDrawer extends ConsumerWidget {
         title: const Text('New Group'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: 'Group name'),
+          decoration: InputDecoration(
+            hintText: 'Group name',
+            hintStyle: taskHintStyle(Theme.of(context)),
+          ),
         ),
         actions: [
           TextButton(

@@ -122,22 +122,25 @@ class _FilterGroup extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final widths = _widths(context, constraints.maxWidth);
-        return Row(
-          children: [
-            for (var i = 0; i < filters.length; i++) ...[
-              if (i > 0) const SizedBox(width: _segmentGap),
-              SizedBox(
-                width: widths[i],
-                child: _FilterSegment(
-                  label: _segmentLabels[filters[i]]!,
-                  selected: selected == filters[i],
-                  isFirst: i == 0,
-                  isLast: i == filters.length - 1,
-                  onTap: () => onSelected(filters[i]),
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var i = 0; i < filters.length; i++) ...[
+                if (i > 0) const SizedBox(width: _segmentGap),
+                SizedBox(
+                  width: widths[i],
+                  child: _FilterSegment(
+                    label: _segmentLabels[filters[i]]!,
+                    selected: selected == filters[i],
+                    isFirst: i == 0,
+                    isLast: i == filters.length - 1,
+                    onTap: () => onSelected(filters[i]),
+                  ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         );
       },
     );

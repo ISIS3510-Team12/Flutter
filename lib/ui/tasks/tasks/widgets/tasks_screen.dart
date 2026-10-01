@@ -9,6 +9,7 @@ import 'package:team12_flutter_juggle/ui/tasks/create_task/widgets/create_task_s
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/group_drawer.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
+import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/view_task_screen.dart';
 
 class TasksScreen extends ConsumerWidget {
@@ -79,6 +80,7 @@ class TasksScreen extends ConsumerWidget {
                     .updateQuery(value),
                 decoration: InputDecoration(
                   hintText: 'Search for a task...',
+                  hintStyle: taskHintStyle(theme),
                   suffixIcon: const Icon(Symbols.search),
                   filled: true,
                   fillColor: theme.colorScheme.surfaceContainerHigh,
