@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
+
 
 class CustomNavigationBar extends StatefulWidget {
   const CustomNavigationBar({super.key});
@@ -50,6 +53,11 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                         setState(() {
                           selectedIndex = index;
                         });
+                        switch (index){
+                          case 0:
+                          context.go(Routes.home);
+                          
+                        }
                       },
                       child: Icon(
                         items[index].$1,
