@@ -18,6 +18,17 @@ class AppTheme {
       titleTextStyle: AppTypography.textTheme.titleSmall?.copyWith(
         color: colorScheme.onSurface,
       ),
+      backgroundColor: colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
+      shadowColor: Colors.transparent,
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: Color(0xFFE5E1E2),
+      dragHandleColor: Color(0xFF737878),
+      modalBarrierColor: Colors.transparent,
+      showDragHandle: true,
+      dragHandleSize: Size(32, 4),
     ),
     datePickerTheme: DatePickerThemeData(
       headerHeadlineStyle: GoogleFonts.spaceGrotesk(

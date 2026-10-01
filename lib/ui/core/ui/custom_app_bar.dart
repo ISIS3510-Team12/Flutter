@@ -31,19 +31,19 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
               onPressed: () => Scaffold.of(context).openDrawer(),
             )
           : null,
-      title: SvgPicture.asset('assets/juggle_logo.svg', height: 42),
+      title: SvgPicture.asset('assets/juggle_logo.svg', height: 44),
+      actionsPadding: const EdgeInsets.only(right: 16),
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: GestureDetector(
-            onTap: openProfile,
-            child: CircleAvatar(
-              backgroundColor: theme.colorScheme.primary,
-              child: Text(
-                user?.initial ?? '',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                ),
+        GestureDetector(
+          onTap: openProfile,
+          child: CircleAvatar(
+            maxRadius: 16,
+            backgroundColor: theme.colorScheme.primary,
+            child: Text(
+              user?.initial ?? '',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onPrimary,
+                fontSize: 16,
               ),
             ),
           ),
