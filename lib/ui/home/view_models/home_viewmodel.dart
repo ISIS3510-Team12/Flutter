@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/domain/models/auth/app_user.dart';
+import 'package:team12_flutter_juggle/data/repositories/auth/auth_repository.dart';
 
 class HomeState {
   const HomeState({
@@ -32,25 +34,19 @@ class HomeState {
         'description': '30 minutes ago',
         'group': 'Group 2',
       },
-      {
-        'title': 'Victoria commented on a task',
-        'icon': Icons.comment,
-        'description': '1 hour ago',
-        'group': 'Group 1',
-      },
     ],
   });
 
-  final String user;
+  //TODO: update task, activity and notifications with @callmecris models
+  final AppUser user;
   final int selectedTab;
   final int numTasks;
   final int numNotifications;
   final List<Map<String, dynamic>> upcomingTasks;
   final List<Map<String, dynamic>> recentActivity;
-  
-  // TODO: Update with user
+
   HomeState copyWith({
-    String? user,
+    AppUser? user,
     int? selectedTab,
     int? numTasks,
     int? numNotifications,
@@ -69,12 +65,17 @@ class HomeState {
 }
 
 class HomeViewModel extends AsyncNotifier<HomeState> {
-  // TODO: Update with repository
-  HomeViewModel();
+  HomeViewModel(this._authRepository);
+
+  final Provider<AuthRepository> _authRepository;
+
+  AuthRepository get repository => ref.read(_authRepository);
 
   @override
   Future<HomeState> build() async {
-    return HomeState(user: 'Victoria', numTasks: 9, numNotifications: 5);
+    final user = await repository.getCurrentUser();
+
+    return HomeState(user: user, numTasks: 9, numNotifications: 5);
   }
 
   void changeTab(int index) {

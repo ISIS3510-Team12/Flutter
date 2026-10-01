@@ -15,28 +15,34 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final homeState = ref.watch(homeViewModelProvider);
-    return homeState.when(
-      data: (data) => _buildHomeScreen(context, data),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => Center(child: Text('Error: $error')),
+    final state = ref.watch(homeViewModelProvider);
+    return Scaffold(
+      appBar: CustomAppBar(),
+      body: _buildHomeContent(context, ref, state),
+      bottomNavigationBar: CustomNavigationBar(),
+      resizeToAvoidBottomInset: false,
     );
   }
 
-  Widget _buildHomeScreen(BuildContext context, HomeState data) {
-    return Scaffold(
-      appBar: CustomAppBar(),
-      body: Padding(
+  Widget _buildHomeContent(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<HomeState> state,
+  ) {
+    return state.when(
+      data: (data) => Padding(
         padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
         child: SingleChildScrollView(
           child: Column(
             spacing: 20,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              userSection(context, data.user),
+              userSection(context, data.user.firstName),
               overviewSection(
                 context,
                 data.selectedTab,
+                (int index) =>
+                    ref.read(homeViewModelProvider.notifier).changeTab(index),
                 data.upcomingTasks,
                 data.recentActivity,
                 numTasks: data.numTasks,
@@ -46,8 +52,8 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
-      bottomNavigationBar: CustomNavigationBar(),
-      resizeToAvoidBottomInset: false,
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stackTrace) => Center(child: Text('Error: $error')),
     );
   }
 
@@ -99,6 +105,7 @@ class HomeScreen extends ConsumerWidget {
   Widget overviewSection(
     BuildContext context,
     int selectedTab,
+    Function(int) changeTab,
     List<Map<String, dynamic>> upcomingTasks,
     List<Map<String, dynamic>> recentActivity, {
     numTasks = 9,
@@ -117,6 +124,7 @@ class HomeScreen extends ConsumerWidget {
           upcomingTasks: upcomingTasks,
           recentActivity: recentActivity,
           selectedTab: selectedTab,
+          changeTab: changeTab,
         ),
         SizedBox(height: 10),
       ],

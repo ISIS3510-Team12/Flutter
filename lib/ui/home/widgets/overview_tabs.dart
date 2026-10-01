@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 
 class OverviewTabs extends ConsumerWidget {
   const OverviewTabs({
@@ -9,11 +8,13 @@ class OverviewTabs extends ConsumerWidget {
     required this.upcomingTasks,
     required this.recentActivity,
     required this.selectedTab,
+    required this.changeTab,
   });
 
   final List<Map<String, dynamic>> upcomingTasks;
   final List<Map<String, dynamic>> recentActivity;
   final int selectedTab;
+  final Function(int) changeTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,9 +30,7 @@ class OverviewTabs extends ConsumerWidget {
             Container(
               color: Color(0xFFF7F3F3),
               child: TabBar(
-                onTap: (index) {
-                  ref.read(homeViewModelProvider.notifier).changeTab(index);
-                },
+                onTap: changeTab,
                 labelColor: Theme.of(context).colorScheme.primary,
                 unselectedLabelColor: Theme.of(context)
                     .colorScheme
