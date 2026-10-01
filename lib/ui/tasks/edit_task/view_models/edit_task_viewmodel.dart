@@ -8,6 +8,7 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel_provider.dart';
 
@@ -204,6 +205,7 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
       }
     } finally {
       ref.invalidate(tasksViewModelProvider);
+      ref.invalidate(tasksOverviewProvider);
       ref.invalidate(viewTaskViewModelProvider(taskId));
     }
   }

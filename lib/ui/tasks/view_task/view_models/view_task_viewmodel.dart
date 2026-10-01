@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 
 class ViewTaskState {
@@ -65,6 +66,7 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
         .updateTaskStatus(current.task, status);
     state = AsyncData(current.copyWith(task: updated));
     ref.invalidate(tasksViewModelProvider);
+    ref.invalidate(tasksOverviewProvider);
   }
 
   Future<void> toggleNeedsHelp() async {
@@ -74,11 +76,13 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
     final updated = await ref.read(taskRepositoryProvider).updateTask(edited);
     state = AsyncData(current.copyWith(task: updated));
     ref.invalidate(tasksViewModelProvider);
+    ref.invalidate(tasksOverviewProvider);
   }
 
   Future<void> deleteTask() async {
     await ref.read(taskRepositoryProvider).deleteTask(taskId);
     ref.invalidate(tasksViewModelProvider);
+    ref.invalidate(tasksOverviewProvider);
   }
 
   Future<void> updateDeadline(DateTime deadline) async {
@@ -88,5 +92,6 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
     final updated = await ref.read(taskRepositoryProvider).updateTask(edited);
     state = AsyncData(current.copyWith(task: updated));
     ref.invalidate(tasksViewModelProvider);
+    ref.invalidate(tasksOverviewProvider);
   }
 }
