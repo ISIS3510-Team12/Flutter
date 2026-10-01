@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
 
 class TasksState {
   const TasksState({
@@ -51,7 +52,9 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
   Future<TasksState> build() async {
     final repository = ref.read(taskRepositoryProvider);
     final groups = await repository.getTaskGroups();
-    final group = groups.isEmpty ? null : groups.first;
+    final group = ref
+        .read(selectedTaskGroupIdProvider.notifier)
+        .resolve(groups);
     final tasks = group == null
         ? <Task>[]
         : await repository.getGroupTasks(group);
@@ -68,6 +71,7 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
     final current = state.value;
     if (current == null) return;
     final tasks = await ref.read(taskRepositoryProvider).getGroupTasks(group);
+    ref.read(selectedTaskGroupIdProvider.notifier).select(group.id);
     state = AsyncData(current.copyWith(group: group, tasks: tasks));
   }
 

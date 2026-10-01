@@ -7,6 +7,7 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 
@@ -60,12 +61,14 @@ class CreateTaskFormState {
 
   String get groupName => group?.name ?? 'No group';
 
-  bool get canSubmit => title.isNotEmpty && deadline != null && time != null;
+  bool get canSubmit =>
+      group != null && title.isNotEmpty && deadline != null && time != null;
 
   CreateTaskFormState copyWith({
     TaskGroup? group,
     List<TaskMember>? members,
     List<String>? projects,
+    List<Task>? candidateTasks,
     bool clearProject = false,
     String? title,
     TaskType? type,
@@ -84,7 +87,7 @@ class CreateTaskFormState {
       group: group ?? this.group,
       members: members ?? this.members,
       projects: projects ?? this.projects,
-      candidateTasks: candidateTasks,
+      candidateTasks: candidateTasks ?? this.candidateTasks,
       title: title ?? this.title,
       type: type ?? this.type,
       selectedMemberIds: selectedMemberIds ?? this.selectedMemberIds,
@@ -107,13 +110,17 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
   Future<CreateTaskFormState> build() async {
     final repository = ref.read(taskRepositoryProvider);
     final groups = await repository.getTaskGroups();
-    final group = groups.isEmpty ? null : groups.first;
+    final group = ref
+        .read(selectedTaskGroupIdProvider.notifier)
+        .resolve(groups);
     final me = (await ref.read(currentUserProvider.future))!;
     final members = membersWithYou(group, me);
     final projects = group == null
         ? <String>[]
         : await repository.getProjects(group);
-    final candidateTasks = await repository.getTasks();
+    final candidateTasks = group == null
+        ? <Task>[]
+        : await repository.getGroupTasks(group);
     return CreateTaskFormState(
       groups: groups,
       group: group,
@@ -127,7 +134,9 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
   Future<void> updateGroup(TaskGroup group) async {
     final current = state.value;
     if (current == null || current.group?.id == group.id) return;
-    final projects = await ref.read(taskRepositoryProvider).getProjects(group);
+    final repository = ref.read(taskRepositoryProvider);
+    final projects = await repository.getProjects(group);
+    final candidateTasks = await repository.getGroupTasks(group);
     final you = current.members.first;
     final members = [
       you,
@@ -138,6 +147,8 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       current.copyWith(
         group: group,
         projects: projects,
+        candidateTasks: candidateTasks,
+        relatedTaskIds: const {},
         clearProject: true,
         members: members,
         selectedMemberIds: current.selectedMemberIds
@@ -217,6 +228,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       type: current.type,
       status: TaskStatus.pending,
       groupName: current.groupName,
+      groupId: current.group?.id,
       assignees: selectedMembers.map((member) => member.name).toList(),
       assigneeIds: selectedMembers.map((member) => member.id).toList(),
       deadline: deadline,
@@ -228,6 +240,10 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     );
     final repository = ref.read(taskRepositoryProvider);
     final created = await repository.createTask(task);
+    final group = current.group;
+    if (group != null) {
+      ref.read(selectedTaskGroupIdProvider.notifier).select(group.id);
+    }
     try {
       final photoPath = current.photoPath;
       if (photoPath != null) {

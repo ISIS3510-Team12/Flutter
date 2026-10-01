@@ -12,23 +12,6 @@ class TaskRepository {
 
   final Map<String, int> _projectIds = {};
 
-  Future<List<Task>> getTasks() async {
-    final groupName = await getCurrentGroupName();
-    try {
-      final response = await _dio.get<List<dynamic>>('/tasks');
-      return response.data!
-          .map(
-            (json) => Task.fromJson(
-              json as Map<String, dynamic>,
-              groupName: groupName,
-            ),
-          )
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to load tasks: $e');
-    }
-  }
-
   Future<List<Task>> getGroupTasks(TaskGroup group) async {
     try {
       final own = await _dio.get<List<dynamic>>('/tasks/own/${group.id}');
@@ -94,6 +77,7 @@ class TaskRepository {
           ...task.toCreateJson(),
           if (_projectIds[task.projectName] != null)
             'project_id': _projectIds[task.projectName],
+          'group_id': ?task.groupId,
           'related_task_ids': task.relatedTaskIds.map(int.parse).toList(),
         },
       );
