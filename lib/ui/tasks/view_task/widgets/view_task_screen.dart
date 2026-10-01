@@ -3,7 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/domain/models/auth/app_user.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 import 'package:team12_flutter_juggle/ui/tasks/edit_task/widgets/edit_task_screen.dart';
@@ -34,25 +37,23 @@ class ViewTaskScreen extends ConsumerWidget {
       firstDate: current.isBefore(now) ? current : now,
       lastDate: now.add(const Duration(days: 365 * 2)),
     );
-    if (picked == null) return;
-    await ref
-        .read(viewTaskViewModelProvider(taskId).notifier)
-        .updateDeadline(picked);
-  }
-
-  Future<void> _editTime(
-    BuildContext context,
-    WidgetRef ref,
-    DateTime current,
-  ) async {
-    final picked = await showTimePicker(
+    if (picked == null || !context.mounted) return;
+    final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(current),
     );
-    if (picked == null) return;
+    if (time == null) return;
     await ref
         .read(viewTaskViewModelProvider(taskId).notifier)
-        .updateTime(picked);
+        .updateDeadline(
+          DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            time.hour,
+            time.minute,
+          ),
+        );
   }
 
   void _openPhoto(BuildContext context, Uint8List photo) {
@@ -69,6 +70,7 @@ class ViewTaskScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final state = ref.watch(viewTaskViewModelProvider(taskId));
+    final me = ref.watch(currentUserProvider).value;
     return Scaffold(
       appBar: AppBar(title: const Text('View task')),
       bottomNavigationBar: const CustomNavigationBar(),
@@ -92,6 +94,7 @@ class ViewTaskScreen extends ConsumerWidget {
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
         data: (data) {
           final task = data.task;
+          final assignees = _assignedMembers(task, me);
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -125,7 +128,6 @@ class ViewTaskScreen extends ConsumerWidget {
                     .toggleReminder(value),
                 onEditDeadline: () =>
                     _editDeadline(context, ref, task.deadline),
-                onEditTime: () => _editTime(context, ref, task.deadline),
               ),
               const SizedBox(height: 16),
               Row(
@@ -139,30 +141,50 @@ class ViewTaskScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  for (final assignee in task.assignees)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 16),
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor:
-                                theme.colorScheme.secondaryContainer,
-                            child: Text(
-                              assignee.isEmpty ? '' : assignee[0].toUpperCase(),
-                              style: TextStyle(
-                                color: theme.colorScheme.onSecondaryContainer,
-                              ),
+              if (assignees.isEmpty)
+                Text(
+                  'No assigned members',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                )
+              else
+                ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context)
+                      .copyWith(scrollbars: false),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final assignee in assignees)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 16),
+                            child: Column(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor:
+                                      theme.colorScheme.secondaryContainer,
+                                  child: Text(
+                                    assignee.initial,
+                                    style: TextStyle(
+                                      color: theme
+                                          .colorScheme
+                                          .onSecondaryContainer,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  assignee.name,
+                                  style: theme.textTheme.labelSmall,
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(assignee, style: theme.textTheme.labelSmall),
-                        ],
-                      ),
+                      ],
                     ),
-                ],
-              ),
+                  ),
+                ),
               if (data.photo != null) ...[
                 const SizedBox(height: 24),
                 Text('EVIDENCES', style: theme.textTheme.labelMedium),
@@ -186,8 +208,22 @@ class ViewTaskScreen extends ConsumerWidget {
                 style: theme.textTheme.titleSmall,
               ),
               const SizedBox(height: 12),
+              if (data.relatedTasks.isEmpty)
+                Text(
+                  'No related tasks',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
               for (final related in data.relatedTasks) ...[
-                TaskCard(task: related, onTap: () {}),
+                TaskCard(
+                  task: related,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ViewTaskScreen(taskId: related.id),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 12),
               ],
               const SizedBox(height: 96),
@@ -197,6 +233,26 @@ class ViewTaskScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+List<TaskMember> _assignedMembers(Task task, AppUser? me) {
+  final members = <TaskMember>[];
+  for (var i = 0; i < task.assignees.length; i++) {
+    final name = task.assignees[i];
+    final id = i < task.assigneeIds.length ? task.assigneeIds[i] : '';
+    final isMe = me != null && id == me.userId;
+    members.add(
+      TaskMember(
+        id: id,
+        name: isMe ? 'You' : name,
+        initial: isMe
+            ? me.initial
+            : (name.isEmpty ? '' : name[0].toUpperCase()),
+      ),
+    );
+  }
+  members.sort((a, b) => (b.name == 'You' ? 1 : 0) - (a.name == 'You' ? 1 : 0));
+  return members;
 }
 
 class _TaskChip extends StatelessWidget {
@@ -236,14 +292,12 @@ class _ScheduledCard extends StatelessWidget {
     required this.reminderEnabled,
     required this.onReminderChanged,
     required this.onEditDeadline,
-    required this.onEditTime,
   });
 
   final Task task;
   final bool reminderEnabled;
   final ValueChanged<bool> onReminderChanged;
   final VoidCallback onEditDeadline;
-  final VoidCallback onEditTime;
 
   @override
   Widget build(BuildContext context) {
@@ -273,26 +327,13 @@ class _ScheduledCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Deadline', style: theme.textTheme.bodySmall),
-                    Text(deadlineDate(task.deadline)),
+                    Text(
+                      '${deadlineDate(task.deadline)} · ${timeOfDayLabel(TimeOfDay.fromDateTime(task.deadline))}',
+                    ),
                   ],
                 ),
               ),
               TextButton(onPressed: onEditDeadline, child: const Text('EDIT')),
-            ],
-          ),
-          const Divider(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Time', style: theme.textTheme.bodySmall),
-                    Text(timeOfDayLabel(TimeOfDay.fromDateTime(task.deadline))),
-                  ],
-                ),
-              ),
-              TextButton(onPressed: onEditTime, child: const Text('EDIT')),
             ],
           ),
           const Divider(height: 24),

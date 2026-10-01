@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:team12_flutter_juggle/data/repositories/tasks/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 
@@ -93,6 +94,7 @@ class TaskRepository {
           ...task.toCreateJson(),
           if (_projectIds[task.projectName] != null)
             'project_id': _projectIds[task.projectName],
+          'related_task_ids': task.relatedTaskIds.map(int.parse).toList(),
         },
       );
       final fromServer = Task.fromJson(
@@ -100,7 +102,6 @@ class TaskRepository {
         groupName: task.groupName,
       );
       return fromServer.copyWith(
-        assignees: task.assignees,
         description: task.description,
         projectName: task.projectName,
         relatedTaskIds: task.relatedTaskIds,
@@ -125,10 +126,8 @@ class TaskRepository {
         groupName: updated.groupName,
       );
       return fromServer.copyWith(
-        assignees: updated.assignees,
         description: updated.description,
         projectName: updated.projectName,
-        relatedTaskIds: updated.relatedTaskIds,
       );
     } catch (e) {
       throw Exception('Failed to update task: $e');
@@ -146,10 +145,8 @@ class TaskRepository {
         groupName: current.groupName,
       );
       return fromServer.copyWith(
-        assignees: current.assignees,
         description: current.description,
         projectName: current.projectName,
-        relatedTaskIds: current.relatedTaskIds,
       );
     } catch (e) {
       throw Exception('Failed to update task status: $e');
@@ -168,8 +165,19 @@ class TaskRepository {
           ),
         }),
       );
-    } catch (e) {
-      throw Exception('Failed to upload photo: $e');
+    } on DioException catch (e) {
+      switch (e.response?.statusCode) {
+        case 413:
+          throw const PhotoUploadException(
+            'The photo is too large. The maximum size is 5 MB.',
+          );
+        case 415:
+          throw const PhotoUploadException(
+            'Only JPEG, PNG, WebP or HEIC photos are allowed.',
+          );
+        default:
+          throw const PhotoUploadException('The photo could not be uploaded.');
+      }
     }
   }
 
@@ -200,10 +208,6 @@ class TaskRepository {
   Future<String> getCurrentGroupName() async {
     final groups = await getTaskGroups();
     return groups.isEmpty ? 'No group' : groups.first.name;
-  }
-
-  Future<List<String>> getGroupMembers() async {
-    return const ['Cristian', 'Diego', 'Shaiel', 'Manuela'];
   }
 
   String? projectNameFor(int? projectId) {
@@ -244,14 +248,7 @@ class TaskRepository {
     try {
       await _dio.post<Map<String, dynamic>>(
         '/groups',
-        data: {
-          'name': name,
-          'description': name,
-          'deadline': DateTime.now()
-              .add(const Duration(days: 30))
-              .toUtc()
-              .toIso8601String(),
-        },
+        data: {'name': name, 'description': name},
       );
     } catch (e) {
       throw Exception('Failed to create group: $e');
@@ -266,6 +263,10 @@ String _photoSubtype(String path) {
       return 'png';
     case 'webp':
       return 'webp';
+    case 'heic':
+      return 'heic';
+    case 'heif':
+      return 'heif';
     default:
       return 'jpeg';
   }

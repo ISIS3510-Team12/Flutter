@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel_provider.dart';
 
@@ -18,7 +20,7 @@ class EditTaskFormState {
     required this.selectedProject,
     required this.members,
     required this.type,
-    required this.selectedMember,
+    required this.selectedMemberIds,
     required this.deadline,
     required this.time,
     required this.isPriority,
@@ -32,9 +34,9 @@ class EditTaskFormState {
   final TaskGroup? group;
   final List<String> projects;
   final String? selectedProject;
-  final List<String> members;
+  final List<TaskMember> members;
   final TaskType type;
-  final String selectedMember;
+  final Set<String> selectedMemberIds;
   final DateTime deadline;
   final TimeOfDay time;
   final bool isPriority;
@@ -44,11 +46,12 @@ class EditTaskFormState {
 
   EditTaskFormState copyWith({
     TaskGroup? group,
+    List<TaskMember>? members,
     List<String>? projects,
     String? selectedProject,
     bool clearProject = false,
     TaskType? type,
-    String? selectedMember,
+    Set<String>? selectedMemberIds,
     DateTime? deadline,
     TimeOfDay? time,
     bool? isPriority,
@@ -63,9 +66,9 @@ class EditTaskFormState {
       selectedProject: clearProject
           ? null
           : selectedProject ?? this.selectedProject,
-      members: members,
+      members: members ?? this.members,
       type: type ?? this.type,
-      selectedMember: selectedMember ?? this.selectedMember,
+      selectedMemberIds: selectedMemberIds ?? this.selectedMemberIds,
       deadline: deadline ?? this.deadline,
       time: time ?? this.time,
       isPriority: isPriority ?? this.isPriority,
@@ -85,7 +88,6 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
   Future<EditTaskFormState> build() async {
     final repository = ref.read(taskRepositoryProvider);
     final task = await repository.getTask(taskId);
-    final members = await repository.getGroupMembers();
     final photo = task.hasPhoto ? await repository.getTaskPhoto(taskId) : null;
     final groups = await repository.getTaskGroups();
     TaskGroup? group;
@@ -96,6 +98,8 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     final projects = group == null
         ? <String>[]
         : await repository.getProjects(group);
+    final me = (await ref.read(currentUserProvider.future))!;
+    final members = membersWithYou(group, me);
     return EditTaskFormState(
       task: task,
       groups: groups,
@@ -104,7 +108,7 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
       selectedProject: repository.projectNameFor(task.projectId),
       members: members,
       type: task.type,
-      selectedMember: task.assigneeName,
+      selectedMemberIds: task.assigneeIds.toSet(),
       deadline: task.deadline,
       time: TimeOfDay.fromDateTime(task.deadline),
       isPriority: task.isPriority,
@@ -117,8 +121,22 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     final current = state.value;
     if (current == null || current.group?.id == group.id) return;
     final projects = await ref.read(taskRepositoryProvider).getProjects(group);
+    final you = current.members.first;
+    final members = [
+      you,
+      ...group.members.where((member) => member.id != you.id),
+    ];
+    final memberIds = members.map((member) => member.id).toSet();
     state = AsyncData(
-      current.copyWith(group: group, projects: projects, clearProject: true),
+      current.copyWith(
+        group: group,
+        projects: projects,
+        clearProject: true,
+        members: members,
+        selectedMemberIds: current.selectedMemberIds
+            .where(memberIds.contains)
+            .toSet(),
+      ),
     );
   }
 
@@ -127,8 +145,13 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
 
   void updateType(TaskType value) => _update((s) => s.copyWith(type: value));
 
-  void updateSelectedMember(String value) =>
-      _update((s) => s.copyWith(selectedMember: value));
+  void toggleMember(String memberId) {
+    final current = state.value;
+    if (current == null) return;
+    final selected = Set<String>.from(current.selectedMemberIds);
+    if (!selected.add(memberId)) selected.remove(memberId);
+    state = AsyncData(current.copyWith(selectedMemberIds: selected));
+  }
 
   void updateDeadline(DateTime value) =>
       _update((s) => s.copyWith(deadline: value));
@@ -153,10 +176,14 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
   Future<void> submit() async {
     final current = state.value;
     if (current == null) return;
+    final selectedMembers = current.members
+        .where((member) => current.selectedMemberIds.contains(member.id))
+        .toList();
     final date = current.deadline;
     final updated = current.task.copyWith(
       type: current.type,
-      assignees: [current.selectedMember],
+      assignees: selectedMembers.map((member) => member.name).toList(),
+      assigneeIds: selectedMembers.map((member) => member.id).toList(),
       projectName: current.selectedProject,
       deadline: DateTime(
         date.year,
@@ -170,11 +197,14 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     );
     final repository = ref.read(taskRepositoryProvider);
     await repository.updateTask(updated);
-    final photoPath = current.newPhotoPath;
-    if (photoPath != null) {
-      await repository.uploadTaskPhoto(taskId, photoPath);
+    try {
+      final photoPath = current.newPhotoPath;
+      if (photoPath != null) {
+        await repository.uploadTaskPhoto(taskId, photoPath);
+      }
+    } finally {
+      ref.invalidate(tasksViewModelProvider);
+      ref.invalidate(viewTaskViewModelProvider(taskId));
     }
-    ref.invalidate(tasksViewModelProvider);
-    ref.invalidate(viewTaskViewModelProvider(taskId));
   }
 }

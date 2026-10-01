@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
 
 const taskOutlineColor = Color(0xFF737878);
 const taskOnSurfaceVariantColor = Color(0xFF434848);
@@ -102,11 +103,13 @@ class TaskMemberChip extends StatelessWidget {
   const TaskMemberChip({
     super.key,
     required this.name,
+    required this.initial,
     required this.selected,
     required this.onTap,
   });
 
   final String name;
+  final String initial;
   final bool selected;
   final VoidCallback onTap;
 
@@ -124,7 +127,7 @@ class TaskMemberChip extends StatelessWidget {
                 ? scheme.primaryContainer
                 : scheme.onPrimaryContainer,
             child: Text(
-              name.isEmpty ? '' : name[0].toUpperCase(),
+              initial,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: selected
                     ? scheme.onPrimaryContainer
@@ -144,6 +147,43 @@ class TaskMemberChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class TaskMembersSelector extends StatelessWidget {
+  const TaskMembersSelector({
+    super.key,
+    required this.members,
+    required this.selectedIds,
+    required this.onToggle,
+  });
+
+  final List<TaskMember> members;
+  final Set<String> selectedIds;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final member in members)
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: TaskMemberChip(
+                  name: member.name,
+                  initial: member.initial,
+                  selected: selectedIds.contains(member.id),
+                  onTap: () => onToggle(member.id),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

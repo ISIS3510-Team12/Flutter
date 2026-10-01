@@ -15,11 +15,13 @@ class Task {
     required this.isMine,
     required this.isPriority,
     required this.needsHelp,
+    this.assigneeIds = const [],
     this.hasPhoto = false,
     this.groupId,
     this.projectId,
     this.projectName,
     this.relatedTaskIds = const [],
+    this.relatedTasks = const [],
   });
 
   final String id;
@@ -33,11 +35,13 @@ class Task {
   final bool isMine;
   final bool isPriority;
   final bool needsHelp;
+  final List<String> assigneeIds;
   final bool hasPhoto;
   final int? groupId;
   final int? projectId;
   final String? projectName;
   final List<String> relatedTaskIds;
+  final List<Task> relatedTasks;
 
   String get assigneeName => assignees.isEmpty ? '' : assignees.first;
 
@@ -51,6 +55,7 @@ class Task {
     TaskStatus? status,
     String? groupName,
     List<String>? assignees,
+    List<String>? assigneeIds,
     DateTime? deadline,
     bool? isMine,
     bool? isPriority,
@@ -68,6 +73,7 @@ class Task {
       status: status ?? this.status,
       groupName: groupName ?? this.groupName,
       assignees: assignees ?? this.assignees,
+      assigneeIds: assigneeIds ?? this.assigneeIds,
       deadline: deadline ?? this.deadline,
       isMine: isMine ?? this.isMine,
       isPriority: isPriority ?? this.isPriority,
@@ -77,6 +83,7 @@ class Task {
       projectId: projectId ?? this.projectId,
       projectName: projectName ?? this.projectName,
       relatedTaskIds: relatedTaskIds ?? this.relatedTaskIds,
+      relatedTasks: relatedTasks,
     );
   }
 
@@ -92,7 +99,14 @@ class Task {
       type: taskTypeFromJson(json['task_type'] as String),
       status: taskStatusFromJson(json['status'] as String),
       groupName: groupName,
-      assignees: const [],
+      assignees: [
+        for (final user in json['assignees'] as List<dynamic>? ?? const [])
+          (user as Map<String, dynamic>)['first_name'] as String,
+      ],
+      assigneeIds: [
+        for (final user in json['assignees'] as List<dynamic>? ?? const [])
+          (user as Map<String, dynamic>)['user_id'] as String,
+      ],
       deadline: json['deadline'] != null
           ? _parseServerDate(json['deadline'] as String)
           : DateTime.now(),
@@ -102,6 +116,40 @@ class Task {
       hasPhoto: json['has_photo'] as bool? ?? false,
       groupId: json['group_id'] as int?,
       projectId: json['project_id'] as int?,
+      relatedTaskIds: [
+        for (final related
+            in json['related_tasks'] as List<dynamic>? ?? const [])
+          (related as Map<String, dynamic>)['id'].toString(),
+      ],
+      relatedTasks: [
+        for (final related
+            in json['related_tasks'] as List<dynamic>? ?? const [])
+          Task.fromSummaryJson(
+            related as Map<String, dynamic>,
+            groupName: groupName,
+          ),
+      ],
+    );
+  }
+
+  factory Task.fromSummaryJson(
+    Map<String, dynamic> json, {
+    required String groupName,
+  }) {
+    return Task(
+      id: json['id'].toString(),
+      title: json['title'] as String,
+      description: '',
+      type: TaskType.coding,
+      status: taskStatusFromJson(json['status'] as String),
+      groupName: groupName,
+      assignees: const [],
+      deadline: json['deadline'] != null
+          ? _parseServerDate(json['deadline'] as String)
+          : DateTime.now(),
+      isMine: true,
+      isPriority: false,
+      needsHelp: json['needs_help'] as bool? ?? false,
     );
   }
 
@@ -112,6 +160,7 @@ class Task {
       'is_priority': isPriority,
       'needs_help': needsHelp,
       'deadline': deadline.toUtc().toIso8601String(),
+      'assignee_ids': assigneeIds,
     };
   }
 

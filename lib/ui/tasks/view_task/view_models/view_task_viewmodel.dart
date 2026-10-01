@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
@@ -39,14 +38,10 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
   Future<ViewTaskState> build() async {
     final repository = ref.read(taskRepositoryProvider);
     final task = await repository.getTask(taskId);
-    final allTasks = await repository.getTasks();
     final photo = task.hasPhoto ? await repository.getTaskPhoto(taskId) : null;
-    final relatedTasks = allTasks
-        .where((other) => task.relatedTaskIds.contains(other.id))
-        .toList();
     return ViewTaskState(
       task: task,
-      relatedTasks: relatedTasks,
+      relatedTasks: task.relatedTasks,
       reminderEnabled: true,
       photo: photo,
     );
@@ -86,37 +81,10 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
     ref.invalidate(tasksViewModelProvider);
   }
 
-  Future<void> updateDeadline(DateTime date) async {
+  Future<void> updateDeadline(DateTime deadline) async {
     final current = state.value;
     if (current == null) return;
-    final previous = current.task.deadline;
-    final edited = current.task.copyWith(
-      deadline: DateTime(
-        date.year,
-        date.month,
-        date.day,
-        previous.hour,
-        previous.minute,
-      ),
-    );
-    final updated = await ref.read(taskRepositoryProvider).updateTask(edited);
-    state = AsyncData(current.copyWith(task: updated));
-    ref.invalidate(tasksViewModelProvider);
-  }
-
-  Future<void> updateTime(TimeOfDay time) async {
-    final current = state.value;
-    if (current == null) return;
-    final previous = current.task.deadline;
-    final edited = current.task.copyWith(
-      deadline: DateTime(
-        previous.year,
-        previous.month,
-        previous.day,
-        time.hour,
-        time.minute,
-      ),
-    );
+    final edited = current.task.copyWith(deadline: deadline);
     final updated = await ref.read(taskRepositoryProvider).updateTask(edited);
     state = AsyncData(current.copyWith(task: updated));
     ref.invalidate(tasksViewModelProvider);

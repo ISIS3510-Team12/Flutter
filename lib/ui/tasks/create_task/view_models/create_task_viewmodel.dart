@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 
 class CreateTaskFormState {
@@ -16,7 +18,7 @@ class CreateTaskFormState {
     required this.candidateTasks,
     this.title = '',
     this.type = TaskType.coding,
-    this.selectedMember = '',
+    this.selectedMemberIds = const {},
     this.selectedProject,
     this.deadline,
     this.time,
@@ -29,12 +31,12 @@ class CreateTaskFormState {
 
   final List<TaskGroup> groups;
   final TaskGroup? group;
-  final List<String> members;
+  final List<TaskMember> members;
   final List<String> projects;
   final List<Task> candidateTasks;
   final String title;
   final TaskType type;
-  final String selectedMember;
+  final Set<String> selectedMemberIds;
   final String? selectedProject;
   final DateTime? deadline;
   final TimeOfDay? time;
@@ -57,19 +59,16 @@ class CreateTaskFormState {
 
   String get groupName => group?.name ?? 'No group';
 
-  bool get canSubmit =>
-      title.isNotEmpty &&
-      selectedMember.isNotEmpty &&
-      deadline != null &&
-      time != null;
+  bool get canSubmit => title.isNotEmpty && deadline != null && time != null;
 
   CreateTaskFormState copyWith({
     TaskGroup? group,
+    List<TaskMember>? members,
     List<String>? projects,
     bool clearProject = false,
     String? title,
     TaskType? type,
-    String? selectedMember,
+    Set<String>? selectedMemberIds,
     String? selectedProject,
     DateTime? deadline,
     TimeOfDay? time,
@@ -82,12 +81,12 @@ class CreateTaskFormState {
     return CreateTaskFormState(
       groups: groups,
       group: group ?? this.group,
-      members: members,
+      members: members ?? this.members,
       projects: projects ?? this.projects,
       candidateTasks: candidateTasks,
       title: title ?? this.title,
       type: type ?? this.type,
-      selectedMember: selectedMember ?? this.selectedMember,
+      selectedMemberIds: selectedMemberIds ?? this.selectedMemberIds,
       selectedProject: clearProject
           ? null
           : selectedProject ?? this.selectedProject,
@@ -108,7 +107,8 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     final repository = ref.read(taskRepositoryProvider);
     final groups = await repository.getTaskGroups();
     final group = groups.isEmpty ? null : groups.first;
-    final members = await repository.getGroupMembers();
+    final me = (await ref.read(currentUserProvider.future))!;
+    final members = membersWithYou(group, me);
     final projects = group == null
         ? <String>[]
         : await repository.getProjects(group);
@@ -119,7 +119,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       members: members,
       projects: projects,
       candidateTasks: candidateTasks,
-      selectedMember: members.isEmpty ? '' : members.first,
+      selectedMemberIds: {me.userId},
     );
   }
 
@@ -127,8 +127,22 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     final current = state.value;
     if (current == null || current.group?.id == group.id) return;
     final projects = await ref.read(taskRepositoryProvider).getProjects(group);
+    final you = current.members.first;
+    final members = [
+      you,
+      ...group.members.where((member) => member.id != you.id),
+    ];
+    final memberIds = members.map((member) => member.id).toSet();
     state = AsyncData(
-      current.copyWith(group: group, projects: projects, clearProject: true),
+      current.copyWith(
+        group: group,
+        projects: projects,
+        clearProject: true,
+        members: members,
+        selectedMemberIds: current.selectedMemberIds
+            .where(memberIds.contains)
+            .toSet(),
+      ),
     );
   }
 
@@ -136,8 +150,13 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
 
   void updateType(TaskType value) => _update((s) => s.copyWith(type: value));
 
-  void updateSelectedMember(String value) =>
-      _update((s) => s.copyWith(selectedMember: value));
+  void toggleMember(String memberId) {
+    final current = state.value;
+    if (current == null) return;
+    final selected = Set<String>.from(current.selectedMemberIds);
+    if (!selected.add(memberId)) selected.remove(memberId);
+    state = AsyncData(current.copyWith(selectedMemberIds: selected));
+  }
 
   void updateSelectedProject(String value) =>
       _update((s) => s.copyWith(selectedProject: value));
@@ -187,6 +206,9 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       time.hour,
       time.minute,
     );
+    final selectedMembers = current.members
+        .where((member) => current.selectedMemberIds.contains(member.id))
+        .toList();
     final task = Task(
       id: '',
       title: current.title,
@@ -194,7 +216,8 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       type: current.type,
       status: TaskStatus.pending,
       groupName: current.groupName,
-      assignees: [current.selectedMember],
+      assignees: selectedMembers.map((member) => member.name).toList(),
+      assigneeIds: selectedMembers.map((member) => member.id).toList(),
       deadline: deadline,
       isMine: true,
       isPriority: current.isPriority,
@@ -204,10 +227,13 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     );
     final repository = ref.read(taskRepositoryProvider);
     final created = await repository.createTask(task);
-    final photoPath = current.photoPath;
-    if (photoPath != null) {
-      await repository.uploadTaskPhoto(created.id, photoPath);
+    try {
+      final photoPath = current.photoPath;
+      if (photoPath != null) {
+        await repository.uploadTaskPhoto(created.id, photoPath);
+      }
+    } finally {
+      ref.invalidate(tasksViewModelProvider);
     }
-    ref.invalidate(tasksViewModelProvider);
   }
 }

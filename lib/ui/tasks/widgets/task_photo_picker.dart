@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
+const _maxPhotoBytes = 5 * 1024 * 1024;
+const _allowedExtensions = {'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'};
+
 class TaskPhotoPicker extends StatelessWidget {
   const TaskPhotoPicker({
     super.key,
@@ -44,7 +47,23 @@ class TaskPhotoPicker extends StatelessWidget {
       maxWidth: 1600,
       imageQuality: 85,
     );
-    if (picked != null) onPicked(picked.path);
+    if (picked == null || !context.mounted) return;
+    final extension = picked.path.split('.').last.toLowerCase();
+    final String? error;
+    if (!_allowedExtensions.contains(extension)) {
+      error = 'Only JPEG, PNG, WebP or HEIC photos are allowed.';
+    } else if (await picked.length() > _maxPhotoBytes) {
+      error = 'The photo is too large. The maximum size is 5 MB.';
+    } else {
+      error = null;
+    }
+    if (!context.mounted) return;
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    onPicked(picked.path);
   }
 
   @override

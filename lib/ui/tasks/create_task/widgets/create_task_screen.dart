@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/data/repositories/tasks/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
@@ -45,8 +46,24 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   }
 
   Future<void> _submit() async {
-    await ref.read(createTaskViewModelProvider.notifier).submit();
-    if (mounted) Navigator.of(context).pop();
+    final messenger = ScaffoldMessenger.of(context);
+    String? photoError;
+    try {
+      await ref.read(createTaskViewModelProvider.notifier).submit();
+    } on PhotoUploadException catch (e) {
+      photoError = e.message;
+    }
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    if (photoError != null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Task saved, but the photo was not uploaded. $photoError',
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -162,21 +179,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 const SizedBox(height: 19),
                 const TaskFieldLabel('ASSIGNED MEMBERS', bold: true),
                 const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final member in form.members)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: TaskMemberChip(
-                            name: member,
-                            selected: member == form.selectedMember,
-                            onTap: () => notifier.updateSelectedMember(member),
-                          ),
-                        ),
-                    ],
-                  ),
+                TaskMembersSelector(
+                  members: form.members,
+                  selectedIds: form.selectedMemberIds,
+                  onToggle: notifier.toggleMember,
                 ),
                 const SizedBox(height: 19),
                 const TaskFieldLabel('DEADLINE & TIMING', required: true),
