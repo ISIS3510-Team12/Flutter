@@ -1,10 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/domain/models/project/project.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/task_card.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/pace_warning_card.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/task_filter_card.dart';
 
-class ProjectDetailScreen extends StatelessWidget {
+class ProjectDetailScreen extends StatefulWidget {
   const ProjectDetailScreen({
     super.key,
+    required this.project,
   });
+
+  final Project project;
+
+  @override
+  State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
+}
+
+class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
+  final int totalTasks = 10;
+  final int completedTasks = 6;
+  final DateTime projectStartDate = DateTime(2026, 9, 1);
+  
+  double get completedTasksPerDay {
+    final daysElapsed =
+        DateTime.now().difference(projectStartDate).inHours / 24;
+
+    if (daysElapsed <= 0) {
+      return completedTasks.toDouble();
+    }
+
+    return completedTasks / daysElapsed;
+  }
+
+  bool get showPaceWarning {
+    final remainingTasks = totalTasks - completedTasks;
+
+    if (remainingTasks <= 0) {
+      return false;
+    }
+
+    if (completedTasksPerDay <= 0) {
+      return true;
+    }
+
+    final daysNeeded =
+        remainingTasks / completedTasksPerDay;
+
+    final daysAvailable =
+        widget.project.deadline
+            .difference(DateTime.now())
+            .inHours /
+        24;
+
+    return daysNeeded > daysAvailable;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +84,7 @@ class ProjectDetailScreen extends StatelessWidget {
 
             // Project name
             Text(
-              'Sprint 2 Planning',
+              widget.project.name,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -43,7 +93,7 @@ class ProjectDetailScreen extends StatelessWidget {
             const SizedBox(height: 4),
 
             Text(
-              "Coordinate the team's upcoming sprint work",
+              widget.project.description,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -62,7 +112,7 @@ class ProjectDetailScreen extends StatelessWidget {
             const SizedBox(height: 2),
 
             Text(
-              '6 of 10 tasks complete',
+              '$completedTasks of $totalTasks tasks complete',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -71,32 +121,29 @@ class ProjectDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
 
             Row(
-              children: [
-                Expanded(
-                  flex: 6,
-                  child: Container(
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+            children: [
+              Expanded(
+                flex: completedTasks,
+                child: Container(
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-
-                const SizedBox(width: 3),
-
-                Expanded(
-                  flex: 4,
-                  child: Container(
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+              ),
+              Expanded(
+                flex: totalTasks - completedTasks,
+                child: Container(
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondary,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
 
             const SizedBox(height: 12),
 
@@ -111,13 +158,37 @@ class ProjectDetailScreen extends StatelessWidget {
             const SizedBox(height: 2),
 
             Text(
-              'Friday, September 18',
+              '${widget.project.deadline.day}/${widget.project.deadline.month}/${widget.project.deadline.year}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
 
             const SizedBox(height: 20),
+
+            //Pace
+            const SizedBox(height: 20),
+
+            Text(
+              'Current pace',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 2),
+
+            Text(
+              '${completedTasksPerDay.toStringAsFixed(0)} completed tasks per day',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            
+            if (showPaceWarning) ...[
+              const SizedBox(height: 16),
+              PaceWarningCard(),
+            ],
 
             // Tasks
             Text(
@@ -133,7 +204,7 @@ class ProjectDetailScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _TaskFilter(
+                  child: TaskFilter(
                     text: 'In progress',
                     selected: true,
                   ),
@@ -142,7 +213,7 @@ class ProjectDetailScreen extends StatelessWidget {
                 const SizedBox(width: 4),
 
                 Expanded(
-                  child: _TaskFilter(
+                  child: TaskFilter(
                     text: 'Upcoming',
                     selected: false,
                   ),
@@ -151,7 +222,7 @@ class ProjectDetailScreen extends StatelessWidget {
                 const SizedBox(width: 4),
 
                 Expanded(
-                  child: _TaskFilter(
+                  child: TaskFilter(
                     text: 'Completed',
                     selected: false,
                   ),
@@ -162,12 +233,12 @@ class ProjectDetailScreen extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Tasks
-            _TaskCard(
+            TaskCard(
               title: 'Finish the sprint 2 Figma',
               subtitle: 'Diego - Due tomorrow',
             ),
 
-            _TaskCard(
+            TaskCard(
               title: 'Finish the sprint 2 Figma',
               subtitle: 'Diego - Due tomorrow',
             ),
@@ -203,96 +274,6 @@ class ProjectDetailScreen extends StatelessWidget {
       ),
 
       bottomNavigationBar: const CustomNavigationBar(),
-    );
-  }
-}
-
-
-class _TaskFilter extends StatelessWidget {
-  final String text;
-  final bool selected;
-
-  const _TaskFilter({
-    required this.text,
-    required this.selected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      height: 28,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: selected
-            ? theme.colorScheme.secondary
-            : theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: selected
-              ? theme.colorScheme.onSecondary
-              : theme.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-
-class _TaskCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-
-  const _TaskCard({
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant,
-        ),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 4,
-        ),
-
-        leading: CircleAvatar(
-          radius: 20,
-          backgroundColor: theme.colorScheme.secondary,
-          child: Text(
-            'D',
-            style: TextStyle(
-              color: theme.colorScheme.onSecondary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-
-        subtitle: Text(subtitle),
-      ),
     );
   }
 }
