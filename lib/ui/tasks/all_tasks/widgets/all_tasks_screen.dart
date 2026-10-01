@@ -58,8 +58,6 @@ class AllTasksScreen extends ConsumerWidget {
   }
 }
 
-const _segmentUnselectedColor = Color(0xFFDFE3E3);
-const _segmentUnselectedTextColor = Color(0xFF434848);
 const _segmentGap = 2.0;
 const _segmentHorizontalPadding = 12.0;
 const _segmentLabels = {
@@ -68,13 +66,8 @@ const _segmentLabels = {
   TaskFilter.assignedToMe: 'Assigned to me',
 };
 
-TextStyle _segmentTextStyle(BuildContext context, Color color) {
-  return Theme.of(context).textTheme.labelLarge!.copyWith(
-    fontSize: 14,
-    height: 20 / 14,
-    letterSpacing: 0.1,
-    color: color,
-  );
+TextStyle? _segmentTextStyle(BuildContext context, [Color? color]) {
+  return Theme.of(context).textTheme.labelMedium?.copyWith(color: color);
 }
 
 class _FilterGroup extends StatelessWidget {
@@ -85,7 +78,7 @@ class _FilterGroup extends StatelessWidget {
 
   List<double> _widths(BuildContext context, double available) {
     const filters = TaskFilter.values;
-    final style = _segmentTextStyle(context, Colors.black);
+    final style = _segmentTextStyle(context);
     final minWidths = [
       for (final filter in filters)
         (TextPainter(
@@ -172,7 +165,9 @@ class _FilterSegment extends StatelessWidget {
       right: isLast ? outer : inner,
     );
     return Material(
-      color: selected ? theme.colorScheme.secondary : _segmentUnselectedColor,
+      color: selected
+          ? theme.colorScheme.secondary
+          : theme.colorScheme.surfaceContainerHighest,
       borderRadius: radius,
       child: InkWell(
         borderRadius: radius,
@@ -191,7 +186,7 @@ class _FilterSegment extends StatelessWidget {
               context,
               selected
                   ? theme.colorScheme.onSecondary
-                  : _segmentUnselectedTextColor,
+                  : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),

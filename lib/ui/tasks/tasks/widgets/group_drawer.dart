@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
 
@@ -77,7 +78,7 @@ class GroupDrawer extends ConsumerWidget {
                           '${group.pendingCount} pending tasks',
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: theme.colorScheme.onSecondaryContainer,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: AppFontWeight.bold,
                           ),
                         ),
                       ],

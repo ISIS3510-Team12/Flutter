@@ -107,12 +107,12 @@ class TaskPhotoPicker extends StatelessWidget {
                       bottom: 0,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        color: Colors.black54,
+                        color: theme.colorScheme.primaryContainer,
                         alignment: Alignment.center,
                         child: Text(
                           'Tap to retake',
                           style: theme.textTheme.labelLarge?.copyWith(
-                            color: Colors.white,
+                            color: theme.colorScheme.onPrimaryContainer,
                           ),
                         ),
                       ),

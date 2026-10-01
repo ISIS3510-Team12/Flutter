@@ -396,7 +396,7 @@ class _TaskActionsFabState extends State<_TaskActionsFab> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () => setState(() => _expanded = true),
         icon: const Icon(Symbols.stars, fill: 1),
-        label: Text('Task Actions', style: _fabLabelStyle(context)),
+        label: Text('Task Actions', style: theme.textTheme.labelLarge),
       );
     }
 
@@ -448,11 +448,6 @@ class _TaskActionsFabState extends State<_TaskActionsFab> {
   }
 }
 
-TextStyle _fabLabelStyle(BuildContext context) {
-  return Theme.of(context).textTheme.labelLarge!
-      .copyWith(fontSize: 16, height: 24 / 16, letterSpacing: 0.15);
-}
-
 class _ActionPill extends StatelessWidget {
   const _ActionPill({
     required this.icon,
@@ -484,8 +479,8 @@ class _ActionPill extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: _fabLabelStyle(context)
-                    .copyWith(color: scheme.primaryContainer),
+                style: Theme.of(context).textTheme.labelLarge
+                    ?.copyWith(color: scheme.primaryContainer),
               ),
             ],
           ),

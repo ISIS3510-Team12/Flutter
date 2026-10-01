@@ -9,11 +9,12 @@ class TaskPhotoViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: scheme.onSurface,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: scheme.onSurface,
+        foregroundColor: scheme.surface,
         title: const Text('Evidences'),
       ),
       body: Center(

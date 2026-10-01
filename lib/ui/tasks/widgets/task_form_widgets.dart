@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
-
-const taskOutlineColor = Color(0xFF737878);
-const taskOnSurfaceVariantColor = Color(0xFF434848);
-const taskFieldLabelColor = Color(0xFF525252);
-const taskRequiredColor = Color(0xFFEC4899);
-const taskHintColor = Color(0xFF8F9393);
+import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
 
 TextStyle? taskHintStyle(ThemeData theme) {
-  return theme.textTheme.bodyLarge?.copyWith(color: taskHintColor);
+  return theme.textTheme.bodyLarge?.copyWith(
+    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+  );
 }
 
 TextStyle? taskMenuTextStyle(ThemeData theme) {
@@ -56,7 +53,7 @@ InputDecoration taskTimingDecoration(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: taskOnSurfaceVariantColor.withValues(alpha: 0.08),
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon),
@@ -82,12 +79,10 @@ class TaskFieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelMedium?.copyWith(
-      fontSize: 11,
-      height: 1.5,
-      letterSpacing: 0.55,
-      fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-      color: taskFieldLabelColor,
+    final scheme = Theme.of(context).colorScheme;
+    final style = Theme.of(context).textTheme.labelSmall?.copyWith(
+      fontWeight: bold ? AppFontWeight.bold : AppFontWeight.regular,
+      color: scheme.onSurfaceVariant,
     );
     return Text.rich(
       TextSpan(
@@ -97,7 +92,7 @@ class TaskFieldLabel extends StatelessWidget {
           if (required)
             TextSpan(
               text: ' *',
-              style: style?.copyWith(color: taskRequiredColor),
+              style: style?.copyWith(color: scheme.error),
             ),
         ],
       ),
@@ -148,7 +143,7 @@ class TaskMemberChip extends StatelessWidget {
             child: Text(
               name,
               style: theme.textTheme.titleSmall?.copyWith(
-                color: taskOnSurfaceVariantColor,
+                color: scheme.onSurfaceVariant,
               ),
             ),
           ),

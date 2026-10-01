@@ -150,11 +150,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(4),
-                      borderSide: const BorderSide(color: taskOutlineColor),
+                      borderSide: BorderSide(color: theme.colorScheme.outline),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(4),
-                      borderSide: const BorderSide(color: taskOutlineColor),
+                      borderSide: BorderSide(color: theme.colorScheme.outline),
                     ),
                   ),
                 ),
