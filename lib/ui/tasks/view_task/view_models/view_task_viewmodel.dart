@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
@@ -10,24 +12,20 @@ class ViewTaskState {
     required this.task,
     required this.relatedTasks,
     required this.reminderEnabled,
-    this.timeSlotLabel,
+    this.photo,
   });
 
   final Task task;
   final List<Task> relatedTasks;
   final bool reminderEnabled;
-  final String? timeSlotLabel;
+  final Uint8List? photo;
 
-  ViewTaskState copyWith({
-    Task? task,
-    bool? reminderEnabled,
-    String? timeSlotLabel,
-  }) {
+  ViewTaskState copyWith({Task? task, bool? reminderEnabled}) {
     return ViewTaskState(
       task: task ?? this.task,
       relatedTasks: relatedTasks,
       reminderEnabled: reminderEnabled ?? this.reminderEnabled,
-      timeSlotLabel: timeSlotLabel ?? this.timeSlotLabel,
+      photo: photo,
     );
   }
 }
@@ -42,6 +40,7 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
     final repository = ref.read(taskRepositoryProvider);
     final task = await repository.getTask(taskId);
     final allTasks = await repository.getTasks();
+    final photo = task.hasPhoto ? await repository.getTaskPhoto(taskId) : null;
     final relatedTasks = allTasks
         .where((other) => task.relatedTaskIds.contains(other.id))
         .toList();
@@ -49,6 +48,7 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
       task: task,
       relatedTasks: relatedTasks,
       reminderEnabled: true,
+      photo: photo,
     );
   }
 
@@ -86,9 +86,39 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
     ref.invalidate(tasksViewModelProvider);
   }
 
-  void setTimeSlot(String label) {
+  Future<void> updateDeadline(DateTime date) async {
     final current = state.value;
     if (current == null) return;
-    state = AsyncData(current.copyWith(timeSlotLabel: label));
+    final previous = current.task.deadline;
+    final edited = current.task.copyWith(
+      deadline: DateTime(
+        date.year,
+        date.month,
+        date.day,
+        previous.hour,
+        previous.minute,
+      ),
+    );
+    final updated = await ref.read(taskRepositoryProvider).updateTask(edited);
+    state = AsyncData(current.copyWith(task: updated));
+    ref.invalidate(tasksViewModelProvider);
+  }
+
+  Future<void> updateTime(TimeOfDay time) async {
+    final current = state.value;
+    if (current == null) return;
+    final previous = current.task.deadline;
+    final edited = current.task.copyWith(
+      deadline: DateTime(
+        previous.year,
+        previous.month,
+        previous.day,
+        time.hour,
+        time.minute,
+      ),
+    );
+    final updated = await ref.read(taskRepositoryProvider).updateTask(edited);
+    state = AsyncData(current.copyWith(task: updated));
+    ref.invalidate(tasksViewModelProvider);
   }
 }

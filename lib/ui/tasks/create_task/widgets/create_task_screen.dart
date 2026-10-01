@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 import 'package:team12_flutter_juggle/ui/tasks/create_task/view_models/create_task_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
+import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_picker.dart';
 
 class CreateTaskScreen extends ConsumerStatefulWidget {
   const CreateTaskScreen({super.key});
@@ -15,7 +18,6 @@ class CreateTaskScreen extends ConsumerStatefulWidget {
 
 class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   final _titleController = TextEditingController();
-  final _notesController = TextEditingController();
   final _deadlineController = TextEditingController();
   final _timeController = TextEditingController();
 
@@ -32,24 +34,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     }
   }
 
-  Future<void> _pickTimeRange() async {
-    final notifier = ref.read(createTaskViewModelProvider.notifier);
-    final start = await showTimePicker(
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
-    if (start == null || !mounted) return;
-    notifier.updateStartTime(start);
-
-    final end = await showTimePicker(
-      context: context,
-      initialTime: start.replacing(hour: (start.hour + 1) % 24),
-    );
-    if (end == null) return;
-    notifier.updateEndTime(end);
-
-    final form = ref.read(createTaskViewModelProvider).value;
-    _timeController.text = form?.timeRangeLabel ?? '';
+    if (picked == null) return;
+    ref.read(createTaskViewModelProvider.notifier).updateTime(picked);
+    _timeController.text = timeOfDayLabel(picked);
   }
 
   Future<void> _submit() async {
@@ -60,7 +52,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   @override
   void dispose() {
     _titleController.dispose();
-    _notesController.dispose();
     _deadlineController.dispose();
     _timeController.dispose();
     super.dispose();
@@ -83,80 +74,38 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(32),
-                    ),
-                    child: Text(
-                      'Current Group: ${form.groupName}',
-                      style: theme.textTheme.labelMedium,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text('TASK TITLE *', style: theme.textTheme.labelMedium),
+                const TaskFieldLabel('SELECTED GROUP', required: true),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: _titleController,
-                  onChanged: notifier.updateTitle,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text('TASK TYPE *', style: theme.textTheme.labelMedium),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<TaskType>(
-                  initialValue: form.type,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
+                DropdownButtonFormField<TaskGroup>(
+                  initialValue: form.group,
+                  style: taskMenuTextStyle(theme),
+                  icon: const Icon(Symbols.arrow_right, size: 20),
+                  decoration: taskMenuDecoration(theme),
                   onChanged: (value) {
-                    if (value != null) notifier.updateType(value);
+                    if (value != null) notifier.updateGroup(value);
                   },
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Symbols.star),
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerLow,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  items: TaskType.values
+                  items: form.groups
                       .map(
-                        (type) => DropdownMenuItem(
-                          value: type,
-                          child: Text(_typeLabel(type)),
+                        (group) => DropdownMenuItem(
+                          value: group,
+                          child: Text(group.name),
                         ),
                       )
                       .toList(),
                 ),
-                const SizedBox(height: 16),
-                Text('ASSOCIATED PROJECT', style: theme.textTheme.labelMedium),
+                const SizedBox(height: 19),
+                const TaskFieldLabel('ASSOCIATED PROJECT'),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
+                  key: ValueKey(form.group?.id),
                   initialValue: form.selectedProject,
                   hint: const Text('Select a project'),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
+                  style: taskMenuTextStyle(theme),
+                  icon: const Icon(Symbols.arrow_right, size: 20),
+                  decoration: taskMenuDecoration(theme),
                   onChanged: (value) {
                     if (value != null) notifier.updateSelectedProject(value);
                   },
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Symbols.star),
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerLow,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
                   items: form.projects
                       .map(
                         (project) => DropdownMenuItem(
@@ -166,8 +115,52 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                       )
                       .toList(),
                 ),
-                const SizedBox(height: 16),
-                Text('ASSIGNED MEMBERS', style: theme.textTheme.labelMedium),
+                const SizedBox(height: 19),
+                const TaskFieldLabel('TASK TITLE', required: true),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _titleController,
+                  onChanged: notifier.updateTitle,
+                  decoration: InputDecoration(
+                    suffixIcon: IconButton(
+                      icon: const Icon(Symbols.cancel),
+                      onPressed: () {
+                        _titleController.clear();
+                        notifier.updateTitle('');
+                      },
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      borderSide: const BorderSide(color: taskOutlineColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      borderSide: const BorderSide(color: taskOutlineColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 19),
+                const TaskFieldLabel('TASK TYPE', required: true),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<TaskType>(
+                  initialValue: form.type,
+                  style: taskMenuTextStyle(theme),
+                  icon: const Icon(Symbols.arrow_right, size: 20),
+                  decoration: taskMenuDecoration(theme),
+                  onChanged: (value) {
+                    if (value != null) notifier.updateType(value);
+                  },
+                  items: TaskType.values
+                      .map(
+                        (type) => DropdownMenuItem(
+                          value: type,
+                          child: Text(_typeLabel(type)),
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 19),
+                const TaskFieldLabel('ASSIGNED MEMBERS', bold: true),
                 const SizedBox(height: 8),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -175,59 +168,50 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     children: [
                       for (final member in form.members)
                         Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: GestureDetector(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: TaskMemberChip(
+                            name: member,
+                            selected: member == form.selectedMember,
                             onTap: () => notifier.updateSelectedMember(member),
-                            child: Column(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: member == form.selectedMember
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.primaryFixed,
-                                  child: Text(
-                                    member.isEmpty
-                                        ? ''
-                                        : member[0].toUpperCase(),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(member, style: theme.textTheme.labelSmall),
-                              ],
-                            ),
                           ),
                         ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 19),
+                const TaskFieldLabel('DEADLINE & TIMING', required: true),
                 const SizedBox(height: 16),
-                Text('DEADLINE & TIMING *', style: theme.textTheme.labelMedium),
-                const SizedBox(height: 8),
                 TextField(
                   readOnly: true,
                   onTap: _pickDeadline,
                   controller: _deadlineController,
-                  decoration: InputDecoration(
-                    hintText: 'MM/DD/YYYY',
-                    suffixIcon: const Icon(Symbols.calendar_today),
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  readOnly: true,
-                  onTap: _pickTimeRange,
-                  controller: _timeController,
-                  decoration: InputDecoration(
-                    hintText: 'HH:MM - HH:MM',
-                    suffixIcon: const Icon(Symbols.schedule),
-                    border: const OutlineInputBorder(),
+                  decoration: taskTimingDecoration(
+                    theme,
+                    label: 'Date',
+                    hint: 'MM/DD/YYYY',
+                    icon: Symbols.calendar_today,
+                    helper: 'MM/DD/YYYY',
                   ),
                 ),
                 const SizedBox(height: 16),
+                TextField(
+                  readOnly: true,
+                  onTap: _pickTime,
+                  controller: _timeController,
+                  decoration: taskTimingDecoration(
+                    theme,
+                    label: 'Time',
+                    hint: 'HH:MM',
+                    icon: Symbols.schedule,
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Row(
                   children: [
-                    Text('IS PRIORITY', style: theme.textTheme.labelMedium),
-                    const Spacer(),
+                    const SizedBox(
+                      width: 130,
+                      child: TaskFieldLabel('IS PRIORITY'),
+                    ),
                     Switch(
                       value: form.isPriority,
                       onChanged: notifier.updateIsPriority,
@@ -236,8 +220,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 ),
                 Row(
                   children: [
-                    Text('NEEDS HELP', style: theme.textTheme.labelMedium),
-                    const Spacer(),
+                    const SizedBox(
+                      width: 130,
+                      child: TaskFieldLabel('NEEDS HELP'),
+                    ),
                     Switch(
                       value: form.needsHelp,
                       onChanged: notifier.updateNeedsHelp,
@@ -245,18 +231,12 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'NOTES & DELIVERABLE LINK',
-                  style: theme.textTheme.labelMedium,
-                ),
+                const SizedBox(height: 16),
+                const TaskFieldLabel('EVIDENCES'),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: _notesController,
-                  onChanged: notifier.updateNotes,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
+                TaskPhotoPicker(
+                  newPhotoPath: form.photoPath,
+                  onPicked: notifier.updatePhotoPath,
                 ),
                 if (form.candidateTasks.isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -299,7 +279,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   width: double.infinity,
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(56),
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      minimumSize: const Size.fromHeight(40),
                     ),
                     onPressed: form.canSubmit ? _submit : null,
                     icon: const Icon(Symbols.add),

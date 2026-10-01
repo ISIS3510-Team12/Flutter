@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
@@ -99,7 +101,6 @@ class TaskRepository {
       );
       return fromServer.copyWith(
         assignees: task.assignees,
-        notes: task.notes,
         description: task.description,
         projectName: task.projectName,
         relatedTaskIds: task.relatedTaskIds,
@@ -113,7 +114,11 @@ class TaskRepository {
     try {
       final response = await _dio.patch<Map<String, dynamic>>(
         '/tasks/${updated.id}',
-        data: updated.toUpdateJson(),
+        data: {
+          ...updated.toUpdateJson(),
+          'project_id':
+              ?(_projectIds[updated.projectName] ?? updated.projectId),
+        },
       );
       final fromServer = Task.fromJson(
         response.data!,
@@ -121,7 +126,6 @@ class TaskRepository {
       );
       return fromServer.copyWith(
         assignees: updated.assignees,
-        notes: updated.notes,
         description: updated.description,
         projectName: updated.projectName,
         relatedTaskIds: updated.relatedTaskIds,
@@ -143,13 +147,45 @@ class TaskRepository {
       );
       return fromServer.copyWith(
         assignees: current.assignees,
-        notes: current.notes,
         description: current.description,
         projectName: current.projectName,
         relatedTaskIds: current.relatedTaskIds,
       );
     } catch (e) {
       throw Exception('Failed to update task status: $e');
+    }
+  }
+
+  Future<void> uploadTaskPhoto(String taskId, String path) async {
+    try {
+      await _dio.put<void>(
+        '/tasks/$taskId/photo',
+        data: FormData.fromMap({
+          'file': await MultipartFile.fromFile(
+            path,
+            filename: 'photo.${_photoSubtype(path)}',
+            contentType: DioMediaType('image', _photoSubtype(path)),
+          ),
+        }),
+      );
+    } catch (e) {
+      throw Exception('Failed to upload photo: $e');
+    }
+  }
+
+  Future<Uint8List?> getTaskPhoto(String taskId) async {
+    try {
+      final response = await _dio.get<List<int>>(
+        '/tasks/$taskId/photo',
+        options: Options(
+          responseType: ResponseType.bytes,
+          validateStatus: (status) => status == 200 || status == 404,
+        ),
+      );
+      if (response.statusCode == 404) return null;
+      return Uint8List.fromList(response.data!);
+    } catch (e) {
+      throw Exception('Failed to load photo: $e');
     }
   }
 
@@ -170,13 +206,18 @@ class TaskRepository {
     return const ['Cristian', 'Diego', 'Shaiel', 'Manuela'];
   }
 
-  Future<List<String>> getProjects() async {
-    final groups = await getTaskGroups();
+  String? projectNameFor(int? projectId) {
+    for (final entry in _projectIds.entries) {
+      if (entry.value == projectId) return entry.key;
+    }
+    return null;
+  }
+
+  Future<List<String>> getProjects(TaskGroup group) async {
     _projectIds.clear();
-    if (groups.isEmpty) return const [];
     try {
       final response = await _dio.get<List<dynamic>>(
-        '/projects/group/${groups.first.id}',
+        '/projects/group/${group.id}',
       );
       for (final json in response.data!) {
         final map = json as Map<String, dynamic>;
@@ -215,5 +256,17 @@ class TaskRepository {
     } catch (e) {
       throw Exception('Failed to create group: $e');
     }
+  }
+}
+
+String _photoSubtype(String path) {
+  final extension = path.split('.').last.toLowerCase();
+  switch (extension) {
+    case 'png':
+      return 'png';
+    case 'webp':
+      return 'webp';
+    default:
+      return 'jpeg';
   }
 }

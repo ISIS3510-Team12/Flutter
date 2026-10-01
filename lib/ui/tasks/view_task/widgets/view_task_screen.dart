@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
@@ -7,6 +9,7 @@ import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 import 'package:team12_flutter_juggle/ui/tasks/edit_task/widgets/edit_task_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_viewer.dart';
 
 class ViewTaskScreen extends ConsumerWidget {
   const ViewTaskScreen({super.key, required this.taskId});
@@ -19,11 +22,42 @@ class ViewTaskScreen extends ConsumerWidget {
     ).push(MaterialPageRoute(builder: (_) => EditTaskScreen(taskId: taskId)));
   }
 
-  Future<void> _assignTimeSlot(BuildContext context, WidgetRef ref) async {
-    final label = await _pickTimeSlot(context);
-    if (label != null) {
-      ref.read(viewTaskViewModelProvider(taskId).notifier).setTimeSlot(label);
-    }
+  Future<void> _editDeadline(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime current,
+  ) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: current.isBefore(now) ? current : now,
+      lastDate: now.add(const Duration(days: 365 * 2)),
+    );
+    if (picked == null) return;
+    await ref
+        .read(viewTaskViewModelProvider(taskId).notifier)
+        .updateDeadline(picked);
+  }
+
+  Future<void> _editTime(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime current,
+  ) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+    );
+    if (picked == null) return;
+    await ref
+        .read(viewTaskViewModelProvider(taskId).notifier)
+        .updateTime(picked);
+  }
+
+  void _openPhoto(BuildContext context, Uint8List photo) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => TaskPhotoViewer(photo: photo)));
   }
 
   Future<void> _deleteTask(BuildContext context, WidgetRef ref) async {
@@ -52,7 +86,6 @@ class ViewTaskScreen extends ConsumerWidget {
               onMarkStarted: () => ref
                   .read(viewTaskViewModelProvider(taskId).notifier)
                   .markStarted(),
-              onAssignTimeSlot: () => _assignTimeSlot(context, ref),
             ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -87,11 +120,12 @@ class ViewTaskScreen extends ConsumerWidget {
               _ScheduledCard(
                 task: task,
                 reminderEnabled: data.reminderEnabled,
-                timeSlotLabel: data.timeSlotLabel,
                 onReminderChanged: (value) => ref
                     .read(viewTaskViewModelProvider(taskId).notifier)
                     .toggleReminder(value),
-                onEditDeadline: () => _openEditTask(context),
+                onEditDeadline: () =>
+                    _editDeadline(context, ref, task.deadline),
+                onEditTime: () => _editTime(context, ref, task.deadline),
               ),
               const SizedBox(height: 16),
               Row(
@@ -129,6 +163,23 @@ class ViewTaskScreen extends ConsumerWidget {
                     ),
                 ],
               ),
+              if (data.photo != null) ...[
+                const SizedBox(height: 24),
+                Text('EVIDENCES', style: theme.textTheme.labelMedium),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => _openPhoto(context, data.photo!),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      data.photo!,
+                      width: double.infinity,
+                      height: 220,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               Text(
                 'Related tasks / subtasks',
@@ -183,16 +234,16 @@ class _ScheduledCard extends StatelessWidget {
   const _ScheduledCard({
     required this.task,
     required this.reminderEnabled,
-    required this.timeSlotLabel,
     required this.onReminderChanged,
     required this.onEditDeadline,
+    required this.onEditTime,
   });
 
   final Task task;
   final bool reminderEnabled;
-  final String? timeSlotLabel;
   final ValueChanged<bool> onReminderChanged;
   final VoidCallback onEditDeadline;
+  final VoidCallback onEditTime;
 
   @override
   Widget build(BuildContext context) {
@@ -236,6 +287,21 @@ class _ScheduledCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text('Time', style: theme.textTheme.bodySmall),
+                    Text(timeOfDayLabel(TimeOfDay.fromDateTime(task.deadline))),
+                  ],
+                ),
+              ),
+              TextButton(onPressed: onEditTime, child: const Text('EDIT')),
+            ],
+          ),
+          const Divider(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text('Reminder', style: theme.textTheme.bodySmall),
                     const Text('1 day before'),
                   ],
@@ -244,16 +310,6 @@ class _ScheduledCard extends StatelessWidget {
               Switch(value: reminderEnabled, onChanged: onReminderChanged),
             ],
           ),
-          if (timeSlotLabel != null) ...[
-            const Divider(height: 24),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Time slot', style: theme.textTheme.bodySmall),
-                Text(timeSlotLabel!),
-              ],
-            ),
-          ],
         ],
       ),
     );
@@ -267,7 +323,6 @@ class _TaskActionsFab extends StatefulWidget {
     required this.onDeleteTask,
     required this.onAskForHelp,
     required this.onMarkStarted,
-    required this.onAssignTimeSlot,
   });
 
   final VoidCallback onMarkComplete;
@@ -275,7 +330,6 @@ class _TaskActionsFab extends StatefulWidget {
   final VoidCallback onDeleteTask;
   final VoidCallback onAskForHelp;
   final VoidCallback onMarkStarted;
-  final VoidCallback onAssignTimeSlot;
 
   @override
   State<_TaskActionsFab> createState() => _TaskActionsFabState();
@@ -338,13 +392,6 @@ class _TaskActionsFabState extends State<_TaskActionsFab> {
           label: 'Mark as started',
           onPressed: () => _run(widget.onMarkStarted),
         ),
-        const SizedBox(height: 4),
-        _ActionPill(
-          icon: Symbols.stars,
-          filled: true,
-          label: 'Assign a time slot',
-          onPressed: () => _run(widget.onAssignTimeSlot),
-        ),
         const SizedBox(height: 8),
         FloatingActionButton(
           backgroundColor: scheme.primaryContainer,
@@ -370,13 +417,11 @@ class _ActionPill extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onPressed,
-    this.filled = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
-  final bool filled;
 
   @override
   Widget build(BuildContext context) {
@@ -394,12 +439,7 @@ class _ActionPill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 24,
-                fill: filled ? 1 : 0,
-                color: scheme.primaryContainer,
-              ),
+              Icon(icon, size: 24, color: scheme.primaryContainer),
               const SizedBox(width: 8),
               Text(
                 label,
@@ -412,30 +452,6 @@ class _ActionPill extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<String?> _pickTimeSlot(BuildContext context) async {
-  final date = await showDatePicker(
-    context: context,
-    initialDate: DateTime.now(),
-    firstDate: DateTime.now(),
-    lastDate: DateTime.now().add(const Duration(days: 365)),
-  );
-  if (date == null || !context.mounted) return null;
-
-  final start = await showTimePicker(
-    context: context,
-    initialTime: TimeOfDay.now(),
-  );
-  if (start == null || !context.mounted) return null;
-
-  final end = await showTimePicker(
-    context: context,
-    initialTime: start.replacing(hour: (start.hour + 1) % 24),
-  );
-  if (end == null) return null;
-
-  return '${deadlineDate(date)} ${timeOfDayLabel(start)} - ${timeOfDayLabel(end)}';
 }
 
 String _statusLabel(TaskStatus status) {

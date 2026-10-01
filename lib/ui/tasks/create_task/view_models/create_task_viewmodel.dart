@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
-import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 
 class CreateTaskFormState {
   const CreateTaskFormState({
-    required this.groupName,
+    required this.groups,
+    required this.group,
     required this.members,
     required this.projects,
     required this.candidateTasks,
@@ -18,16 +19,16 @@ class CreateTaskFormState {
     this.selectedMember = '',
     this.selectedProject,
     this.deadline,
-    this.startTime,
-    this.endTime,
+    this.time,
     this.isPriority = false,
     this.needsHelp = false,
-    this.notes = '',
     this.relatedTaskIds = const {},
     this.relatedQuery = '',
+    this.photoPath,
   });
 
-  final String groupName;
+  final List<TaskGroup> groups;
+  final TaskGroup? group;
   final List<String> members;
   final List<String> projects;
   final List<Task> candidateTasks;
@@ -36,13 +37,12 @@ class CreateTaskFormState {
   final String selectedMember;
   final String? selectedProject;
   final DateTime? deadline;
-  final TimeOfDay? startTime;
-  final TimeOfDay? endTime;
+  final TimeOfDay? time;
   final bool isPriority;
   final bool needsHelp;
-  final String notes;
   final Set<String> relatedTaskIds;
   final String relatedQuery;
+  final String? photoPath;
 
   List<Task> get filteredCandidates {
     final query = relatedQuery.trim().toLowerCase();
@@ -55,45 +55,49 @@ class CreateTaskFormState {
         .toList();
   }
 
-  bool get canSubmit =>
-      title.isNotEmpty && selectedMember.isNotEmpty && deadline != null;
+  String get groupName => group?.name ?? 'No group';
 
-  String? get timeRangeLabel {
-    if (startTime == null || endTime == null) return null;
-    return '${timeOfDayLabel(startTime!)} - ${timeOfDayLabel(endTime!)}';
-  }
+  bool get canSubmit =>
+      title.isNotEmpty &&
+      selectedMember.isNotEmpty &&
+      deadline != null &&
+      time != null;
 
   CreateTaskFormState copyWith({
+    TaskGroup? group,
+    List<String>? projects,
+    bool clearProject = false,
     String? title,
     TaskType? type,
     String? selectedMember,
     String? selectedProject,
     DateTime? deadline,
-    TimeOfDay? startTime,
-    TimeOfDay? endTime,
+    TimeOfDay? time,
     bool? isPriority,
     bool? needsHelp,
-    String? notes,
     Set<String>? relatedTaskIds,
     String? relatedQuery,
+    String? photoPath,
   }) {
     return CreateTaskFormState(
-      groupName: groupName,
+      groups: groups,
+      group: group ?? this.group,
       members: members,
-      projects: projects,
+      projects: projects ?? this.projects,
       candidateTasks: candidateTasks,
       title: title ?? this.title,
       type: type ?? this.type,
       selectedMember: selectedMember ?? this.selectedMember,
-      selectedProject: selectedProject ?? this.selectedProject,
+      selectedProject: clearProject
+          ? null
+          : selectedProject ?? this.selectedProject,
       deadline: deadline ?? this.deadline,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
+      time: time ?? this.time,
       isPriority: isPriority ?? this.isPriority,
       needsHelp: needsHelp ?? this.needsHelp,
-      notes: notes ?? this.notes,
       relatedTaskIds: relatedTaskIds ?? this.relatedTaskIds,
       relatedQuery: relatedQuery ?? this.relatedQuery,
+      photoPath: photoPath ?? this.photoPath,
     );
   }
 }
@@ -102,16 +106,29 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
   @override
   Future<CreateTaskFormState> build() async {
     final repository = ref.read(taskRepositoryProvider);
-    final groupName = await repository.getCurrentGroupName();
+    final groups = await repository.getTaskGroups();
+    final group = groups.isEmpty ? null : groups.first;
     final members = await repository.getGroupMembers();
-    final projects = await repository.getProjects();
+    final projects = group == null
+        ? <String>[]
+        : await repository.getProjects(group);
     final candidateTasks = await repository.getTasks();
     return CreateTaskFormState(
-      groupName: groupName,
+      groups: groups,
+      group: group,
       members: members,
       projects: projects,
       candidateTasks: candidateTasks,
       selectedMember: members.isEmpty ? '' : members.first,
+    );
+  }
+
+  Future<void> updateGroup(TaskGroup group) async {
+    final current = state.value;
+    if (current == null || current.group?.id == group.id) return;
+    final projects = await ref.read(taskRepositoryProvider).getProjects(group);
+    state = AsyncData(
+      current.copyWith(group: group, projects: projects, clearProject: true),
     );
   }
 
@@ -128,11 +145,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
   void updateDeadline(DateTime value) =>
       _update((s) => s.copyWith(deadline: value));
 
-  void updateStartTime(TimeOfDay value) =>
-      _update((s) => s.copyWith(startTime: value));
-
-  void updateEndTime(TimeOfDay value) =>
-      _update((s) => s.copyWith(endTime: value));
+  void updateTime(TimeOfDay value) => _update((s) => s.copyWith(time: value));
 
   void updateIsPriority(bool value) =>
       _update((s) => s.copyWith(isPriority: value));
@@ -140,7 +153,8 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
   void updateNeedsHelp(bool value) =>
       _update((s) => s.copyWith(needsHelp: value));
 
-  void updateNotes(String value) => _update((s) => s.copyWith(notes: value));
+  void updatePhotoPath(String value) =>
+      _update((s) => s.copyWith(photoPath: value));
 
   void updateRelatedQuery(String value) =>
       _update((s) => s.copyWith(relatedQuery: value));
@@ -164,20 +178,19 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
   Future<void> submit() async {
     final current = state.value;
     if (current == null || !current.canSubmit) return;
-    var deadline = current.deadline!;
-    if (current.startTime != null) {
-      deadline = DateTime(
-        deadline.year,
-        deadline.month,
-        deadline.day,
-        current.startTime!.hour,
-        current.startTime!.minute,
-      );
-    }
+    final date = current.deadline!;
+    final time = current.time!;
+    final deadline = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
     final task = Task(
       id: '',
       title: current.title,
-      description: current.notes,
+      description: '',
       type: current.type,
       status: TaskStatus.pending,
       groupName: current.groupName,
@@ -186,11 +199,15 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       isMine: true,
       isPriority: current.isPriority,
       needsHelp: current.needsHelp,
-      notes: current.notes,
       projectName: current.selectedProject,
       relatedTaskIds: current.relatedTaskIds.toList(),
     );
-    await ref.read(taskRepositoryProvider).createTask(task);
+    final repository = ref.read(taskRepositoryProvider);
+    final created = await repository.createTask(task);
+    final photoPath = current.photoPath;
+    if (photoPath != null) {
+      await repository.uploadTaskPhoto(created.id, photoPath);
+    }
     ref.invalidate(tasksViewModelProvider);
   }
 }

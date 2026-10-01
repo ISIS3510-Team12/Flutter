@@ -1,0 +1,150 @@
+import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
+
+const taskOutlineColor = Color(0xFF737878);
+const taskOnSurfaceVariantColor = Color(0xFF434848);
+const taskFieldLabelColor = Color(0xFF525252);
+const taskRequiredColor = Color(0xFFEC4899);
+
+TextStyle? taskMenuTextStyle(ThemeData theme) {
+  return theme.textTheme.bodyLarge?.copyWith(
+    color: theme.colorScheme.onSurface,
+  );
+}
+
+InputDecoration taskMenuDecoration(ThemeData theme) {
+  return InputDecoration(
+    prefixIcon: const Icon(Symbols.stars, size: 20),
+    filled: true,
+    fillColor: theme.colorScheme.surfaceContainerLow,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(4),
+      borderSide: BorderSide.none,
+    ),
+  );
+}
+
+InputDecoration taskTimingDecoration(
+  ThemeData theme, {
+  required String label,
+  required String hint,
+  required IconData icon,
+  String? helper,
+}) {
+  final accent = theme.colorScheme.onPrimaryContainer;
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(4),
+    borderSide: BorderSide(color: accent, width: 3),
+  );
+  return InputDecoration(
+    labelText: label,
+    labelStyle: TextStyle(color: accent),
+    floatingLabelStyle: TextStyle(color: accent),
+    floatingLabelBehavior: FloatingLabelBehavior.always,
+    hintText: hint,
+    helperText: helper,
+    suffixIcon: Padding(
+      padding: const EdgeInsets.all(4),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: taskOnSurfaceVariantColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon),
+      ),
+    ),
+    border: border,
+    enabledBorder: border,
+    focusedBorder: border,
+  );
+}
+
+class TaskFieldLabel extends StatelessWidget {
+  const TaskFieldLabel(
+    this.text, {
+    super.key,
+    this.required = false,
+    this.bold = false,
+  });
+
+  final String text;
+  final bool required;
+  final bool bold;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelMedium?.copyWith(
+      fontSize: 11,
+      height: 1.5,
+      letterSpacing: 0.55,
+      fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+      color: taskFieldLabelColor,
+    );
+    return Text.rich(
+      TextSpan(
+        text: text,
+        style: style,
+        children: [
+          if (required)
+            TextSpan(
+              text: ' *',
+              style: style?.copyWith(color: taskRequiredColor),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class TaskMemberChip extends StatelessWidget {
+  const TaskMemberChip({
+    super.key,
+    required this.name,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String name;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: selected
+                ? scheme.primaryContainer
+                : scheme.onPrimaryContainer,
+            child: Text(
+              name.isEmpty ? '' : name[0].toUpperCase(),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: selected
+                    ? scheme.onPrimaryContainer
+                    : scheme.primaryContainer,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            color: scheme.surfaceContainerLow,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              name,
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: taskOnSurfaceVariantColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

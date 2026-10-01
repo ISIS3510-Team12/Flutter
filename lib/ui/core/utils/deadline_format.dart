@@ -26,8 +26,7 @@ String deadlineDate(DateTime date) {
 }
 
 String timeOfDayLabel(TimeOfDay time) {
-  final hour12 = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+  final hour = time.hour.toString().padLeft(2, '0');
   final minute = time.minute.toString().padLeft(2, '0');
-  final period = time.period == DayPeriod.am ? 'am' : 'pm';
-  return '$hour12:$minute$period';
+  return '$hour:$minute';
 }

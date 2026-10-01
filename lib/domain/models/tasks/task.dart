@@ -15,7 +15,9 @@ class Task {
     required this.isMine,
     required this.isPriority,
     required this.needsHelp,
-    required this.notes,
+    this.hasPhoto = false,
+    this.groupId,
+    this.projectId,
     this.projectName,
     this.relatedTaskIds = const [],
   });
@@ -31,7 +33,9 @@ class Task {
   final bool isMine;
   final bool isPriority;
   final bool needsHelp;
-  final String notes;
+  final bool hasPhoto;
+  final int? groupId;
+  final int? projectId;
   final String? projectName;
   final List<String> relatedTaskIds;
 
@@ -51,7 +55,8 @@ class Task {
     bool? isMine,
     bool? isPriority,
     bool? needsHelp,
-    String? notes,
+    bool? hasPhoto,
+    int? projectId,
     String? projectName,
     List<String>? relatedTaskIds,
   }) {
@@ -67,7 +72,9 @@ class Task {
       isMine: isMine ?? this.isMine,
       isPriority: isPriority ?? this.isPriority,
       needsHelp: needsHelp ?? this.needsHelp,
-      notes: notes ?? this.notes,
+      hasPhoto: hasPhoto ?? this.hasPhoto,
+      groupId: groupId,
+      projectId: projectId ?? this.projectId,
       projectName: projectName ?? this.projectName,
       relatedTaskIds: relatedTaskIds ?? this.relatedTaskIds,
     );
@@ -87,12 +94,14 @@ class Task {
       groupName: groupName,
       assignees: const [],
       deadline: json['deadline'] != null
-          ? DateTime.parse(json['deadline'] as String)
+          ? _parseServerDate(json['deadline'] as String)
           : DateTime.now(),
       isMine: isMine,
       isPriority: json['is_priority'] as bool? ?? false,
       needsHelp: json['needs_help'] as bool? ?? false,
-      notes: '',
+      hasPhoto: json['has_photo'] as bool? ?? false,
+      groupId: json['group_id'] as int?,
+      projectId: json['project_id'] as int?,
     );
   }
 
@@ -107,6 +116,19 @@ class Task {
   }
 
   Map<String, dynamic> toUpdateJson() => toCreateJson();
+}
+
+DateTime _parseServerDate(String value) {
+  final parsed = DateTime.parse(value);
+  if (parsed.isUtc) return parsed.toLocal();
+  return DateTime.utc(
+    parsed.year,
+    parsed.month,
+    parsed.day,
+    parsed.hour,
+    parsed.minute,
+    parsed.second,
+  ).toLocal();
 }
 
 TaskType taskTypeFromJson(String value) {
