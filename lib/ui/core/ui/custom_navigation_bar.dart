@@ -31,7 +31,10 @@ class CustomNavigationBar extends StatelessWidget {
           children: List.generate(items.length, (index) {
             final item = items[index];
             final route = item.$3;
-            final isSelected = route != null && route == currentLocation;
+            final isSelected =
+                route != null &&
+                (route == currentLocation ||
+                    currentLocation.startsWith('$route/'));
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:team12_flutter_juggle/data/repositories/tasks/photo_upload_exception.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 

@@ -7,8 +7,12 @@ import 'package:team12_flutter_juggle/ui/profile/information/widgets/information
 import 'package:team12_flutter_juggle/ui/profile/notifications/widgets/notifications_screen.dart';
 import 'package:team12_flutter_juggle/ui/profile/profile/widgets/profile_screen.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_screen.dart';
+import 'package:team12_flutter_juggle/ui/tasks/all_tasks/widgets/all_tasks_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/create_task/widgets/create_task_screen.dart';
+import 'package:team12_flutter_juggle/ui/tasks/edit_task/widgets/edit_task_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/tasks_screen.dart';
+import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/view_task_screen.dart';
+import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_viewer.dart';
 
 import './routes.dart';
 
@@ -30,6 +34,25 @@ final routes = <RouteBase>[
   GoRoute(
     path: Routes.createTask,
     builder: (context, state) => const CreateTaskScreen(),
+  ),
+  GoRoute(
+    path: Routes.allTasks,
+    builder: (context, state) => const AllTasksScreen(),
+  ),
+  GoRoute(
+    path: Routes.task,
+    builder: (context, state) =>
+        ViewTaskScreen(taskId: state.pathParameters['taskId']!),
+  ),
+  GoRoute(
+    path: Routes.editTask,
+    builder: (context, state) =>
+        EditTaskScreen(taskId: state.pathParameters['taskId']!),
+  ),
+  GoRoute(
+    path: Routes.taskPhoto,
+    builder: (context, state) =>
+        TaskPhotoViewer(taskId: state.pathParameters['taskId']!),
   ),
   GoRoute(
     path: Routes.profile,

@@ -3,37 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
-import 'package:team12_flutter_juggle/ui/tasks/all_tasks/widgets/all_tasks_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
-import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/group_name_dialog.dart';
 
 class GroupDrawer extends ConsumerWidget {
   const GroupDrawer({super.key});
 
   Future<void> _createGroup(BuildContext context, WidgetRef ref) async {
-    final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('New Group'),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: 'Group name',
-            hintStyle: taskHintStyle(Theme.of(context)),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+      builder: (_) => const GroupNameDialog(),
     );
     if (name == null || name.trim().isEmpty) return;
     try {
@@ -90,7 +71,7 @@ class GroupDrawer extends ConsumerWidget {
       title: Text(group.name, style: theme.textTheme.bodyLarge),
       onTap: () {
         ref.read(tasksViewModelProvider.notifier).switchGroup(group);
-        Navigator.of(context).pop();
+        Scaffold.of(context).closeDrawer();
       },
     );
   }
@@ -126,10 +107,8 @@ class GroupDrawer extends ConsumerWidget {
                   leading: const Icon(Symbols.checklist_rtl),
                   title: Text('All tasks', style: theme.textTheme.bodyLarge),
                   onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AllTasksScreen()),
-                    );
+                    Scaffold.of(context).closeDrawer();
+                    context.push(Routes.allTasks);
                   },
                 ),
                 ListTile(

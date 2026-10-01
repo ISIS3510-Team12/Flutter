@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
-import 'package:team12_flutter_juggle/data/repositories/tasks/photo_upload_exception.dart';
-import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 import 'package:team12_flutter_juggle/ui/tasks/create_task/view_models/create_task_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/tasks/create_task/widgets/related_tasks_section.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
+import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_sections.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_picker.dart';
 
 class CreateTaskScreen extends ConsumerStatefulWidget {
@@ -54,7 +56,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       photoError = e.message;
     }
     if (!mounted) return;
-    Navigator.of(context).pop();
+    context.pop();
     if (photoError != null) {
       messenger.showSnackBar(
         SnackBar(
@@ -161,22 +163,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 const SizedBox(height: 19),
                 const TaskFieldLabel('TASK TYPE', required: true),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<TaskType>(
-                  initialValue: form.type,
-                  style: taskMenuTextStyle(theme),
-                  icon: const Icon(Symbols.arrow_right, size: 20),
-                  decoration: taskMenuDecoration(theme),
-                  onChanged: (value) {
-                    if (value != null) notifier.updateType(value);
-                  },
-                  items: TaskType.values
-                      .map(
-                        (type) => DropdownMenuItem(
-                          value: type,
-                          child: Text(_typeLabel(type)),
-                        ),
-                      )
-                      .toList(),
+                TaskTypeDropdown(
+                  value: form.type,
+                  onChanged: notifier.updateType,
                 ),
                 const SizedBox(height: 19),
                 const TaskFieldLabel('ASSIGNED MEMBERS', bold: true),
@@ -214,29 +203,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  children: [
-                    const SizedBox(
-                      width: 130,
-                      child: TaskFieldLabel('IS PRIORITY'),
-                    ),
-                    Switch(
-                      value: form.isPriority,
-                      onChanged: notifier.updateIsPriority,
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const SizedBox(
-                      width: 130,
-                      child: TaskFieldLabel('NEEDS HELP'),
-                    ),
-                    Switch(
-                      value: form.needsHelp,
-                      onChanged: notifier.updateNeedsHelp,
-                    ),
-                  ],
+                TaskFlagSwitches(
+                  isPriority: form.isPriority,
+                  needsHelp: form.needsHelp,
+                  onPriorityChanged: notifier.updateIsPriority,
+                  onNeedsHelpChanged: notifier.updateNeedsHelp,
                 ),
                 const SizedBox(height: 16),
                 const SizedBox(height: 16),
@@ -248,38 +219,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 ),
                 if (form.candidateTasks.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Text('RELATED TASKS', style: theme.textTheme.labelMedium),
-                      const Spacer(),
-                      if (form.relatedTaskIds.isNotEmpty)
-                        Text(
-                          '${form.relatedTaskIds.length} selected',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    onChanged: notifier.updateRelatedQuery,
-                    decoration: InputDecoration(
-                      hintText: 'Search for a task...',
-                      hintStyle: taskHintStyle(theme),
-                      suffixIcon: const Icon(Symbols.search),
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHigh,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(32),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _RelatedTasksList(
+                  RelatedTasksSection(
                     tasks: form.filteredCandidates,
                     selectedIds: form.relatedTaskIds,
+                    onQueryChanged: notifier.updateRelatedQuery,
                     onToggle: notifier.toggleRelatedTask,
                   ),
                 ],
@@ -304,92 +247,5 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         },
       ),
     );
-  }
-}
-
-class _RelatedTasksList extends StatelessWidget {
-  const _RelatedTasksList({
-    required this.tasks,
-    required this.selectedIds,
-    required this.onToggle,
-  });
-
-  final List<Task> tasks;
-  final Set<String> selectedIds;
-  final ValueChanged<String> onToggle;
-
-  static const _itemHeight = 72.0;
-  static const _maxVisibleItems = 3;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    if (tasks.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Center(
-          child: Text(
-            'No tasks found',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      );
-    }
-    return Container(
-      constraints: const BoxConstraints(
-        maxHeight: _itemHeight * _maxVisibleItems,
-      ),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Scrollbar(
-        child: ListView.builder(
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          itemCount: tasks.length,
-          itemBuilder: (context, index) {
-            final candidate = tasks[index];
-            return CheckboxListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-              controlAffinity: ListTileControlAffinity.trailing,
-              secondary: CircleAvatar(
-                backgroundColor: theme.colorScheme.secondaryContainer,
-                child: Text(
-                  candidate.assigneeInitial,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSecondaryContainer,
-                  ),
-                ),
-              ),
-              title: Text(
-                candidate.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Text('Due date: ${deadlineDate(candidate.deadline)}'),
-              value: selectedIds.contains(candidate.id),
-              onChanged: (_) => onToggle(candidate.id),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-String _typeLabel(TaskType type) {
-  switch (type) {
-    case TaskType.coding:
-      return 'Coding';
-    case TaskType.design:
-      return 'Design';
-    case TaskType.writing:
-      return 'Writing';
-    case TaskType.research:
-      return 'Research';
   }
 }

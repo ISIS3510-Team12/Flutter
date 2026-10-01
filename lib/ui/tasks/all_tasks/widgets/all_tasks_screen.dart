@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/tasks/all_tasks/view_models/all_tasks_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/tasks/all_tasks/view_models/all_tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
-import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/view_task_screen.dart';
 
 class AllTasksScreen extends ConsumerWidget {
   const AllTasksScreen({super.key});
 
   void _openTask(BuildContext context, String taskId) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => ViewTaskScreen(taskId: taskId)));
+    context.push(Routes.taskPath(taskId));
   }
 
   @override

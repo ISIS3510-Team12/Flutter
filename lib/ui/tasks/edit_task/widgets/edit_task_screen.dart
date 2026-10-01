@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
-import 'package:team12_flutter_juggle/data/repositories/tasks/photo_upload_exception.dart';
-import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 import 'package:team12_flutter_juggle/ui/tasks/edit_task/view_models/edit_task_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
+import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_sections.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_picker.dart';
 
 class EditTaskScreen extends ConsumerStatefulWidget {
@@ -63,7 +64,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
       photoError = e.message;
     }
     if (!mounted) return;
-    Navigator.of(context).pop();
+    context.pop();
     if (photoError != null) {
       messenger.showSnackBar(
         SnackBar(
@@ -150,22 +151,9 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                 const SizedBox(height: 19),
                 const TaskFieldLabel('TASK TYPE', required: true),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<TaskType>(
-                  initialValue: form.type,
-                  style: taskMenuTextStyle(theme),
-                  icon: const Icon(Symbols.arrow_right, size: 20),
-                  decoration: taskMenuDecoration(theme),
-                  onChanged: (value) {
-                    if (value != null) notifier.updateType(value);
-                  },
-                  items: TaskType.values
-                      .map(
-                        (type) => DropdownMenuItem(
-                          value: type,
-                          child: Text(_typeLabel(type)),
-                        ),
-                      )
-                      .toList(),
+                TaskTypeDropdown(
+                  value: form.type,
+                  onChanged: notifier.updateType,
                 ),
                 const SizedBox(height: 19),
                 const TaskFieldLabel('CURRENT ASSIGNED MEMBERS', bold: true),
@@ -206,29 +194,11 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  children: [
-                    const SizedBox(
-                      width: 130,
-                      child: TaskFieldLabel('IS PRIORITY'),
-                    ),
-                    Switch(
-                      value: form.isPriority,
-                      onChanged: notifier.updateIsPriority,
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const SizedBox(
-                      width: 130,
-                      child: TaskFieldLabel('NEEDS HELP'),
-                    ),
-                    Switch(
-                      value: form.needsHelp,
-                      onChanged: notifier.updateNeedsHelp,
-                    ),
-                  ],
+                TaskFlagSwitches(
+                  isPriority: form.isPriority,
+                  needsHelp: form.needsHelp,
+                  onPriorityChanged: notifier.updateIsPriority,
+                  onNeedsHelpChanged: notifier.updateNeedsHelp,
                 ),
                 const SizedBox(height: 16),
                 const TaskFieldLabel('EVIDENCES'),
@@ -267,7 +237,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => context.pop(),
                         icon: const Icon(Symbols.close),
                         label: const Text('Cancel'),
                       ),
@@ -281,18 +251,5 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
         },
       ),
     );
-  }
-}
-
-String _typeLabel(TaskType type) {
-  switch (type) {
-    case TaskType.coding:
-      return 'Coding';
-    case TaskType.design:
-      return 'Design';
-    case TaskType.writing:
-      return 'Writing';
-    case TaskType.research:
-      return 'Research';
   }
 }

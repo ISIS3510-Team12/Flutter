@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
-import 'package:team12_flutter_juggle/ui/tasks/create_task/widgets/create_task_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/group_drawer.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
-import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/view_task_screen.dart';
 
 class TasksScreen extends ConsumerWidget {
   const TasksScreen({super.key});
 
   void _openCreateTask(BuildContext context) {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const CreateTaskScreen()));
+    context.push(Routes.createTask);
   }
 
   void _openTask(BuildContext context, String taskId) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => ViewTaskScreen(taskId: taskId)));
+    context.push(Routes.taskPath(taskId));
   }
 
   @override
