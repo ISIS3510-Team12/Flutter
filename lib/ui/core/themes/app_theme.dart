@@ -30,6 +30,16 @@ class AppTheme {
         fontSize: 54,
         fontWeight: AppFontWeight.bold,
       ),
+      dayPeriodColor: WidgetStateColor.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colorScheme.secondary
+            : Colors.transparent,
+      ),
+      dayPeriodTextColor: WidgetStateColor.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colorScheme.onSecondary
+            : colorScheme.onSurface,
+      ),
     ),
   );
 }

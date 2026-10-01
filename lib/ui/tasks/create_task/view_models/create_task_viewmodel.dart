@@ -24,6 +24,7 @@ class CreateTaskFormState {
     this.needsHelp = false,
     this.notes = '',
     this.relatedTaskIds = const {},
+    this.relatedQuery = '',
   });
 
   final String groupName;
@@ -41,6 +42,18 @@ class CreateTaskFormState {
   final bool needsHelp;
   final String notes;
   final Set<String> relatedTaskIds;
+  final String relatedQuery;
+
+  List<Task> get filteredCandidates {
+    final query = relatedQuery.trim().toLowerCase();
+    return candidateTasks
+        .where(
+          (task) =>
+              task.status != TaskStatus.done &&
+              (query.isEmpty || task.title.toLowerCase().contains(query)),
+        )
+        .toList();
+  }
 
   bool get canSubmit =>
       title.isNotEmpty && selectedMember.isNotEmpty && deadline != null;
@@ -62,6 +75,7 @@ class CreateTaskFormState {
     bool? needsHelp,
     String? notes,
     Set<String>? relatedTaskIds,
+    String? relatedQuery,
   }) {
     return CreateTaskFormState(
       groupName: groupName,
@@ -79,6 +93,7 @@ class CreateTaskFormState {
       needsHelp: needsHelp ?? this.needsHelp,
       notes: notes ?? this.notes,
       relatedTaskIds: relatedTaskIds ?? this.relatedTaskIds,
+      relatedQuery: relatedQuery ?? this.relatedQuery,
     );
   }
 }
@@ -126,6 +141,9 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       _update((s) => s.copyWith(needsHelp: value));
 
   void updateNotes(String value) => _update((s) => s.copyWith(notes: value));
+
+  void updateRelatedQuery(String value) =>
+      _update((s) => s.copyWith(relatedQuery: value));
 
   void toggleRelatedTask(String taskId) {
     final current = state.value;

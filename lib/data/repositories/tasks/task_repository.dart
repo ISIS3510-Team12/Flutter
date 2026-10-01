@@ -1,10 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 
 class TaskRepository {
   TaskRepository(this._dio);
 
   final Dio _dio;
+
+  final Map<String, int> _projectIds = {};
 
   Future<List<Task>> getTasks() async {
     final groupName = await getCurrentGroupName();
@@ -18,6 +21,53 @@ class TaskRepository {
             ),
           )
           .toList();
+    } catch (e) {
+      throw Exception('Failed to load tasks: $e');
+    }
+  }
+
+  Future<List<Task>> getGroupTasks(TaskGroup group) async {
+    try {
+      final own = await _dio.get<List<dynamic>>('/tasks/own/${group.id}');
+      final others = await _dio.get<List<dynamic>>('/tasks/group/${group.id}');
+      return [
+        for (final json in own.data!)
+          Task.fromJson(json as Map<String, dynamic>, groupName: group.name),
+        for (final json in others.data!)
+          Task.fromJson(
+            json as Map<String, dynamic>,
+            groupName: group.name,
+            isMine: false,
+          ),
+      ];
+    } catch (e) {
+      throw Exception('Failed to load group tasks: $e');
+    }
+  }
+
+  Future<List<Task>> getAllTasks({
+    bool mine = false,
+    bool priority = false,
+    int? dueWithinDays,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/tasks/all',
+        queryParameters: {
+          'mine': mine,
+          'priority': priority,
+          'due_within_days': ?dueWithinDays,
+        },
+      );
+      final groups = {for (final g in await getTaskGroups()) g.id: g.name};
+      return response.data!.map((json) {
+        final map = json as Map<String, dynamic>;
+        return Task.fromJson(
+          map,
+          groupName: groups[map['group_id']] ?? '',
+          isMine: mine,
+        );
+      }).toList();
     } catch (e) {
       throw Exception('Failed to load tasks: $e');
     }
@@ -37,7 +87,11 @@ class TaskRepository {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/tasks',
-        data: task.toCreateJson(),
+        data: {
+          ...task.toCreateJson(),
+          if (_projectIds[task.projectName] != null)
+            'project_id': _projectIds[task.projectName],
+        },
       );
       final fromServer = Task.fromJson(
         response.data!,
@@ -108,7 +162,8 @@ class TaskRepository {
   }
 
   Future<String> getCurrentGroupName() async {
-    return 'App Devs';
+    final groups = await getTaskGroups();
+    return groups.isEmpty ? 'No group' : groups.first.name;
   }
 
   Future<List<String>> getGroupMembers() async {
@@ -116,17 +171,49 @@ class TaskRepository {
   }
 
   Future<List<String>> getProjects() async {
-    return const ['Project #1', 'Project #2'];
+    final groups = await getTaskGroups();
+    _projectIds.clear();
+    if (groups.isEmpty) return const [];
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/projects/group/${groups.first.id}',
+      );
+      for (final json in response.data!) {
+        final map = json as Map<String, dynamic>;
+        _projectIds[map['name'] as String] = map['id'] as int;
+      }
+      return _projectIds.keys.toList();
+    } catch (e) {
+      throw Exception('Failed to load projects: $e');
+    }
   }
 
-  final List<String> _groups = ['App Devs', 'Group 1', 'Group 2'];
-
-  Future<List<String>> getGroups() async {
-    return List.unmodifiable(_groups);
+  Future<List<TaskGroup>> getTaskGroups() async {
+    try {
+      final response = await _dio.get<List<dynamic>>('/groups');
+      return response.data!
+          .map((json) => TaskGroup.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to load groups: $e');
+    }
   }
 
   Future<void> addGroup(String name) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _groups.add(name);
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/groups',
+        data: {
+          'name': name,
+          'description': name,
+          'deadline': DateTime.now()
+              .add(const Duration(days: 30))
+              .toUtc()
+              .toIso8601String(),
+        },
+      );
+    } catch (e) {
+      throw Exception('Failed to create group: $e');
+    }
   }
 }

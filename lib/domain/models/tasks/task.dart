@@ -76,6 +76,7 @@ class Task {
   factory Task.fromJson(
     Map<String, dynamic> json, {
     required String groupName,
+    bool isMine = true,
   }) {
     return Task(
       id: json['id'].toString(),
@@ -88,7 +89,7 @@ class Task {
       deadline: json['deadline'] != null
           ? DateTime.parse(json['deadline'] as String)
           : DateTime.now(),
-      isMine: true,
+      isMine: isMine,
       isPriority: json['is_priority'] as bool? ?? false,
       needsHelp: json['needs_help'] as bool? ?? false,
       notes: '',

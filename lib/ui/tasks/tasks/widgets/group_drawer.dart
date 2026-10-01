@@ -48,7 +48,7 @@ class GroupDrawer extends ConsumerWidget {
               Text('Your Groups', style: theme.textTheme.titleMedium),
               const SizedBox(height: 16),
               for (final group in data.groups)
-                if (group == data.groupName)
+                if (group.id == data.group?.id)
                   Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.symmetric(
@@ -63,14 +63,14 @@ class GroupDrawer extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            group,
+                            group.name,
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: theme.colorScheme.onSecondaryContainer,
                             ),
                           ),
                         ),
                         Text(
-                          '${data.pendingCountFor(group)} pending tasks',
+                          '${group.pendingCount} pending tasks',
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: theme.colorScheme.onSecondaryContainer,
                             fontWeight: FontWeight.bold,
@@ -82,7 +82,7 @@ class GroupDrawer extends ConsumerWidget {
                 else
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(group, style: theme.textTheme.bodyLarge),
+                    title: Text(group.name, style: theme.textTheme.bodyLarge),
                     onTap: () {
                       ref
                           .read(tasksViewModelProvider.notifier)
