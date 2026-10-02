@@ -107,7 +107,7 @@ class OverviewTabs extends StatelessWidget {
                 title,
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
-              if (assignee != null)
+              if (assignee != null && assignee.isNotEmpty)
                 Text(assignee, style: TextStyle(fontSize: 12)),
             ],
           ),
