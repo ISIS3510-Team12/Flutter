@@ -8,6 +8,8 @@ import 'package:team12_flutter_juggle/ui/profile/information/widgets/information
 import 'package:team12_flutter_juggle/ui/profile/notifications/widgets/notifications_screen.dart';
 import 'package:team12_flutter_juggle/ui/profile/profile/widgets/profile_screen.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_screen.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/create_project_screen.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/project_detail_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/all_tasks/widgets/all_tasks_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/create_task/widgets/create_task_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/edit_task/widgets/edit_task_screen.dart';
@@ -74,5 +76,19 @@ final routes = <RouteBase>[
   GoRoute(
     path: Routes.calendar,
     builder: (context, state) => const CalendarScreen(),
+  ),
+  GoRoute(
+    path: Routes.createProject,
+    builder: (context, state) {
+      final groupId = int.parse(state.pathParameters['groupId']!);
+      return CreateProjectScreen(groupId: groupId);
+    },
+  ),
+  GoRoute(
+    path: Routes.projectDetail,
+    builder: (context, state) {
+      final projectId = int.parse(state.pathParameters['projectId']!);
+      return ProjectDetailScreen(projectId: projectId);
+    },
   ),
 ];
