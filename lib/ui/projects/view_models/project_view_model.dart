@@ -1,15 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository.dart';
+import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
+import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project_create.dart';
+
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
 
-class ProjectViewModel extends AsyncNotifier<Project?> {
-  late final ProjectRepository _projectRepository;
+class ProjectViewModel extends AsyncNotifier<ProjectDetailState?> {
 
   @override
-  Future<Project?> build() async {
-    _projectRepository = ref.read(projectRepositoryProvider);
+  Future<ProjectDetailState?> build() async {
     return null;
   }
 
@@ -22,7 +24,7 @@ class ProjectViewModel extends AsyncNotifier<Project?> {
     state = const AsyncLoading();
 
     try {
-      final project = ProjectCreate(
+      final projectData = ProjectCreate(
         name: name,
         description: description,
         deadline: deadline,
@@ -30,14 +32,18 @@ class ProjectViewModel extends AsyncNotifier<Project?> {
       );
 
       final createdProject =
-          await _projectRepository.createProject(project);
+          await _projectRepository.createProject(projectData);
 
-      state = AsyncData(createdProject);
+      state = AsyncData(
+        ProjectDetailState(
+          project: createdProject,
+          tasks: const [],
+        ),
+      );
 
       return createdProject;
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
-
       return null;
     }
   }
@@ -46,11 +52,33 @@ class ProjectViewModel extends AsyncNotifier<Project?> {
     state = const AsyncLoading();
 
     try {
-      final project = await _projectRepository.getProject(projectId);
+      final projectRepository = ref.read(projectRepositoryProvider);
+      final taskRepository = ref.read(taskRepositoryProvider);
 
-      state = AsyncData(project);
+      final project = await projectRepository.getProject(projectId);
+      final allTasks = await taskRepository.getAllTasks();
+
+      final projectTasks = allTasks
+          .where((task) => task.projectId == projectId)
+          .toList();
+
+      state = AsyncData(
+        ProjectDetailState(
+          project: project,
+          tasks: projectTasks,
+        ),
+      );
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
     }
-  }
+}
+
+class ProjectDetailState {
+  const ProjectDetailState({
+    required this.project,
+    required this.tasks,
+  });
+
+  final Project project;
+  final List<Task> tasks;
 }

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/projects/widgets/pace_warning_card.dart';
 import 'package:team12_flutter_juggle/ui/projects/widgets/task_filter_card.dart';
 import 'package:team12_flutter_juggle/ui/projects/widgets/task_card.dart';
-
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   const ProjectDetailScreen({
@@ -23,6 +24,8 @@ class ProjectDetailScreen extends ConsumerStatefulWidget {
 
 class _ProjectDetailScreenState
     extends ConsumerState<ProjectDetailScreen> {
+  String selectedFilter = 'All';
+
   @override
   void initState() {
     super.initState();
@@ -59,12 +62,26 @@ class _ProjectDetailScreenState
             ),
           ),
         ),
-        data: (project) {
-          if (project == null) {
+        data: (projectStateData) {
+          if (projectStateData == null) {
             return const Center(
               child: Text('Project not found.'),
             );
           }
+
+          final project = projectStateData.project;
+          final tasks = projectStateData.tasks;
+
+          final filteredTasks = tasks.where((task) {
+            switch (selectedFilter) {
+              case 'Pending':
+                return task.status != TaskStatus.done;
+              case 'Completed':
+                return task.status == TaskStatus.done;
+              default:
+                return true;
+            }
+          }).toList();
 
           final deadline =
               '${project.deadline.day}/${project.deadline.month}/${project.deadline.year}';
@@ -81,7 +98,10 @@ class _ProjectDetailScreenState
               children: [
                 Text(
                   project.name,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
@@ -97,38 +117,62 @@ class _ProjectDetailScreenState
                 ),
                 const SizedBox(height: 24),
 
-                const PaceWarningCard(),
+                PaceWarningCard(
+                  completedTasks: tasks
+                      .where((task) => task.status == TaskStatus.done)
+                      .length,
+                  totalTasks: tasks.length,
+                  deadline: project.deadline,
+                ),
 
                 const SizedBox(height: 24),
 
                 Text(
                   'Tasks',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 12),
 
-                const Row(
+                Row(
                   children: [
                     Expanded(
                       child: TaskFilter(
                         text: 'All',
-                        selected: true,
+                        selected: selectedFilter == 'All',
+                        onTap: () {
+                          setState(() {
+                            selectedFilter = 'All';
+                          });
+                        },
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: TaskFilter(
                         text: 'Pending',
-                        selected: false,
+                        selected: selectedFilter == 'Pending',
+                        onTap: () {
+                          setState(() {
+                            selectedFilter = 'Pending';
+                          });
+                        },
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: TaskFilter(
                         text: 'Completed',
-                        selected: false,
+                        selected: selectedFilter == 'Completed',
+                        onTap: () {
+                          setState(() {
+                            selectedFilter = 'Completed';
+                          });
+                        },
                       ),
                     ),
                   ],
@@ -136,10 +180,24 @@ class _ProjectDetailScreenState
 
                 const SizedBox(height: 12),
 
-                const ProjectTaskCard(
-                  title: 'No tasks yet',
-                  subtitle: 'Tasks will appear here',
-                ),
+                if (filteredTasks.isEmpty)
+                  const ProjectTaskCard(
+                    title: 'No tasks',
+                    subtitle: 'There are no tasks for this filter.',
+                  )
+                else
+                  ...filteredTasks.map(
+                    (task) => ProjectTaskCard(
+                      title: task.title,
+                      subtitle: task.assigneeName.isEmpty
+                          ? 'Unassigned'
+                          : 'Assigned: ${task.assigneeName}',
+                      assigneeInitial: task.assigneeInitial,
+                      onTap: () {
+                        context.push(Routes.taskPath(task.id));
+                      },
+                    ),
+                  ),
               ],
             ),
           );

@@ -18,6 +18,6 @@ final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
 });
 
 final projectViewModelProvider =
-    AsyncNotifierProvider<ProjectViewModel, Project?>(
+    AsyncNotifierProvider<ProjectViewModel, ProjectDetailState?>(
   ProjectViewModel.new,
 );

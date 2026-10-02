@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 
 class ProjectTaskCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String? assigneeInitial;
-
   const ProjectTaskCard({
     super.key,
     required this.title,
     required this.subtitle,
     this.assigneeInitial,
+    this.onTap,
   });
+
+  final String title;
+  final String subtitle;
+  final String? assigneeInitial;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +28,7 @@ class ProjectTaskCard extends StatelessWidget {
         ),
       ),
       child: ListTile(
+        onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 4,
