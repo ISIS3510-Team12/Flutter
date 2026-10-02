@@ -1,73 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
+import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
+
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository.dart';
+import 'package:team12_flutter_juggle/data/repositories/user/user_repository.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
-import 'package:team12_flutter_juggle/ui/groups/screens/new_group_screen.dart';
-import 'package:team12_flutter_juggle/ui/groups/screens/group_detail_screen.dart';
-import '../viewmodels/groups_view_model.dart';
-import '../widgets/group_card.dart';
-import 'package:team12_flutter_juggle/data/repositories/user/user_repository.dart';
+import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model.dart';
+import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/groups/widgets/group_detail_screen.dart';
+import 'package:team12_flutter_juggle/ui/groups/widgets/group_card.dart';
+import 'package:team12_flutter_juggle/ui/groups/widgets/new_group_screen.dart';
 
-class GroupsScreen extends StatefulWidget {
+class GroupsScreen extends ConsumerWidget {
   const GroupsScreen({
     super.key,
-    required this.groupRepository,
     required this.projectRepository,
     required this.userRepository,
   });
 
-  final GroupRepository groupRepository;
   final ProjectRepository projectRepository;
   final UserRepository userRepository;
 
   @override
-  State<GroupsScreen> createState() => _GroupsScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewModel = ref.watch(groupsViewModelProvider);
+    final groupRepository = ref.watch(groupRepositoryProvider);
 
-class _GroupsScreenState extends State<GroupsScreen> {
-  late final GroupsViewModel viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-
-    viewModel = GroupsViewModel(
-      groupRepository: widget.groupRepository,
-    );
-  }
-
-  @override
-  void dispose() {
-    viewModel.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(),
-      body: ListenableBuilder(
-        listenable: viewModel,
-        builder: (context, child) {
-          return Column(
-            children: [
-              _buildSearchBar(context),
-
-              Expanded(
-                child: _buildGroupsContent(context),
-              ),
-
-              _buildCreateGroupButton(context),
-            ],
-          );
-        },
+      body: Column(
+        children: [
+          _buildSearchBar(context, viewModel),
+          Expanded(
+            child: _buildGroupsContent(
+              context,
+              viewModel,
+              groupRepository,
+            ),
+          ),
+          _buildCreateGroupButton(
+            context,
+            viewModel,
+            groupRepository,
+          ),
+        ],
       ),
       bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 
-  Widget _buildSearchBar(BuildContext context) {
+  Widget _buildSearchBar(
+    BuildContext context,
+    GroupsViewModel viewModel,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SizedBox(
@@ -98,7 +85,11 @@ class _GroupsScreenState extends State<GroupsScreen> {
     );
   }
 
-  Widget _buildGroupsContent(BuildContext context) {
+  Widget _buildGroupsContent(
+    BuildContext context,
+    GroupsViewModel viewModel,
+    GroupRepository groupRepository,
+  ) {
     if (viewModel.isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -145,8 +136,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
               MaterialPageRoute(
                 builder: (context) => GroupDetailScreen(
                   group: group,
-                  groupRepository: widget.groupRepository,
-                  projectRepository: widget.projectRepository,
+                  projectRepository: projectRepository,
                 ),
               ),
             );
@@ -156,7 +146,11 @@ class _GroupsScreenState extends State<GroupsScreen> {
     );
   }
 
-  Widget _buildCreateGroupButton(BuildContext context) {
+  Widget _buildCreateGroupButton(
+    BuildContext context,
+    GroupsViewModel viewModel,
+    GroupRepository groupRepository,
+  ) {
     final theme = Theme.of(context);
 
     return Padding(
@@ -171,14 +165,12 @@ class _GroupsScreenState extends State<GroupsScreen> {
               final groupCreated = await Navigator.push<bool>(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => NewGroupScreen(
-                    groupRepository: widget.groupRepository,
-                    userRepository: widget.userRepository,
+                  builder: (context) => const NewGroupScreen(
                   ),
                 ),
               );
 
-              if (!mounted) return;
+              if (!context.mounted) return;
 
               if (groupCreated == true) {
                 await viewModel.loadGroups();

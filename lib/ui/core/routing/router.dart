@@ -19,4 +19,5 @@ final routes = <RouteBase>[
     builder: (context, state) => const SignupScreen(),
   ),
   GoRoute(path: Routes.home, builder: (context, state) => const HomeScreen()),
+  
 ];

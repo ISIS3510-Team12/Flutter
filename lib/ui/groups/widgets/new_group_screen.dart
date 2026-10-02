@@ -1,28 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
-import 'package:team12_flutter_juggle/ui/groups/viewmodels/new_group_view_model.dart';
-import 'package:team12_flutter_juggle/data/repositories/user/user_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class NewGroupScreen extends StatefulWidget {
+import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/ui/groups/view_models/new_group_view_model_provider.dart';
+
+class NewGroupScreen extends ConsumerStatefulWidget {
   const NewGroupScreen({
     super.key,
-    required this.groupRepository,
-    required this.userRepository,
   });
 
-  final GroupRepository groupRepository;
-  final UserRepository userRepository;
-
-  
   @override
-  State<NewGroupScreen> createState() => _NewGroupScreenState();
+  ConsumerState<NewGroupScreen> createState() => _NewGroupScreenState();
 }
 
-class _NewGroupScreenState extends State<NewGroupScreen> {
-  late final NewGroupViewModel viewModel = NewGroupViewModel(
-    groupRepository: widget.groupRepository,
-  );
-
+class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController classController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
@@ -39,21 +30,24 @@ class _NewGroupScreenState extends State<NewGroupScreen> {
 
   Future<void> _loadUsers() async {
     try {
-      final backendUsers = await widget.userRepository.getUsers();
+      final userRepository = ref.read(userRepositoryProvider);
+      final backendUsers = await userRepository.getUsers();
 
       if (!mounted) return;
 
       setState(() {
-        users = backendUsers.map(
-          (user) => GroupUserOption(
-            userId: user.userId,
-            name: '${user.firstName} ${user.lastName}',
-            email: user.email,
-            initial: user.firstName.isNotEmpty
-                ? user.firstName[0].toUpperCase()
-                : '?',
-          ),
-        ).toList();
+        users = backendUsers
+            .map(
+              (user) => GroupUserOption(
+                userId: user.userId,
+                name: '${user.firstName} ${user.lastName}',
+                email: user.email,
+                initial: user.firstName.isNotEmpty
+                    ? user.firstName[0].toUpperCase()
+                    : '?',
+              ),
+            )
+            .toList();
       });
     } catch (e) {
       if (!mounted) return;
@@ -68,7 +62,6 @@ class _NewGroupScreenState extends State<NewGroupScreen> {
 
   @override
   void dispose() {
-    viewModel.dispose();
     nameController.dispose();
     classController.dispose();
     searchController.dispose();
@@ -76,6 +69,8 @@ class _NewGroupScreenState extends State<NewGroupScreen> {
   }
 
   Future<void> _createGroup() async {
+    final viewModel = ref.read(newGroupViewModelProvider);
+
     final success = await viewModel.createGroup(
       name: nameController.text.trim(),
       description: classController.text.trim(),
@@ -99,6 +94,8 @@ class _NewGroupScreenState extends State<NewGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = ref.watch(newGroupViewModelProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('New Group'),
@@ -115,9 +112,7 @@ class _NewGroupScreenState extends State<NewGroupScreen> {
               helperText: 'Give your group a name',
               controller: nameController,
             ),
-
             const SizedBox(height: 20),
-
             _buildTextField(
               context: context,
               label: 'Description',
@@ -125,29 +120,22 @@ class _NewGroupScreenState extends State<NewGroupScreen> {
               helperText: 'Enter the group description',
               controller: classController,
             ),
-
             const SizedBox(height: 28),
-
             Text(
               'Add People',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
-
             const SizedBox(height: 12),
-
             _buildSearchField(context),
-
             const SizedBox(height: 12),
-
             ...users.map(
               (user) => _buildUserTile(
                 context: context,
                 user: user,
               ),
             ),
-
             ElevatedButton(
               onPressed: viewModel.isLoading ? null : _createGroup,
               child: viewModel.isLoading
@@ -260,9 +248,7 @@ class _NewGroupScreenState extends State<NewGroupScreen> {
               ),
             ),
           ),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +267,6 @@ class _NewGroupScreenState extends State<NewGroupScreen> {
               ],
             ),
           ),
-
           Checkbox(
             value: selectedUserIds.contains(user.userId),
             onChanged: (value) {

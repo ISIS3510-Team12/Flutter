@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
-import 'package:team12_flutter_juggle/ui/groups/screens/edit_group_screen.dart';
-import 'package:team12_flutter_juggle/ui/projects/screens/create_project_screen.dart';
-import 'package:team12_flutter_juggle/ui/projects/screens/project_detail_screen.dart';
+import 'package:team12_flutter_juggle/ui/groups/widgets/edit_group_screen.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/create_project_screen.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/project_detail_screen.dart';
 
-class GroupDetailScreen extends StatefulWidget {
+class GroupDetailScreen extends ConsumerStatefulWidget {
   const GroupDetailScreen({
     super.key,
     required this.group,
-    required this.groupRepository,
     required this.projectRepository,
   });
 
   final Group group;
   final ProjectRepository projectRepository;
-  final GroupRepository groupRepository;
 
   final List<Map<String, String>> projects = const [
     {
@@ -36,20 +36,25 @@ class GroupDetailScreen extends StatefulWidget {
   ];
 
   @override
-  State<GroupDetailScreen> createState() => _GroupDetailScreenState();
+  ConsumerState<GroupDetailScreen> createState() =>
+      _GroupDetailScreenState();
 }
 
-class _GroupDetailScreenState extends State<GroupDetailScreen> { 
+class _GroupDetailScreenState
+    extends ConsumerState<GroupDetailScreen> {
   late Group group;
 
-  @override void initState() { 
-      super.initState();
-      group = widget.group; 
-      _reloadGroup();
-    }
+  @override
+  void initState() {
+    super.initState();
+    group = widget.group;
+    _reloadGroup();
+  }
 
   Future<void> _reloadGroup() async {
-    final updatedGroup = await widget.groupRepository.getGroup(
+    final groupRepository = ref.read(groupRepositoryProvider);
+
+    final updatedGroup = await groupRepository.getGroup(
       group.id,
     );
 
@@ -93,23 +98,22 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         actions: [
           IconButton(
             onPressed: () async {
-            final updated = await Navigator.push<bool>(
-              context,
-              MaterialPageRoute(
-                builder: (context) => GroupEditScreen(
-                  group: group,
-                  groupRepository: widget.groupRepository,
+              final updated = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GroupEditScreen(
+                    group: group,
+                  ),
                 ),
-              ),
-            );
+              );
 
-            if (!mounted) return;
+              if (!mounted) return;
 
-            if (updated == true) {
-              await _reloadGroup();
-            }
-          },
-          icon: const Icon(Icons.edit_outlined),
+              if (updated == true) {
+                await _reloadGroup();
+              }
+            },
+            icon: const Icon(Icons.edit_outlined),
           ),
         ],
       ),
@@ -124,47 +128,35 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 4),
-
             Text(
               group.description,
               style: theme.textTheme.bodyLarge,
             ),
-
             const SizedBox(height: 28),
-
             Text(
               'Members',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 16),
-
             _buildMembers(context),
-
             const SizedBox(height: 32),
-
             Text(
               'Related projects',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 16),
-
             ...widget.projects.map(
               (project) => _buildProjectCard(
                 context,
                 project,
               ),
             ),
-
             const SizedBox(height: 16),
-
             Align(
               alignment: Alignment.centerRight,
               child: FilledButton.icon(
@@ -247,9 +239,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
-
             const SizedBox(width: 12),
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,7 +258,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 ],
               ),
             ),
-
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [

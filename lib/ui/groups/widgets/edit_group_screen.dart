@@ -1,30 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:team12_flutter_juggle/domain/models/group/group.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
-import 'package:team12_flutter_juggle/ui/groups/viewmodels/group_edit_view_model.dart';
+import 'package:team12_flutter_juggle/ui/groups/view_models/group_edit_view_model_provider.dart';
 
-class GroupEditScreen extends StatefulWidget {
+class GroupEditScreen extends ConsumerStatefulWidget {
   const GroupEditScreen({
     super.key,
     required this.group,
-    required this.groupRepository,
   });
 
   final Group group;
-  final GroupRepository groupRepository;
 
   @override
-  State<GroupEditScreen> createState() => _GroupEditScreenState();
+  ConsumerState<GroupEditScreen> createState() => _GroupEditScreenState();
 }
 
-class _GroupEditScreenState extends State<GroupEditScreen> {
+class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   late final TextEditingController nameController;
   late final TextEditingController descriptionController;
 
   final Set<String> selectedUserIds = {};
-
-  late final GroupEditViewModel viewModel;
 
   @override
   void initState() {
@@ -41,22 +38,18 @@ class _GroupEditScreenState extends State<GroupEditScreen> {
     selectedUserIds.addAll(
       widget.group.users.map((user) => user.userId),
     );
-
-    viewModel = GroupEditViewModel(
-      groupRepository: widget.groupRepository,
-    );
   }
-
 
   @override
   void dispose() {
     nameController.dispose();
     descriptionController.dispose();
-    viewModel.dispose();
     super.dispose();
   }
 
   Future<void> _updateGroup() async {
+    final viewModel = ref.read(groupEditViewModelProvider);
+
     final success = await viewModel.updateGroup(
       groupId: widget.group.id,
       name: nameController.text.trim(),
@@ -216,62 +209,58 @@ class _GroupEditScreenState extends State<GroupEditScreen> {
 
   Widget _buildButtons(BuildContext context) {
     final theme = Theme.of(context);
+    final viewModel = ref.watch(groupEditViewModelProvider);
 
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) {
-        return Row(
-          children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: viewModel.isLoading ? null : _updateGroup,
-                icon: viewModel.isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Icon(Icons.check),
-                label: Text(
-                  viewModel.isLoading ? 'Editing...' : 'Edit Group',
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor:
-                      theme.colorScheme.surfaceContainerHighest,
-                  foregroundColor: theme.colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: viewModel.isLoading ? null : _updateGroup,
+            icon: viewModel.isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.check),
+            label: Text(
+              viewModel.isLoading ? 'Editing...' : 'Edit Group',
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor:
+                  theme.colorScheme.surfaceContainerHighest,
+              foregroundColor: theme.colorScheme.primary,
+              padding: const EdgeInsets.symmetric(
+                vertical: 14,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: viewModel.isLoading
-                    ? null
-                    : () {
-                        Navigator.pop(context);
-                      },
-                child: const Text('Cancel'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: viewModel.isLoading
+                ? null
+                : () {
+                    Navigator.pop(context);
+                  },
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                vertical: 14,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-          ],
-        );
-      },
+            child: const Text('Cancel'),
+          ),
+        ),
+      ],
     );
   }
 }
