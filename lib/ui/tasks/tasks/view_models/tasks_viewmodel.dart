@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
@@ -63,7 +64,7 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
   Future<TasksState> build() async {
     final repository = ref.watch(taskRepositoryProvider);
     final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
-    final groups = await repository.getTaskGroups();
+    final groups = await ref.watch(groupRepositoryProvider).getGroups();
     final group = selectedGroup.resolve(groups);
     final tasks = group == null
         ? <Task>[]
@@ -92,8 +93,7 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
   }
 
   Future<void> createGroup(String name) async {
-    final repository = ref.read(taskRepositoryProvider);
-    await repository.addGroup(name);
+    await ref.read(groupRepositoryProvider).createGroup(name);
     if (!ref.mounted) return;
     ref.invalidateSelf();
   }

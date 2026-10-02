@@ -1,16 +1,31 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_settings.dart';
 
 class SettingsRepository {
-  AppSettings _settings = const AppSettings(
-    themeMode: AppThemeMode.system,
-    soundAndVibrationEnabled: true,
-  );
+  SettingsRepository(this._preferences);
+
+  static const _themeModeKey = 'settings_theme_mode';
+  static const _soundAndVibrationKey = 'settings_sound_and_vibration';
+
+  final SharedPreferencesAsync _preferences;
 
   Future<AppSettings> getSettings() async {
-    return _settings;
+    final themeName = await _preferences.getString(_themeModeKey);
+    final soundAndVibration = await _preferences.getBool(_soundAndVibrationKey);
+    return AppSettings(
+      themeMode: AppThemeMode.values.firstWhere(
+        (mode) => mode.name == themeName,
+        orElse: () => AppThemeMode.system,
+      ),
+      soundAndVibrationEnabled: soundAndVibration ?? true,
+    );
   }
 
   Future<void> updateSettings(AppSettings settings) async {
-    _settings = settings;
+    await _preferences.setString(_themeModeKey, settings.themeMode.name);
+    await _preferences.setBool(
+      _soundAndVibrationKey,
+      settings.soundAndVibrationEnabled,
+    );
   }
 }

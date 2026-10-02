@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
-import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 import 'package:team12_flutter_juggle/ui/tasks/edit_task/view_models/edit_task_viewmodel_provider.dart';
@@ -109,28 +108,18 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
               children: [
                 const TaskFieldLabel('SELECTED GROUP', required: true),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<TaskGroup>(
-                  initialValue: form.group,
-                  style: taskMenuTextStyle(theme),
-                  icon: const Icon(Symbols.arrow_right, size: 20),
-                  decoration: taskMenuDecoration(theme),
-                  onChanged: (value) {
-                    if (value != null) notifier.updateGroup(value);
-                  },
-                  items: form.groups
-                      .map(
-                        (group) => DropdownMenuItem(
-                          value: group,
-                          child: Text(group.name),
-                        ),
-                      )
-                      .toList(),
+                TextFormField(
+                  initialValue: form.group?.name ?? form.task.groupName,
+                  enabled: false,
+                  style: taskMenuTextStyle(theme)?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
+                  ),
+                  decoration: taskInactiveDecoration(theme),
                 ),
                 const SizedBox(height: 19),
                 const TaskFieldLabel('ASSOCIATED PROJECT'),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  key: ValueKey(form.group?.id),
                   initialValue: form.selectedProject,
                   hint: Text('Select a project', style: taskHintStyle(theme)),
                   style: taskMenuTextStyle(theme),

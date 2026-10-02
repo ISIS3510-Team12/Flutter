@@ -17,17 +17,9 @@ class ProjectDetailViewModel extends AsyncNotifier<ProjectDetailState> {
     final taskRepository = ref.watch(taskRepositoryProvider);
 
     final project = await projectRepository.getProject(projectId);
-    final allTasks = await taskRepository.getAllTasks();
+    final tasks = await taskRepository.getProjectTasks(projectId);
 
-    if (!ref.mounted) {
-      throw StateError('Project detail provider was disposed.');
-    }
-
-    final projectTasks = allTasks
-        .where((task) => task.projectId == projectId)
-        .toList();
-
-    return ProjectDetailState(project: project, tasks: projectTasks);
+    return ProjectDetailState(project: project, tasks: tasks);
   }
 }
 
