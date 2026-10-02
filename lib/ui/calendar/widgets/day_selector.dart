@@ -4,27 +4,28 @@ class DaySelector extends StatelessWidget {
   const DaySelector({
     super.key,
     required this.selectedDate,
+    required this.dates,
     required this.onDateSelected,
+    required this.onPreviousWeek,
+    required this.onNextWeek,
   });
 
   final DateTime selectedDate;
+  final List<DateTime> dates;
   final ValueChanged<DateTime> onDateSelected;
+  final VoidCallback onPreviousWeek;
+  final VoidCallback onNextWeek;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    final dates = List.generate(
-      7,
-      (index) => DateTime(2026, 9, 6 + index),
-    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           IconButton(
-            onPressed: () {},
+            onPressed: onPreviousWeek,
             icon: const Icon(Icons.chevron_left),
           ),
 
@@ -76,7 +77,7 @@ class DaySelector extends StatelessWidget {
           ),
 
           IconButton(
-            onPressed: () {},
+            onPressed: onNextWeek,
             icon: const Icon(Icons.chevron_right),
           ),
         ],

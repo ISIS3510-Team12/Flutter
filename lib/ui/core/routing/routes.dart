@@ -3,6 +3,7 @@ abstract final class Routes {
   static const home = '/home';
   static const signin = '/signin';
   static const signup = '/signup';
+  static const calendar = '/calendar';
   
   static const publicRoutes = [
     landing,

@@ -56,6 +56,10 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                         switch (index){
                           case 0:
                           context.go(Routes.home);
+
+                          case 3:
+                          context.go(Routes.calendar);
+                          break;
                           
                         }
                       },

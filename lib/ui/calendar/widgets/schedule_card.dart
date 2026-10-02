@@ -36,7 +36,7 @@ class ScheduleCard extends StatelessWidget {
               radius: 22,
               backgroundColor: theme.colorScheme.secondary,
               child: Text(
-                'D',
+                assignedTo.isNotEmpty ? assignedTo[0].toUpperCase() : '?',
                 style: TextStyle(
                   color: theme.colorScheme.onSecondary,
                   fontWeight: FontWeight.bold,
