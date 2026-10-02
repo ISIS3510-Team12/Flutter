@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group.dart';
+import 'package:team12_flutter_juggle/domain/models/user/user.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_edit_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 
 class GroupEditScreen extends ConsumerStatefulWidget {
   const GroupEditScreen({
@@ -22,6 +24,33 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   late final TextEditingController descriptionController;
 
   final Set<String> selectedUserIds = {};
+  List<User> users = [];
+  String? currentUserId;
+  bool isLoadingUsers = true;
+
+  Future<void> _loadUsers() async {
+    try {
+      final currentUser = await ref.read(currentUserProvider.future);
+
+      final userRepository = ref.read(userRepositoryProvider);
+
+      final loadedUsers = await userRepository.getUsers();
+
+      if (!mounted) return;
+
+      setState(() {
+        currentUserId = currentUser?.userId;
+        users = loadedUsers;
+        isLoadingUsers = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoadingUsers = false;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -38,6 +67,8 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     selectedUserIds.addAll(
       widget.group.users.map((user) => user.userId),
     );
+
+    _loadUsers();
   }
 
   @override
@@ -50,11 +81,31 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   Future<void> _updateGroup() async {
     final viewModel = ref.read(groupEditViewModelProvider);
 
+    final originalUserIds = widget.group.users
+        .map((user) => user.userId)
+        .toSet();
+
+    final emailsToAdd = users
+        .where(
+          (user) =>
+              selectedUserIds.contains(user.userId) &&
+              !originalUserIds.contains(user.userId),
+        )
+        .map((user) => user.email)
+        .toList();
+
+    final userIdsToRemove = originalUserIds
+        .where(
+          (userId) => !selectedUserIds.contains(userId),
+        )
+        .toList();
+
     final success = await viewModel.updateGroup(
       groupId: widget.group.id,
       name: nameController.text.trim(),
       description: descriptionController.text.trim(),
-      userIds: selectedUserIds.toList(),
+      emailsToAdd: emailsToAdd,
+      userIdsToRemove: userIdsToRemove,
     );
 
     if (!mounted) return;
@@ -160,8 +211,14 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     );
   }
 
-  Widget _buildEditPeopleSection(BuildContext context) {
+ Widget _buildEditPeopleSection(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (isLoadingUsers) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,19 +230,21 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        ...widget.group.users.map(
+        ...users.map(
           (user) => CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             value: selectedUserIds.contains(user.userId),
-            onChanged: (value) {
-              setState(() {
-                if (value == true) {
-                  selectedUserIds.add(user.userId);
-                } else {
-                  selectedUserIds.remove(user.userId);
-                }
-              });
-            },
+            onChanged: user.userId == currentUserId
+              ? null
+              : (value) {
+                  setState(() {
+                    if (value == true) {
+                      selectedUserIds.add(user.userId);
+                    } else {
+                      selectedUserIds.remove(user.userId);
+                    }
+                  });
+                },
             secondary: CircleAvatar(
               backgroundColor: theme.colorScheme.primaryContainer,
               child: Text(
@@ -201,6 +260,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
             title: Text(
               '${user.firstName} ${user.lastName}',
             ),
+            subtitle: Text(user.email),
           ),
         ),
       ],

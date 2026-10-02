@@ -1,29 +1,76 @@
-import 'package:team12_flutter_juggle/data/services/group/group_api_client.dart';
+import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group_create.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group_update.dart';
 
 class GroupRepository {
-  GroupRepository(this._apiClient);
+  GroupRepository(this._dio);
 
-  final GroupApiClient _apiClient;
+  final Dio _dio;
 
-  Future<List<Group>> getGroups() {
-    return _apiClient.fetchGroups();
-  }
-
-  Future<Group> createGroup(GroupCreate group) {
-    return _apiClient.createGroup(group);
-  }
-
-  Future<Group> updateGroup(int groupId, GroupUpdate group,) {
-    return _apiClient.updateGroup(
-      groupId,
-      group,
+  Future<List<Group>> getGroups() async {
+    final response = await _dio.get<List<dynamic>>(
+      '/groups',
     );
+
+    return response.data!
+        .map(
+          (json) => Group.fromJson(
+            json as Map<String, dynamic>,
+          ),
+        )
+        .toList();
   }
 
-  Future<Group> getGroup(int groupId) {
-    return _apiClient.fetchGroup(groupId);
+  Future<Group> createGroup(GroupCreate group) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/groups',
+      data: group.toJson(),
+    );
+
+    return Group.fromJson(response.data!);
+  }
+
+  Future<Group> updateGroup(
+    int groupId,
+    GroupUpdate group,
+  ) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/groups/$groupId',
+      data: group.toJson(),
+    );
+
+    return Group.fromJson(response.data!);
+  }
+
+  Future<Group> getGroup(int groupId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/groups/$groupId',
+    );
+
+    return Group.fromJson(response.data!);
+  }
+
+  Future<Group> addMember(
+    int groupId,
+    String email,
+  ) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/groups/$groupId/members',
+      data: {
+        'email': email,
+      },
+    );
+
+    return Group.fromJson(response.data!);
+  }
+
+  Future<void> removeMember(
+    int groupId,
+    String userId,
+  ) async {
+    await _dio.delete(
+      '/groups/$groupId/members/$userId',
+    );
   }
 }

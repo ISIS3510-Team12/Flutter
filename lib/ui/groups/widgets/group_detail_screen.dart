@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group.dart';

@@ -18,7 +18,7 @@ class NewGroupViewModel extends ChangeNotifier {
   Future<bool> createGroup({
     required String name,
     required String description,
-    required List<String> userIds,
+    required List<String> selectedEmails,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -29,10 +29,16 @@ class NewGroupViewModel extends ChangeNotifier {
       final group = GroupCreate(
         name: name,
         description: description,
-        userIds: userIds,
       );
 
-      await _groupRepository.createGroup(group);
+      final createdGroup = await _groupRepository.createGroup(group);
+
+      for (final email in selectedEmails) {
+        await _groupRepository.addMember(
+          createdGroup.id,
+          email,
+        );
+      }
 
       return true;
     } catch (e) {

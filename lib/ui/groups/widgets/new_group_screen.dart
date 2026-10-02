@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/new_group_view_model_provider.dart';
 
 class NewGroupScreen extends ConsumerStatefulWidget {
@@ -19,7 +19,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
   final TextEditingController searchController = TextEditingController();
 
   List<GroupUserOption> users = [];
-
+  bool isLoadingUsers = true;
   final Set<String> selectedUserIds = {};
 
   @override
@@ -30,33 +30,37 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
 
   Future<void> _loadUsers() async {
     try {
+      final currentUser = await ref.read(currentUserProvider.future);
       final userRepository = ref.read(userRepositoryProvider);
-      final backendUsers = await userRepository.getUsers();
+      final loadedUsers = await userRepository.getUsers();
+      final availableUsers = loadedUsers
+          .where(
+            (user) => user.userId != currentUser?.userId,
+          )
+          .map(
+            (user) => GroupUserOption(
+              userId: user.userId,
+              name: '${user.firstName} ${user.lastName}',
+              email: user.email,
+              initial: user.firstName.isNotEmpty
+                  ? user.firstName[0].toUpperCase()
+                  : '?',
+            ),
+          )
+          .toList();
 
       if (!mounted) return;
 
       setState(() {
-        users = backendUsers
-            .map(
-              (user) => GroupUserOption(
-                userId: user.userId,
-                name: '${user.firstName} ${user.lastName}',
-                email: user.email,
-                initial: user.firstName.isNotEmpty
-                    ? user.firstName[0].toUpperCase()
-                    : '?',
-              ),
-            )
-            .toList();
+        users = availableUsers;
+        isLoadingUsers = false;
       });
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not load users: $e'),
-        ),
-      );
+      setState(() {
+        isLoadingUsers = false;
+      });
     }
   }
 
@@ -74,7 +78,10 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
     final success = await viewModel.createGroup(
       name: nameController.text.trim(),
       description: classController.text.trim(),
-      userIds: selectedUserIds.toList(),
+      selectedEmails: users
+          .where((user) => selectedUserIds.contains(user.userId))
+          .map((user) => user.email)
+          .toList(),
     );
 
     if (!mounted) return;

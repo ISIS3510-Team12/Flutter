@@ -19,7 +19,8 @@ class GroupEditViewModel extends ChangeNotifier {
     required int groupId,
     required String name,
     required String description,
-    required List<String> userIds,
+    required List<String> emailsToAdd,
+    required List<String> userIdsToRemove,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -29,13 +30,26 @@ class GroupEditViewModel extends ChangeNotifier {
       final group = GroupUpdate(
         name: name,
         description: description,
-        userIds: userIds,
       );
 
       await _groupRepository.updateGroup(
         groupId,
         group,
       );
+
+      for (final email in emailsToAdd) {
+        await _groupRepository.addMember(
+          groupId,
+          email,
+        );
+      }
+
+      for (final userId in userIdsToRemove) {
+        await _groupRepository.removeMember(
+          groupId,
+          userId,
+        );
+      }
 
       return true;
     } catch (e) {
