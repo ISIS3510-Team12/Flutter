@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/custom_bottom_sheet.dart';
@@ -10,11 +11,24 @@ import 'package:team12_flutter_juggle/ui/home/widgets/overview_tabs.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  int _selectedTab = 0;
+
+  void _changeTab(int index) {
+    setState(() {
+      _selectedTab = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(homeViewModelProvider);
     return Scaffold(
       appBar: CustomAppBar(),
@@ -40,12 +54,11 @@ class HomeScreen extends ConsumerWidget {
               userSection(context, data.user.firstName),
               overviewSection(
                 context,
-                data.selectedTab,
-                (int index) =>
-                    ref.read(homeViewModelProvider.notifier).changeTab(index),
-                data.upcomingTasks,
+                _selectedTab,
+                _changeTab,
+                data.dueTodayTasks,
                 data.recentActivity,
-                numTasks: data.numTasks,
+                data.numTasks,
                 numNotifications: data.numNotifications,
               ),
             ],
@@ -106,9 +119,9 @@ class HomeScreen extends ConsumerWidget {
     BuildContext context,
     int selectedTab,
     Function(int) changeTab,
-    List<Map<String, dynamic>> upcomingTasks,
-    List<Map<String, dynamic>> recentActivity, {
-    numTasks = 9,
+    List<Map<String, dynamic>> dueTodayTasks,
+    List<Map<String, dynamic>> recentActivity,
+    int numTasks, {
     numNotifications = 5,
   }) {
     return Column(
@@ -121,7 +134,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         OverviewCards(numTasks: numTasks, numNotifications: numNotifications),
         OverviewTabs(
-          upcomingTasks: upcomingTasks,
+          dueTodayTasks: dueTodayTasks,
           recentActivity: recentActivity,
           selectedTab: selectedTab,
           changeTab: changeTab,
