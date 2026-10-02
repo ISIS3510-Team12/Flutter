@@ -1,21 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
+import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/ui/calendar/strategies/day_schedule_strategy.dart';
 
 class CalendarViewModel extends AsyncNotifier<CalendarState> {
-  late final DayScheduleStrategy _scheduleStrategy;
+  final DayScheduleStrategy _scheduleStrategy = DayScheduleStrategy();
 
   @override
   Future<CalendarState> build() async {
-    _scheduleStrategy = DayScheduleStrategy();
+    final taskRepository = ref.watch(taskRepositoryProvider);
 
     final selectedDate = DateTime.now();
+    final tasks = await taskRepository.getAllTasks();
 
     return CalendarState(
       selectedDate: selectedDate,
       week: _getWeek(selectedDate),
+      tasks: tasks,
       schedule: _scheduleStrategy.getSchedule(
-        const [],
+        tasks,
         selectedDate,
       ),
     );
@@ -23,17 +28,14 @@ class CalendarViewModel extends AsyncNotifier<CalendarState> {
 
   void selectDate(DateTime date) {
     final currentState = state.value;
-
-    if (currentState == null) {
-      return;
-    }
+    if (currentState == null) return;
 
     state = AsyncData(
       currentState.copyWith(
         selectedDate: date,
         week: _getWeek(date),
         schedule: _scheduleStrategy.getSchedule(
-          currentState.schedule,
+          currentState.tasks,
           date,
         ),
       ),
@@ -42,10 +44,7 @@ class CalendarViewModel extends AsyncNotifier<CalendarState> {
 
   void previousWeek() {
     final currentState = state.value;
-
-    if (currentState == null) {
-      return;
-    }
+    if (currentState == null) return;
 
     final newDate = currentState.selectedDate.subtract(
       const Duration(days: 7),
@@ -56,10 +55,7 @@ class CalendarViewModel extends AsyncNotifier<CalendarState> {
 
   void nextWeek() {
     final currentState = state.value;
-
-    if (currentState == null) {
-      return;
-    }
+    if (currentState == null) return;
 
     final newDate = currentState.selectedDate.add(
       const Duration(days: 7),
@@ -87,22 +83,26 @@ class CalendarViewModel extends AsyncNotifier<CalendarState> {
 class CalendarState {
   final DateTime selectedDate;
   final List<DateTime> week;
-  final List<dynamic> schedule;
+  final List<Task> tasks;
+  final List<Task> schedule;
 
   const CalendarState({
     required this.selectedDate,
     required this.week,
+    required this.tasks,
     required this.schedule,
   });
 
   CalendarState copyWith({
     DateTime? selectedDate,
     List<DateTime>? week,
-    List<dynamic>? schedule,
+    List<Task>? tasks,
+    List<Task>? schedule,
   }) {
     return CalendarState(
       selectedDate: selectedDate ?? this.selectedDate,
       week: week ?? this.week,
+      tasks: tasks ?? this.tasks,
       schedule: schedule ?? this.schedule,
     );
   }

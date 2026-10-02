@@ -76,20 +76,24 @@ class CalendarScreen extends ConsumerWidget {
               ),
 
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                  children: calendar.schedule
-                      .map(
-                        (item) => ScheduleCard(
-                          title: 'Needs Help.',
-                          task: 'Finish the figma',
-                          assignedTo: 'Diego',
-                          timeInfo: 'Tomorrow - 12 hours left',
+                child: calendar.schedule.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No tasks scheduled for this day.',
+                          style: TextStyle(fontSize: 16),
                         ),
                       )
-                      .toList(),
-                ),
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                        itemCount: calendar.schedule.length,
+                        itemBuilder: (context, index) {
+                          final task = calendar.schedule[index];
+
+                          return ScheduleCard(task: task);
+                        },
+                      ),
               ),
+
             ],
           );
         },
