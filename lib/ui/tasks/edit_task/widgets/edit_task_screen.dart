@@ -151,6 +151,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
                   members: form.members,
                   selectedIds: form.selectedMemberIds,
                   onToggle: notifier.toggleMember,
+                  lockedId: form.lockedMemberId,
                 ),
                 const SizedBox(height: 19),
                 const TaskFieldLabel(

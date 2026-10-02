@@ -72,6 +72,8 @@ class CreateTaskFormState {
 
   String get groupName => group?.name ?? 'No group';
 
+  String? get lockedMemberId => members.isEmpty ? null : members.first.id;
+
   bool get canSubmit =>
       group != null && title.isNotEmpty && deadline != null && time != null;
 
@@ -180,6 +182,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
   void toggleMember(String memberId) {
     final current = state.value;
     if (current == null) return;
+    if (memberId == current.lockedMemberId) return;
     final selected = Set<String>.from(current.selectedMemberIds);
     if (!selected.add(memberId)) selected.remove(memberId);
     state = AsyncData(current.copyWith(selectedMemberIds: selected));

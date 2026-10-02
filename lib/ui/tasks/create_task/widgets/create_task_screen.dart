@@ -183,6 +183,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   members: form.members,
                   selectedIds: form.selectedMemberIds,
                   onToggle: notifier.toggleMember,
+                  lockedId: form.lockedMemberId,
                 ),
                 const SizedBox(height: 19),
                 const TaskFieldLabel('DEADLINE & TIMING', required: true),
