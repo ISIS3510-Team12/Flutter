@@ -1,6 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/ui/calendar/strategies/day_schedule_strategy.dart';
