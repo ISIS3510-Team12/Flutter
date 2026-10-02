@@ -71,4 +71,8 @@ final routes = <RouteBase>[
     path: Routes.profileSettings,
     builder: (context, state) => const SettingsScreen(),
   ),
+  GoRoute(
+    path: Routes.calendar,
+    builder: (context, state) => const CalendarScreen(),
+  ),
 ];
