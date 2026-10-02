@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
-import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/custom_bottom_sheet.dart';
@@ -12,7 +9,6 @@ import 'package:team12_flutter_juggle/ui/home/widgets/overview_cards.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_tabs.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel.dart';
-import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -41,19 +37,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Future<void> _openProjects() async {
-    final groups = await ref.read(groupRepositoryProvider).getGroups();
-    final group = ref
-        .read(selectedTaskGroupIdProvider.notifier)
-        .resolve(groups);
-    if (group == null || !mounted) return;
-    final project = await context.push<Project>(
-      '/groups/${group.id}/projects/create',
-    );
-    if (project == null || !mounted) return;
-    context.push('/projects/${project.id}');
-  }
-
   Widget _buildHomeContent(
     BuildContext context,
     WidgetRef ref,
@@ -68,11 +51,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               userSection(context, data.user.firstName),
-              OutlinedButton.icon(
-                onPressed: _openProjects,
-                icon: const Icon(Icons.folder_outlined),
-                label: const Text('Projects (temporary)'),
-              ),
               overviewSection(
                 context,
                 _selectedTab,
