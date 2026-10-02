@@ -1,15 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:team12_flutter_juggle/data/repositories/project/project_repository.dart';
-import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project_create.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
 
 class ProjectViewModel extends AsyncNotifier<ProjectDetailState?> {
-
   @override
   Future<ProjectDetailState?> build() async {
     return null;
@@ -24,6 +21,8 @@ class ProjectViewModel extends AsyncNotifier<ProjectDetailState?> {
     state = const AsyncLoading();
 
     try {
+      final projectRepository = ref.read(projectRepositoryProvider);
+
       final projectData = ProjectCreate(
         name: name,
         description: description,
@@ -32,7 +31,7 @@ class ProjectViewModel extends AsyncNotifier<ProjectDetailState?> {
       );
 
       final createdProject =
-          await _projectRepository.createProject(projectData);
+          await projectRepository.createProject(projectData);
 
       state = AsyncData(
         ProjectDetailState(
@@ -71,6 +70,7 @@ class ProjectViewModel extends AsyncNotifier<ProjectDetailState?> {
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
     }
+  }
 }
 
 class ProjectDetailState {

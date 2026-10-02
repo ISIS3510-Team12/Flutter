@@ -1,16 +1,16 @@
-import 'package:team12_flutter_juggle/data/services/profile/settings_local_service.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_settings.dart';
 
 class SettingsRepository {
-  SettingsRepository(this._localService);
+  AppSettings _settings = const AppSettings(
+    themeMode: AppThemeMode.system,
+    soundAndVibrationEnabled: true,
+  );
 
-  final SettingsLocalService _localService;
-
-  Future<AppSettings> getSettings() {
-    return _localService.readSettings();
+  Future<AppSettings> getSettings() async {
+    return _settings;
   }
 
-  Future<void> updateSettings(AppSettings settings) {
-    return _localService.writeSettings(settings);
+  Future<void> updateSettings(AppSettings settings) async {
+    _settings = settings;
   }
 }
