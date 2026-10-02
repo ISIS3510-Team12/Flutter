@@ -13,6 +13,8 @@ class App extends ConsumerWidget {
       routerConfig: router,
       title: 'Juggle',
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
     );
   }

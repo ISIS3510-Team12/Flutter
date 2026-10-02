@@ -1,0 +1,181 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
+import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel.dart';
+import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/profile/location/widgets/location_map_picker.dart';
+import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
+
+class LocationScreen extends ConsumerWidget {
+  const LocationScreen({super.key});
+
+  Future<void> _pickPlace(
+    BuildContext context,
+    WidgetRef ref,
+    LatLng? current,
+  ) async {
+    final picked = await context.push<LatLng>(
+      Routes.profileLocationMap,
+      extra: current,
+    );
+    if (picked != null) {
+      ref.read(locationViewModelProvider.notifier).selectPoint(picked);
+    }
+  }
+
+  Future<void> _pickRadius(
+    BuildContext context,
+    WidgetRef ref,
+    int current,
+  ) async {
+    final options = {...notifyWithinOptions, current}.toList()..sort();
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Notify within'),
+        children: [
+          for (final meters in options)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(meters),
+              child: Text('$meters m'),
+            ),
+        ],
+      ),
+    );
+    if (selected != null) {
+      ref.read(locationViewModelProvider.notifier).updateNotifyWithin(selected);
+    }
+  }
+
+  Future<void> _save(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final saved = await ref.read(locationViewModelProvider.notifier).save();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          saved ? 'Location saved' : 'The location could not be saved',
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final state = ref.watch(locationViewModelProvider);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Location reminders')),
+      body: state.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        data: (location) => ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            Text(
+              'Pick a place where you want to be reminded about your pending '
+              'tasks. We\u2019ll notify you when you\u2019re nearby.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            _MapPreview(
+              point: location.point,
+              onTap: () => _pickPlace(context, ref, location.point),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SettingsMenuTile(
+                title: 'Notify within',
+                subtitle: '${location.notifyWithin} m',
+                onTap: () => _pickRadius(context, ref, location.notifyWithin),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: FilledButton(
+                onPressed: location.canSave ? () => _save(context, ref) : null,
+                child: const Text('Save location'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MapPreview extends StatelessWidget {
+  const _MapPreview({required this.point, required this.onTap});
+
+  final LatLng? point;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selected = point;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: SizedBox(
+        height: 180,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (selected == null)
+              ColoredBox(color: theme.colorScheme.surfaceContainerHighest)
+            else
+              IgnorePointer(
+                child: FlutterMap(
+                  key: ValueKey(selected),
+                  options: MapOptions(
+                    initialCenter: selected,
+                    initialZoom: 15,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.none,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: mapTilesUrl,
+                      userAgentPackageName: mapUserAgent,
+                    ),
+                  ],
+                ),
+              ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Symbols.location_on,
+                        fill: 1,
+                        size: 36,
+                        color: theme.colorScheme.primary,
+                      ),
+                      if (selected == null)
+                        Text(
+                          'Tap to choose on map',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

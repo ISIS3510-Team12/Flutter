@@ -4,7 +4,10 @@ import 'package:team12_flutter_juggle/ui/home/widgets/home_screen.dart';
 import 'package:team12_flutter_juggle/ui/landing/widgets/landing_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signin/widgets/signin_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signup/widgets/signup_screen.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/widgets/information_screen.dart';
+import 'package:team12_flutter_juggle/ui/profile/location/widgets/location_map_picker.dart';
+import 'package:team12_flutter_juggle/ui/profile/location/widgets/location_screen.dart';
 import 'package:team12_flutter_juggle/ui/profile/notifications/widgets/notifications_screen.dart';
 import 'package:team12_flutter_juggle/ui/profile/profile/widgets/profile_screen.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_screen.dart';
@@ -70,6 +73,15 @@ final routes = <RouteBase>[
   GoRoute(
     path: Routes.profileSettings,
     builder: (context, state) => const SettingsScreen(),
+  ),
+  GoRoute(
+    path: Routes.profileLocation,
+    builder: (context, state) => const LocationScreen(),
+  ),
+  GoRoute(
+    path: Routes.profileLocationMap,
+    builder: (context, state) =>
+        LocationMapPicker(initial: state.extra as LatLng?),
   ),
   GoRoute(
     path: Routes.calendar,

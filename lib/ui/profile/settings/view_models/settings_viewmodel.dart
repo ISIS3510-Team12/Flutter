@@ -10,12 +10,6 @@ class SettingsViewModel extends AsyncNotifier<AppSettings> {
     return ref.watch(settingsRepositoryProvider).getSettings();
   }
 
-  Future<void> updateThemeMode(AppThemeMode mode) async {
-    final current = state.value;
-    if (current == null) return;
-    await _persist(current.copyWith(themeMode: mode));
-  }
-
   Future<void> updateSoundAndVibration(bool enabled) async {
     final current = state.value;
     if (current == null) return;
@@ -23,7 +17,12 @@ class SettingsViewModel extends AsyncNotifier<AppSettings> {
   }
 
   Future<void> _persist(AppSettings updated) async {
+    final previous = state.value;
     state = AsyncData(updated);
-    await ref.read(settingsRepositoryProvider).updateSettings(updated);
+    final result = await AsyncValue.guard(
+      () => ref.read(settingsRepositoryProvider).updateSettings(updated),
+    );
+    if (!ref.mounted) return;
+    if (result.hasError && previous != null) state = AsyncData(previous);
   }
 }
