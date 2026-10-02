@@ -28,7 +28,10 @@ class AllTasksViewModel extends AsyncNotifier<AllTasksState> {
   ) async {
     final tasks = switch (filter) {
       TaskFilter.urgent => await repository.getAllTasks(priority: true),
-      TaskFilter.dueSoon => await repository.getAllTasks(dueWithinDays: 1),
+      TaskFilter.dueSoon => await repository.getAllTasks(
+        mine: true,
+        dueWithinDays: 7,
+      ),
       TaskFilter.assignedToMe => await repository.getAllTasks(mine: true),
     };
     return AllTasksState(tasks: tasks, filter: filter);
