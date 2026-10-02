@@ -24,7 +24,6 @@ Add more detail only if the title and linked issue do not fully explain the PR.
 ## Validation
 
 - [ ] `flutter analyze`
-- [ ] `flutter test`
 - [ ] Checked on Android
 
 ## Before Merge
