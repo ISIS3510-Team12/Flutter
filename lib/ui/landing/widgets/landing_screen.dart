@@ -47,8 +47,7 @@ class LandingScreen extends StatelessWidget {
                 topRight: Radius.circular(40),
               ),
             ),
-            child: Container(
-              margin: EdgeInsets.only(right: 20, left: 20),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 spacing: height <= 914 ? 14 : 20,
@@ -67,13 +66,13 @@ class LandingScreen extends StatelessWidget {
                         'Manage them all in one place.',
                         style: theme.textTheme.bodyMedium,
                       ),
-                      SizedBox(height: 5),
+                      const SizedBox(height: 5),
                     ],
                   ),
                   FilledButton(
                     onPressed: () => context.go('/signup'),
                     style: FilledButton.styleFrom(
-                      fixedSize: Size(251, 40),
+                      fixedSize: const Size(251, 40),
                       backgroundColor: theme.primaryColor,
                     ),
                     child: Text(

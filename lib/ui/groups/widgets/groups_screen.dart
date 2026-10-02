@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
 
-import 'package:team12_flutter_juggle/data/repositories/project/project_repository.dart';
-import 'package:team12_flutter_juggle/data/repositories/user/user_repository.dart';
+
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model.dart';
@@ -16,12 +15,7 @@ import 'package:team12_flutter_juggle/ui/groups/widgets/new_group_screen.dart';
 class GroupsScreen extends ConsumerWidget {
   const GroupsScreen({
     super.key,
-    required this.projectRepository,
-    required this.userRepository,
   });
-
-  final ProjectRepository projectRepository;
-  final UserRepository userRepository;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -135,10 +129,9 @@ class GroupsScreen extends ConsumerWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => GroupDetailScreen(
-                  group: group,
-                  projectRepository: projectRepository,
+                    group: group,
+                  ),
                 ),
-              ),
             );
           },
         );

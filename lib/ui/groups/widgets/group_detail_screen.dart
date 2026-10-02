@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
-import 'package:team12_flutter_juggle/data/repositories/project/project_repository.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
@@ -13,11 +12,9 @@ class GroupDetailScreen extends ConsumerStatefulWidget {
   const GroupDetailScreen({
     super.key,
     required this.group,
-    required this.projectRepository,
   });
 
   final Group group;
-  final ProjectRepository projectRepository;
 
   final List<Map<String, String>> projects = const [
     {
@@ -70,7 +67,6 @@ class _GroupDetailScreenState
       MaterialPageRoute(
         builder: (context) => CreateProjectScreen(
           groupId: group.id,
-          projectRepository: widget.projectRepository,
         ),
       ),
     );
@@ -81,11 +77,12 @@ class _GroupDetailScreenState
       context,
       MaterialPageRoute(
         builder: (context) => ProjectDetailScreen(
-          project: createdProject,
+          projectId: createdProject.id,
         ),
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

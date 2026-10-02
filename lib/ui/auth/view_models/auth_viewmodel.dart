@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/auth/auth_repository.dart';
 
@@ -45,11 +46,10 @@ class AuthViewModel extends AsyncNotifier<void> {
 
   Future<void> signOut() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       await repository.signOut();
     });
+    if (!ref.mounted) return;
+    state = result;
   }
 }
-
-
-
