@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/calendar/widgets/calendar_screen.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/home_screen.dart';
 import 'package:team12_flutter_juggle/ui/landing/widgets/landing_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signin/widgets/signin_screen.dart';
@@ -69,5 +70,9 @@ final routes = <RouteBase>[
   GoRoute(
     path: Routes.profileSettings,
     builder: (context, state) => const SettingsScreen(),
+  ),
+  GoRoute(
+    path: Routes.calendar,
+    builder: (context, state) => const CalendarScreen(),
   ),
 ];
