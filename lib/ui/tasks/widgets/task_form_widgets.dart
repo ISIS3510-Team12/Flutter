@@ -27,6 +27,18 @@ InputDecoration taskMenuDecoration(ThemeData theme) {
   );
 }
 
+InputDecoration taskInactiveDecoration(ThemeData theme) {
+  return InputDecoration(
+    prefixIcon: const Icon(Symbols.stars, size: 20),
+    filled: true,
+    fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(4),
+      borderSide: BorderSide.none,
+    ),
+  );
+}
+
 InputDecoration taskTimingDecoration(
   ThemeData theme, {
   required String label,

@@ -18,7 +18,6 @@ import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_v
 class EditTaskFormState {
   const EditTaskFormState({
     required this.task,
-    required this.groups,
     required this.group,
     required this.projectOptions,
     required this.selectedProject,
@@ -34,7 +33,6 @@ class EditTaskFormState {
   });
 
   final Task task;
-  final List<TaskGroup> groups;
   final TaskGroup? group;
   final List<Project> projectOptions;
   final String? selectedProject;
@@ -57,11 +55,7 @@ class EditTaskFormState {
       .firstOrNull;
 
   EditTaskFormState copyWith({
-    TaskGroup? group,
-    List<TaskMember>? members,
-    List<Project>? projectOptions,
     String? selectedProject,
-    bool clearProject = false,
     TaskType? type,
     Set<String>? selectedMemberIds,
     DateTime? deadline,
@@ -72,13 +66,10 @@ class EditTaskFormState {
   }) {
     return EditTaskFormState(
       task: task,
-      groups: groups,
-      group: group ?? this.group,
-      projectOptions: projectOptions ?? this.projectOptions,
-      selectedProject: clearProject
-          ? null
-          : selectedProject ?? this.selectedProject,
-      members: members ?? this.members,
+      group: group,
+      projectOptions: projectOptions,
+      selectedProject: selectedProject ?? this.selectedProject,
+      members: members,
       type: type ?? this.type,
       selectedMemberIds: selectedMemberIds ?? this.selectedMemberIds,
       deadline: deadline ?? this.deadline,
@@ -115,7 +106,6 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     final members = membersWithYou(group, me);
     return EditTaskFormState(
       task: task,
-      groups: groups,
       group: group,
       projectOptions: projects,
       selectedProject: projects
@@ -131,33 +121,6 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
       needsHelp: task.needsHelp,
       currentPhoto: photo,
     );
-  }
-
-  Future<void> updateGroup(TaskGroup group) async {
-    final current = state.value;
-    if (current == null || current.group?.id == group.id) return;
-    final result = await AsyncValue.guard(() async {
-      final projects = await ref
-          .read(projectRepositoryProvider)
-          .getGroupProjects(group.id);
-      final you = current.members.first;
-      final members = [
-        you,
-        ...group.members.where((member) => member.id != you.id),
-      ];
-      final memberIds = members.map((member) => member.id).toSet();
-      return current.copyWith(
-        group: group,
-        projectOptions: projects,
-        clearProject: true,
-        members: members,
-        selectedMemberIds: current.selectedMemberIds
-            .where(memberIds.contains)
-            .toSet(),
-      );
-    });
-    if (!ref.mounted) return;
-    state = result;
   }
 
   void updateSelectedProject(String value) =>

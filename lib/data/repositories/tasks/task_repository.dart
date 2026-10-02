@@ -59,6 +59,11 @@ class TaskRepository {
     }
   }
 
+  Future<List<Task>> getProjectTasks(int projectId) async {
+    final tasks = await getAllTasks();
+    return tasks.where((task) => task.projectId == projectId).toList();
+  }
+
   Future<Task> getTask(String id) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>('/tasks/$id');
