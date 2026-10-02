@@ -15,7 +15,7 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final user = ref.watch(currentUserProvider).value;
+    final user = ref.read(currentUserProvider);
 
     void openProfile() {
       context.push(Routes.profile);
@@ -40,7 +40,11 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
             maxRadius: 16,
             backgroundColor: theme.colorScheme.primary,
             child: Text(
-              user?.initial ?? '',
+              user.when(
+                data: (user) => user?.firstName.substring(0, 1).toUpperCase() ?? '',
+                loading: () => '',
+                error: (_, _) => '',
+              ),
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.onPrimary,
                 fontSize: 16,

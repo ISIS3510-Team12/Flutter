@@ -8,7 +8,7 @@ final authStateProvider = StreamProvider.autoDispose<User?>((ref) {
   return authRepository.authState;
 });
 
-final currentUserProvider = FutureProvider<AppUser?>((ref) async {
+final currentUserProvider = FutureProvider.autoDispose<AppUser?>((ref) async {
   final firebaseUser = await ref.watch(authStateProvider.future);
   if (firebaseUser == null) {
     return null;
