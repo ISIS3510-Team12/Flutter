@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:google_fonts/google_fonts.dart";
 import "package:team12_flutter_juggle/ui/core/themes/app_color_scheme.dart";
 import "package:team12_flutter_juggle/ui/core/themes/app_typography.dart";
 
@@ -28,6 +29,28 @@ class AppTheme {
       modalBarrierColor: Colors.transparent,
       showDragHandle: true,
       dragHandleSize: Size(32, 4),
+    ),
+    datePickerTheme: DatePickerThemeData(
+      headerHeadlineStyle: GoogleFonts.spaceGrotesk(
+        fontSize: 28,
+        fontWeight: AppFontWeight.bold,
+      ),
+    ),
+    timePickerTheme: TimePickerThemeData(
+      hourMinuteTextStyle: GoogleFonts.spaceGrotesk(
+        fontSize: 54,
+        fontWeight: AppFontWeight.bold,
+      ),
+      dayPeriodColor: WidgetStateColor.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colorScheme.secondary
+            : Colors.transparent,
+      ),
+      dayPeriodTextColor: WidgetStateColor.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colorScheme.onSecondary
+            : colorScheme.onSurface,
+      ),
     ),
   );
 }

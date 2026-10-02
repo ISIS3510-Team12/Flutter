@@ -1,57 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
-import 'package:team12_flutter_juggle/data/repositories/profile/notifications_repository.dart';
-import 'package:team12_flutter_juggle/data/repositories/profile/profile_repository.dart';
-import 'package:team12_flutter_juggle/data/repositories/profile/settings_repository.dart';
-import 'package:team12_flutter_juggle/ui/profile/information/view_models/information_viewmodel.dart';
-import 'package:team12_flutter_juggle/ui/profile/information/widgets/information_screen.dart';
-import 'package:team12_flutter_juggle/ui/profile/notifications/view_models/notifications_viewmodel.dart';
-import 'package:team12_flutter_juggle/ui/profile/notifications/widgets/notifications_screen.dart';
-import 'package:team12_flutter_juggle/ui/profile/profile/view_models/profile_viewmodel.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/profile/profile/widgets/profile_menu_tile.dart';
-import 'package:team12_flutter_juggle/ui/profile/settings/view_models/settings_viewmodel.dart';
-import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_screen.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({
-    super.key,
-    required this.profileRepository,
-    required this.notificationsRepository,
-    required this.settingsRepository,
-    this.onSignedOut,
-  });
-
-  final ProfileRepository profileRepository;
-  final NotificationsRepository notificationsRepository;
-  final SettingsRepository settingsRepository;
-  final VoidCallback? onSignedOut;
+class ProfileScreen extends ConsumerWidget {
+  const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  late final ProfileViewModel _viewModel = ProfileViewModel(
-    profileRepository: widget.profileRepository,
-  );
-
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final user = ref.watch(currentUserProvider);
     return Scaffold(
       appBar: AppBar(),
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          final profile = _viewModel.profile;
-          if (profile == null) {
-            return const Center(child: CircularProgressIndicator());
+      body: user.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        data: (user) {
+          if (user == null) {
+            return const SizedBox.shrink();
           }
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -62,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     radius: 24,
                     backgroundColor: theme.colorScheme.primary,
                     child: Text(
-                      profile.initial,
+                      user.initial,
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.onPrimary,
                       ),
@@ -72,9 +41,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(profile.fullName, style: theme.textTheme.titleLarge),
+                      Text(user.fullName, style: theme.textTheme.titleLarge),
                       Text(
-                        profile.role,
+                        'Student',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -87,43 +56,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ProfileMenuTile(
                 icon: Symbols.account_circle,
                 label: 'Profile Information',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => InformationScreen(
-                      viewModel: InformationViewModel(
-                        profileRepository: widget.profileRepository,
-                      ),
-                    ),
-                  ),
-                ),
+                onTap: () => context.push(Routes.profileInformation),
               ),
               ProfileMenuTile(
                 icon: Symbols.notifications,
                 label: 'Notifications',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => NotificationsScreen(
-                      viewModel: NotificationsViewModel(
-                        notificationsRepository: widget.notificationsRepository,
-                      ),
-                    ),
-                  ),
-                ),
+                onTap: () => context.push(Routes.profileNotifications),
               ),
               ProfileMenuTile(
                 icon: Symbols.settings,
                 label: 'Settings',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => SettingsScreen(
-                      viewModel: SettingsViewModel(
-                        settingsRepository: widget.settingsRepository,
-                        // TODO: once there's a login flow, wire a default
-                        onSignedOut: widget.onSignedOut ?? () {},
-                      ),
-                    ),
-                  ),
-                ),
+                onTap: () => context.push(Routes.profileSettings),
               ),
             ],
           );
