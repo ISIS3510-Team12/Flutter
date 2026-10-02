@@ -20,6 +20,7 @@ class Task {
     this.assigneeIds = const [],
     this.hasPhoto = false,
     this.groupId,
+    this.ownerId,
     this.projectId,
     this.projectName,
     this.relatedTaskIds = const [],
@@ -40,6 +41,7 @@ class Task {
   final List<String> assigneeIds;
   final bool hasPhoto;
   final int? groupId;
+  final String? ownerId;
   final int? projectId;
   final String? projectName;
   final List<String> relatedTaskIds;
@@ -82,6 +84,7 @@ class Task {
       needsHelp: needsHelp ?? this.needsHelp,
       hasPhoto: hasPhoto ?? this.hasPhoto,
       groupId: groupId,
+      ownerId: ownerId,
       projectId: projectId ?? this.projectId,
       projectName: projectName ?? this.projectName,
       relatedTaskIds: relatedTaskIds ?? this.relatedTaskIds,
@@ -117,6 +120,7 @@ class Task {
       needsHelp: json['needs_help'] as bool? ?? false,
       hasPhoto: json['has_photo'] as bool? ?? false,
       groupId: json['group_id'] as int?,
+      ownerId: json['user_id'] as String?,
       projectId: json['project_id'] as int?,
       relatedTaskIds: [
         for (final related

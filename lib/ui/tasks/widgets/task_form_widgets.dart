@@ -118,13 +118,13 @@ class TaskMemberChip extends StatelessWidget {
     required this.name,
     required this.initial,
     required this.selected,
-    required this.onTap,
+    this.onTap,
   });
 
   final String name;
   final String initial;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -171,11 +171,13 @@ class TaskMembersSelector extends StatelessWidget {
     required this.members,
     required this.selectedIds,
     required this.onToggle,
+    this.lockedId,
   });
 
   final List<TaskMember> members;
   final Set<String> selectedIds;
   final ValueChanged<String> onToggle;
+  final String? lockedId;
 
   @override
   Widget build(BuildContext context) {
@@ -192,7 +194,9 @@ class TaskMembersSelector extends StatelessWidget {
                   name: member.name,
                   initial: member.initial,
                   selected: selectedIds.contains(member.id),
-                  onTap: () => onToggle(member.id),
+                  onTap: member.id == lockedId
+                      ? null
+                      : () => onToggle(member.id),
                 ),
               ),
           ],

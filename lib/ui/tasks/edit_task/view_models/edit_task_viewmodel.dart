@@ -49,6 +49,8 @@ class EditTaskFormState {
   List<String> get projects =>
       projectOptions.map((project) => project.name).toList();
 
+  String? get lockedMemberId => task.ownerId;
+
   int? get selectedProjectId => projectOptions
       .where((project) => project.name == selectedProject)
       .map((project) => project.id)
@@ -114,7 +116,7 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
           .firstOrNull,
       members: members,
       type: task.type,
-      selectedMemberIds: task.assigneeIds.toSet(),
+      selectedMemberIds: {...task.assigneeIds, ?task.ownerId},
       deadline: task.deadline,
       time: TimeOfDay.fromDateTime(task.deadline),
       isPriority: task.isPriority,
@@ -131,6 +133,7 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
   void toggleMember(String memberId) {
     final current = state.value;
     if (current == null) return;
+    if (memberId == current.lockedMemberId) return;
     final selected = Set<String>.from(current.selectedMemberIds);
     if (!selected.add(memberId)) selected.remove(memberId);
     state = AsyncData(current.copyWith(selectedMemberIds: selected));

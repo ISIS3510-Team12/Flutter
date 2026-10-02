@@ -86,20 +86,12 @@ class GroupDrawer extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => Center(child: Text('Error: $error')),
           data: (data) {
-            final personal = data.groups.where((group) => group.isPersonal);
-            final others = data.groups.where((group) => !group.isPersonal);
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                for (final group in personal) ...[
-                  Text('Personal', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 16),
-                  _groupTile(context, ref, group, group.id == data.group?.id),
-                  const Divider(),
-                ],
                 Text('Your Groups', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 16),
-                for (final group in others)
+                for (final group in data.groups)
                   _groupTile(context, ref, group, group.id == data.group?.id),
                 const Divider(),
                 ListTile(
