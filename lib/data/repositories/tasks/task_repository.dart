@@ -1,16 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:team12_flutter_juggle/data/repositories/groups/group_repository.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 
 class TaskRepository {
-  TaskRepository(this._dio, this._groups);
+  TaskRepository(this._dio);
 
   final Dio _dio;
-  final GroupRepository _groups;
 
   Future<List<Task>> getGroupTasks(TaskGroup group) async {
     try {
@@ -45,7 +43,7 @@ class TaskRepository {
           'due_within_days': ?dueWithinDays,
         },
       );
-      final groups = {for (final g in await _groups.getGroups()) g.id: g.name};
+      final groups = await _loadGroupNames();
       return response.data!.map((json) {
         final map = json as Map<String, dynamic>;
         return Task.fromJson(
@@ -59,16 +57,25 @@ class TaskRepository {
     }
   }
 
+  Future<Map<int, String>> _loadGroupNames() async {
+    final response = await _dio.get<List<dynamic>>('/groups');
+    return {
+      for (final json in response.data!)
+        (json as Map<String, dynamic>)['id'] as int: json['name'] as String,
+    };
+  }
+
+  Future<List<Task>> getProjectTasks(int projectId) async {
+    final tasks = await getAllTasks();
+    return tasks.where((task) => task.projectId == projectId).toList();
+  }
+
   Future<Task> getTask(String id) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>('/tasks/$id');
       final json = response.data!;
-      final groups = await _groups.getGroups();
-      final groupName = groups
-          .where((group) => group.id == json['group_id'])
-          .map((group) => group.name)
-          .firstOrNull;
-      return Task.fromJson(json, groupName: groupName ?? '');
+      final groups = await _loadGroupNames();
+      return Task.fromJson(json, groupName: groups[json['group_id']] ?? '');
     } catch (e) {
       throw Exception('Failed to load task: $e');
     }

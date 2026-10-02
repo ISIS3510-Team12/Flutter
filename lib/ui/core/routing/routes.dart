@@ -16,6 +16,8 @@ abstract final class Routes {
   static const profileLocation = '/profile/settings/location';
   static const profileLocationMap = '/profile/settings/location/map';
   static const calendar = '/calendar';
+  static const createProject = '/groups/:groupId/projects/create';
+  static const projectDetail = '/projects/:projectId';
 
   static String taskPath(String taskId) => '/tasks/$taskId';
   static String editTaskPath(String taskId) => '/tasks/$taskId/edit';
