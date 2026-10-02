@@ -13,8 +13,10 @@ abstract final class Routes {
   static const profileInformation = '/profile/information';
   static const profileNotifications = '/profile/notifications';
   static const profileSettings = '/profile/settings';
+  static const calendar = '/calendar';
   static const createProject = '/groups/:groupId/projects/create';
   static const projectDetail = '/projects/:projectId';
+
   static String taskPath(String taskId) => '/tasks/$taskId';
   static String editTaskPath(String taskId) => '/tasks/$taskId/edit';
   static String taskPhotoPath(String taskId) => '/tasks/$taskId/photo';

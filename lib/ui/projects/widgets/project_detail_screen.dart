@@ -10,10 +10,7 @@ import 'package:team12_flutter_juggle/ui/projects/widgets/task_filter_card.dart'
 import 'package:team12_flutter_juggle/ui/projects/widgets/task_card.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
-  const ProjectDetailScreen({
-    super.key,
-    required this.projectId,
-  });
+  const ProjectDetailScreen({super.key, required this.projectId});
 
   final int projectId;
 
@@ -22,24 +19,14 @@ class ProjectDetailScreen extends ConsumerStatefulWidget {
       _ProjectDetailScreenState();
 }
 
-class _ProjectDetailScreenState
-    extends ConsumerState<ProjectDetailScreen> {
+class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
   String selectedFilter = 'All';
 
   @override
-  void initState() {
-    super.initState();
-
-    Future.microtask(
-      () => ref
-          .read(projectViewModelProvider.notifier)
-          .loadProject(widget.projectId),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final projectState = ref.watch(projectViewModelProvider);
+    final projectState = ref.watch(
+      projectDetailViewModelProvider(widget.projectId),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -50,9 +37,7 @@ class _ProjectDetailScreenState
         title: const Text('Project'),
       ),
       body: projectState.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -63,12 +48,6 @@ class _ProjectDetailScreenState
           ),
         ),
         data: (projectStateData) {
-          if (projectStateData == null) {
-            return const Center(
-              child: Text('Project not found.'),
-            );
-          }
-
           final project = projectStateData.project;
           final tasks = projectStateData.tasks;
 
@@ -87,23 +66,14 @@ class _ProjectDetailScreenState
               '${project.deadline.day}/${project.deadline.month}/${project.deadline.year}';
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              16,
-              20,
-              24,
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   project.name,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -129,12 +99,8 @@ class _ProjectDetailScreenState
 
                 Text(
                   'Tasks',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
 

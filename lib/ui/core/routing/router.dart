@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/calendar/widgets/calendar_screen.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/home_screen.dart';
 import 'package:team12_flutter_juggle/ui/landing/widgets/landing_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signin/widgets/signin_screen.dart';
@@ -73,25 +74,21 @@ final routes = <RouteBase>[
     builder: (context, state) => const SettingsScreen(),
   ),
   GoRoute(
+    path: Routes.calendar,
+    builder: (context, state) => const CalendarScreen(),
+  ),
+  GoRoute(
     path: Routes.createProject,
     builder: (context, state) {
-      final groupId = int.parse(
-        state.pathParameters['groupId']!,
-      );
-      return CreateProjectScreen(
-        groupId: groupId,
-      );
+      final groupId = int.parse(state.pathParameters['groupId']!);
+      return CreateProjectScreen(groupId: groupId);
     },
   ),
   GoRoute(
     path: Routes.projectDetail,
     builder: (context, state) {
-      final projectId = int.parse(
-        state.pathParameters['projectId']!,
-      );
-      return ProjectDetailScreen(
-        projectId: projectId,
-      );
+      final projectId = int.parse(state.pathParameters['projectId']!);
+      return ProjectDetailScreen(projectId: projectId);
     },
   ),
 ];

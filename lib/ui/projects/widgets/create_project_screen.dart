@@ -5,10 +5,7 @@ import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
-  const CreateProjectScreen({
-    super.key,
-    required this.groupId,
-  });
+  const CreateProjectScreen({super.key, required this.groupId});
 
   final int groupId;
 
@@ -17,13 +14,10 @@ class CreateProjectScreen extends ConsumerStatefulWidget {
       _CreateProjectScreenState();
 }
 
-class _CreateProjectScreenState
-    extends ConsumerState<CreateProjectScreen> {
+class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController descriptionController =
-      TextEditingController();
-  final TextEditingController deadlineController =
-      TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController deadlineController = TextEditingController();
 
   DateTime? selectedDeadline;
 
@@ -39,19 +33,15 @@ class _CreateProjectScreenState
     final name = nameController.text.trim();
     final description = descriptionController.text.trim();
 
-    if (name.isEmpty ||
-        description.isEmpty ||
-        selectedDeadline == null) {
+    if (name.isEmpty || description.isEmpty || selectedDeadline == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please complete all fields.'),
-        ),
+        const SnackBar(content: Text('Please complete all fields.')),
       );
       return;
     }
 
     final createdProject = await ref
-        .read(projectViewModelProvider.notifier)
+        .read(projectCreateViewModelProvider.notifier)
         .createProject(
           name: name,
           description: description,
@@ -66,23 +56,20 @@ class _CreateProjectScreenState
       return;
     }
 
-    final state = ref.read(projectViewModelProvider);
+    final state = ref.read(projectCreateViewModelProvider);
 
     final errorMessage = state.hasError
         ? state.error.toString()
         : 'Failed to create project.';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(errorMessage),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(errorMessage)));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final projectState = ref.watch(projectViewModelProvider);
+    final projectState = ref.watch(projectCreateViewModelProvider);
 
     final isLoading = projectState.isLoading;
 
@@ -95,12 +82,7 @@ class _CreateProjectScreenState
         title: const Text('Create project'),
       ),
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          20,
-          16,
-          20,
-          16,
-        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -157,11 +139,10 @@ class _CreateProjectScreenState
                           return Theme(
                             data: theme.copyWith(
                               datePickerTheme: theme.datePickerTheme.copyWith(
-                                headerHeadlineStyle:
-                                    theme.textTheme.headlineSmall?.copyWith(
-                                  fontSize: 24,
-                                  height: 1.0,
-                                ),
+                                headerHeadlineStyle: theme
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(fontSize: 24, height: 1.0),
                               ),
                             ),
                             child: MediaQuery(
@@ -185,9 +166,7 @@ class _CreateProjectScreenState
               decoration: InputDecoration(
                 labelText: 'Deadline',
                 hintText: 'Select a date',
-                suffixIcon: const Icon(
-                  Icons.calendar_today_outlined,
-                ),
+                suffixIcon: const Icon(Icons.calendar_today_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -204,9 +183,7 @@ class _CreateProjectScreenState
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Text('Create project'),
                 ),

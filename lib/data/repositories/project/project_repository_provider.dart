@@ -1,16 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository.dart';
-import 'package:team12_flutter_juggle/data/services/project/project_api_client.dart';
 import 'package:team12_flutter_juggle/ui/core/network/dio_provider.dart';
 
-final projectApiClientProvider = Provider<ProjectApiClient>((ref) {
+final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
   final dio = ref.watch(dioProvider);
 
-  return ProjectApiClient(dio);
-});
-
-final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
-  final apiClient = ref.watch(projectApiClientProvider);
-
-  return ProjectRepository(apiClient);
+  return ProjectRepository(dio);
 });
