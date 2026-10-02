@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 
 class CustomBottomSheet extends StatefulWidget {
   const CustomBottomSheet({super.key});
@@ -25,15 +26,14 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
     ),
   ];
 
-  // TODO: Update with actual navigation logic for each item
   void _onPressed(BuildContext context, int id) {
-    Navigator.of(context).pop();
+    context.pop(); 
     switch (id) {
       case 1:
-        context.go('/home');
+        context.push(Routes.createTask);
         break;
       case 2:
-        context.go('/home');
+        context.go('/home'); // Replace with the actual route for creating a new group
         break;
     }
   }

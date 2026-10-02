@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OverviewTabs extends ConsumerWidget {
+class OverviewTabs extends StatelessWidget {
   const OverviewTabs({
     super.key,
-    required this.upcomingTasks,
+    required this.dueTodayTasks,
     required this.recentActivity,
     required this.selectedTab,
     required this.changeTab,
   });
 
-  final List<Map<String, dynamic>> upcomingTasks;
+  final List<Map<String, dynamic>> dueTodayTasks;
   final List<Map<String, dynamic>> recentActivity;
   final int selectedTab;
   final Function(int) changeTab;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       initialIndex: selectedTab,
@@ -48,9 +47,9 @@ class OverviewTabs extends ConsumerWidget {
               ),
             ),
             if (selectedTab == 0)
-              _buildListView(context, upcomingTasks)
+              _buildTaskTabView(context, dueTodayTasks)
             else
-              _buildListView(context, recentActivity),
+              _buildActivityTabView(context, recentActivity),
           ],
         ),
       ),
@@ -61,9 +60,10 @@ class OverviewTabs extends ConsumerWidget {
     BuildContext context,
     String title,
     IconData icon,
-    String description,
+    String description, {
     String? group,
-  ) {
+    String? assignee,
+  }) {
     return Card(
       color: Color(0xFFF7F3F3),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -106,6 +106,8 @@ class OverviewTabs extends ConsumerWidget {
                 title,
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
+              if (assignee != null && assignee.isNotEmpty)
+                Text(assignee, style: TextStyle(fontSize: 12)),
             ],
           ),
           subtitle: Text(description, style: TextStyle(fontSize: 12)),
@@ -114,10 +116,19 @@ class OverviewTabs extends ConsumerWidget {
     );
   }
 
-  Widget _buildListView(
+  Widget _buildTaskTabView(
     BuildContext context,
     List<Map<String, dynamic>> items,
   ) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'No upcoming tasks',
+          style: TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+      );
+    }
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -129,7 +140,36 @@ class OverviewTabs extends ConsumerWidget {
           item['title'] as String,
           item['icon'] as IconData,
           item['description'] as String,
-          item['group'] as String?,
+          assignee: item['assignee'] as String?,
+        );
+      },
+    );
+  }
+
+  Widget _buildActivityTabView(
+    BuildContext context,
+    List<Map<String, dynamic>> items,
+  ) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'No recent activity',
+          style: TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+      );
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return cardItem(
+          context,
+          item['title'] as String,
+          item['icon'] as IconData,
+          item['description'] as String,
+          group: item['group'] as String?,
         );
       },
     );

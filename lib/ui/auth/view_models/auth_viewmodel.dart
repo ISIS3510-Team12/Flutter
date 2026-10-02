@@ -46,8 +46,10 @@ class AuthViewModel extends AsyncNotifier<void> {
 
   Future<void> signOut() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       await repository.signOut();
     });
+    if (!ref.mounted) return;
+    state = result;
   }
 }

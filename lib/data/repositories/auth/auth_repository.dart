@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:team12_flutter_juggle/domain/models/auth/app_user.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/auth_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/format_user.dart';
+
 
 class AuthRepository {
   AuthRepository({
@@ -16,7 +18,7 @@ class AuthRepository {
   final Dio _dio;
   final GoogleSignIn _googleSignIn;
 
-  Stream<User?> get authState => _firebaseAuth.authStateChanges();
+  Stream<User?> get authState => _firebaseAuth.userChanges();
 
   Future<void> signIn({required String email, required String password}) async {
     try {
@@ -25,7 +27,7 @@ class AuthRepository {
         password: password,
       );
     } on FirebaseAuthException catch (e) {
-      throw Exception('Failed to sign in: ${e.message}');
+      throw AuthException('Failed to sign in: ${e.message}', code: e.code);
     }
   }
 
@@ -36,21 +38,16 @@ class AuthRepository {
     required String lastName,
   }) async {
     try {
-      await _firebaseAuth.createUserWithEmailAndPassword(
+      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      try {
-        await _dio.post(
-          '/users/create_user',
-          data: {'first_name': firstName, 'last_name': lastName},
-        );
-      } catch (e) {
-        throw Exception('Failed to create user profile: $e');
-      }
+      await userCredential.user?.updateDisplayName(
+        '$firstName $lastName'.trim(),
+      );
+      await createAppUser(firstName: firstName, lastName: lastName);
     } on FirebaseAuthException catch (e) {
-      throw Exception('Failed to sign up: ${e.message}');
+      throw AuthException('Failed to sign up: ${e.message}', code: e.code);
     }
   }
 
@@ -58,44 +55,53 @@ class AuthRepository {
     try {
       await _googleSignIn.signOut();
 
-      GoogleSignInAccount? gUser;
-
-      gUser = await _googleSignIn.authenticate();
-
-      final gAuth = gUser.authentication;
-
-      final credential = GoogleAuthProvider.credential(idToken: gAuth.idToken);
+      final googleUser = await _googleSignIn.authenticate();
+      final googleAuth = googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
 
       final userCredential = await _firebaseAuth.signInWithCredential(
         credential,
       );
 
-      try {
-        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-          await _dio.post(
-            '/users/create_user',
-            data: {
-              'first_name': userCredential.user?.displayName?.split(' ').first ?? '',
-              'last_name': userCredential.user?.displayName?.split(' ').last ?? '',
-            },
-          );
-        }
-      } catch (e) {
-        throw Exception('Failed to create user profile: $e');
+      final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+
+      if (isNewUser) {
+        final name = splitDisplayName(userCredential.user?.displayName);
+        await createAppUser(
+          firstName: name.firstName,
+          lastName: name.lastName,
+        );
       }
     } on FirebaseAuthException catch (e) {
-      throw Exception('Failed to sign in with Google: ${e.message}');
+      throw AuthException(
+        'Failed to sign in with Google: ${e.message}',
+        code: e.code,
+      );
     }
   }
 
-  Future<AppUser> getCurrentUser() async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/users/current_user',
-    );
-    return AppUser.fromJson(response.data!);
+  Future<void> createAppUser({
+    required String firstName,
+    required String lastName,
+  }) async {
+    try {
+      await _dio.post(
+        '/users/create_user',
+        data: {'first_name': firstName, 'last_name': lastName},
+      );
+    } on DioException catch (e) {
+      throw AuthException(
+        'Failed to create user profile: ${e.message}',
+        code: e.response?.statusCode?.toString(),
+      );
+    }
   }
 
-  Future<void> signOut() {
-    return _firebaseAuth.signOut();
+  Future<void> signOut() async {
+    await _firebaseAuth.signOut();
+    await _googleSignIn.signOut();
   }
+
 }
