@@ -14,27 +14,24 @@ class TaskFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        height: 28,
+        height: 36,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected
-              ? theme.colorScheme.secondary
-              : theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(20),
+              ? const Color(0xFF2F5D54)
+              : const Color(0xFFEDEDED),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           text,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: selected
-                ? theme.colorScheme.onSecondary
-                : theme.colorScheme.onSurfaceVariant,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.black54,
             fontWeight: FontWeight.w600,
+            fontSize: 13,
           ),
         ),
       ),

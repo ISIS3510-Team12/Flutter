@@ -4,19 +4,29 @@ class ProjectTaskCard extends StatelessWidget {
   const ProjectTaskCard({
     super.key,
     required this.title,
-    required this.subtitle,
+    this.assigneeName,
+    this.dueText,
     this.assigneeInitial,
     this.onTap,
   });
 
   final String title;
-  final String subtitle;
+  final String? assigneeName;
+  final String? dueText;
   final String? assigneeInitial;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final subtitleParts = [
+      if (assigneeName != null && assigneeName!.isNotEmpty) assigneeName,
+      if (dueText != null && dueText!.isNotEmpty) dueText,
+    ];
+    final subtitle = subtitleParts.isEmpty
+        ? ''
+        : subtitleParts.join(' - ');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -50,7 +60,7 @@ class ProjectTaskCard extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        subtitle: Text(subtitle),
+        subtitle: subtitle.isEmpty ? null : Text(subtitle),
       ),
     );
   }
