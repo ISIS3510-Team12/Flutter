@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 
 class OverviewTabs extends StatelessWidget {
   const OverviewTabs({
@@ -121,6 +120,15 @@ class OverviewTabs extends StatelessWidget {
     BuildContext context,
     List<Map<String, dynamic>> items,
   ) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'No upcoming tasks',
+          style: TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+      );
+    }
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -142,6 +150,14 @@ class OverviewTabs extends StatelessWidget {
     BuildContext context,
     List<Map<String, dynamic>> items,
   ) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'No recent activity',
+          style: TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+      );
+    }
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
