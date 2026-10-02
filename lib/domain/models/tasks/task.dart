@@ -1,3 +1,5 @@
+import 'package:team12_flutter_juggle/domain/models/shared/server_date.dart';
+
 enum TaskType { coding, design, writing, research }
 
 enum TaskStatus { pending, inProgress, done }
@@ -108,7 +110,7 @@ class Task {
           (user as Map<String, dynamic>)['user_id'] as String,
       ],
       deadline: json['deadline'] != null
-          ? _parseServerDate(json['deadline'] as String)
+          ? parseServerDate(json['deadline'] as String)
           : DateTime.now(),
       isMine: isMine,
       isPriority: json['is_priority'] as bool? ?? false,
@@ -145,7 +147,7 @@ class Task {
       groupName: groupName,
       assignees: const [],
       deadline: json['deadline'] != null
-          ? _parseServerDate(json['deadline'] as String)
+          ? parseServerDate(json['deadline'] as String)
           : DateTime.now(),
       isMine: true,
       isPriority: false,
@@ -167,18 +169,6 @@ class Task {
   Map<String, dynamic> toUpdateJson() => toCreateJson();
 }
 
-DateTime _parseServerDate(String value) {
-  final parsed = DateTime.parse(value);
-  if (parsed.isUtc) return parsed.toLocal();
-  return DateTime.utc(
-    parsed.year,
-    parsed.month,
-    parsed.day,
-    parsed.hour,
-    parsed.minute,
-    parsed.second,
-  ).toLocal();
-}
 
 TaskType taskTypeFromJson(String value) {
   return TaskType.values.firstWhere(

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/auth/auth_repository.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 
 class AuthViewModel extends AsyncNotifier<void> {
   AuthViewModel(this._authRepository);
@@ -35,6 +36,7 @@ class AuthViewModel extends AsyncNotifier<void> {
         lastName: lastName,
       );
     });
+    if (ref.mounted && !state.hasError) ref.invalidate(currentUserProvider);
   }
 
   Future<void> signInWithGoogle() async {
@@ -42,6 +44,7 @@ class AuthViewModel extends AsyncNotifier<void> {
     state = await AsyncValue.guard(() async {
       await repository.signInWithGoogle();
     });
+    if (ref.mounted && !state.hasError) ref.invalidate(currentUserProvider);
   }
 
   Future<void> signOut() async {

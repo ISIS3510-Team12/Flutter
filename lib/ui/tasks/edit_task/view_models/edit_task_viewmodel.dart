@@ -3,7 +3,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
+import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
@@ -17,7 +20,7 @@ class EditTaskFormState {
     required this.task,
     required this.groups,
     required this.group,
-    required this.projects,
+    required this.projectOptions,
     required this.selectedProject,
     required this.members,
     required this.type,
@@ -33,7 +36,7 @@ class EditTaskFormState {
   final Task task;
   final List<TaskGroup> groups;
   final TaskGroup? group;
-  final List<String> projects;
+  final List<Project> projectOptions;
   final String? selectedProject;
   final List<TaskMember> members;
   final TaskType type;
@@ -45,10 +48,18 @@ class EditTaskFormState {
   final Uint8List? currentPhoto;
   final String? newPhotoPath;
 
+  List<String> get projects =>
+      projectOptions.map((project) => project.name).toList();
+
+  int? get selectedProjectId => projectOptions
+      .where((project) => project.name == selectedProject)
+      .map((project) => project.id)
+      .firstOrNull;
+
   EditTaskFormState copyWith({
     TaskGroup? group,
     List<TaskMember>? members,
-    List<String>? projects,
+    List<Project>? projectOptions,
     String? selectedProject,
     bool clearProject = false,
     TaskType? type,
@@ -63,7 +74,7 @@ class EditTaskFormState {
       task: task,
       groups: groups,
       group: group ?? this.group,
-      projects: projects ?? this.projects,
+      projectOptions: projectOptions ?? this.projectOptions,
       selectedProject: clearProject
           ? null
           : selectedProject ?? this.selectedProject,
@@ -91,23 +102,26 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     final currentUser = ref.watch(currentUserProvider.future);
     final task = await repository.getTask(taskId);
     final photo = task.hasPhoto ? await repository.getTaskPhoto(taskId) : null;
-    final groups = await repository.getTaskGroups();
+    final groups = await ref.watch(groupRepositoryProvider).getGroups();
     TaskGroup? group;
     for (final candidate in groups) {
       if (candidate.id == task.groupId) group = candidate;
     }
     group ??= groups.isEmpty ? null : groups.first;
     final projects = group == null
-        ? <String>[]
-        : await repository.getProjects(group);
+        ? <Project>[]
+        : await ref.watch(projectRepositoryProvider).getGroupProjects(group.id);
     final me = (await currentUser)!;
     final members = membersWithYou(group, me);
     return EditTaskFormState(
       task: task,
       groups: groups,
       group: group,
-      projects: projects,
-      selectedProject: repository.projectNameFor(task.projectId),
+      projectOptions: projects,
+      selectedProject: projects
+          .where((project) => project.id == task.projectId)
+          .map((project) => project.name)
+          .firstOrNull,
       members: members,
       type: task.type,
       selectedMemberIds: task.assigneeIds.toSet(),
@@ -122,9 +136,10 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
   Future<void> updateGroup(TaskGroup group) async {
     final current = state.value;
     if (current == null || current.group?.id == group.id) return;
-    final repository = ref.read(taskRepositoryProvider);
     final result = await AsyncValue.guard(() async {
-      final projects = await repository.getProjects(group);
+      final projects = await ref
+          .read(projectRepositoryProvider)
+          .getGroupProjects(group.id);
       final you = current.members.first;
       final members = [
         you,
@@ -133,7 +148,7 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
       final memberIds = members.map((member) => member.id).toSet();
       return current.copyWith(
         group: group,
-        projects: projects,
+        projectOptions: projects,
         clearProject: true,
         members: members,
         selectedMemberIds: current.selectedMemberIds
@@ -189,6 +204,7 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
       type: current.type,
       assignees: selectedMembers.map((member) => member.name).toList(),
       assigneeIds: selectedMembers.map((member) => member.id).toList(),
+      projectId: current.selectedProjectId,
       projectName: current.selectedProject,
       deadline: DateTime(
         date.year,
