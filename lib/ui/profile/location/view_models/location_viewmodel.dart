@@ -22,17 +22,40 @@ enum SaveOutcome {
 }
 
 class LocationState {
-  const LocationState({this.point, this.notifyWithin = defaultNotifyWithin});
+  const LocationState({
+    this.saved,
+    this.point,
+    this.notifyWithin = defaultNotifyWithin,
+    this.remindersActive = false,
+  });
 
+  final UserLocation? saved;
   final LatLng? point;
   final int notifyWithin;
+  final bool remindersActive;
 
-  bool get canSave => point != null;
+  bool get hasChanges {
+    final current = saved;
+    final selected = point;
+    if (selected == null) return false;
+    if (current == null) return true;
+    return current.latitude != selected.latitude ||
+        current.longitude != selected.longitude ||
+        current.notifyWithin != notifyWithin;
+  }
 
-  LocationState copyWith({LatLng? point, int? notifyWithin}) {
+  bool get canSave => point != null && (hasChanges || !remindersActive);
+
+  LocationState copyWith({
+    LatLng? point,
+    int? notifyWithin,
+    bool? remindersActive,
+  }) {
     return LocationState(
+      saved: saved,
       point: point ?? this.point,
       notifyWithin: notifyWithin ?? this.notifyWithin,
+      remindersActive: remindersActive ?? this.remindersActive,
     );
   }
 }
@@ -43,8 +66,10 @@ class LocationViewModel extends AsyncNotifier<LocationState> {
     final saved = await ref.watch(locationRepositoryProvider).getLocation();
     if (saved == null) return const LocationState();
     return LocationState(
+      saved: saved,
       point: LatLng(saved.latitude, saved.longitude),
       notifyWithin: saved.notifyWithin,
+      remindersActive: await _remindersActive(),
     );
   }
 
@@ -59,6 +84,9 @@ class LocationViewModel extends AsyncNotifier<LocationState> {
     if (current == null) return;
     state = AsyncData(current.copyWith(notifyWithin: meters));
   }
+
+  Future<CurrentLocation> locateMe() =>
+      ref.read(deviceLocationRepositoryProvider).currentLocation();
 
   Future<SaveOutcome> save() async {
     final current = state.value;
@@ -75,7 +103,26 @@ class LocationViewModel extends AsyncNotifier<LocationState> {
       ),
     );
     if (result.hasError) return SaveOutcome.failed;
-    return _enableReminders(result.requireValue);
+    final saved = result.requireValue;
+    final outcome = await _enableReminders(saved);
+    if (ref.mounted) {
+      state = AsyncData(
+        LocationState(
+          saved: saved,
+          point: point,
+          notifyWithin: saved.notifyWithin,
+          remindersActive: outcome == SaveOutcome.saved,
+        ),
+      );
+    }
+    return outcome;
+  }
+
+  Future<bool> _remindersActive() async {
+    final result = await AsyncValue.guard(
+      () => ref.read(arrivalReminderRepositoryProvider).isEnabled(),
+    );
+    return result.value ?? false;
   }
 
   Future<SaveOutcome> _enableReminders(UserLocation location) async {

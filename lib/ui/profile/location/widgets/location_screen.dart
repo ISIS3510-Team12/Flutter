@@ -76,7 +76,10 @@ class LocationScreen extends ConsumerWidget {
         'Location saved, but reminders couldn’t be turned on.',
         false,
       ),
-      SaveOutcome.failed => ('The location could not be saved', false),
+      SaveOutcome.failed => (
+        'We couldn’t save your location. Check your connection and try again.',
+        false,
+      ),
     };
     messenger.showSnackBar(
       SnackBar(
@@ -100,7 +103,25 @@ class LocationScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Location reminders')),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        error: (error, stackTrace) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'We couldn’t load your location. Check your connection and try again.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton(
+                  onPressed: () => ref.invalidate(locationViewModelProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
         data: (location) => ListView(
           padding: const EdgeInsets.all(24),
           children: [
@@ -140,29 +161,16 @@ class LocationScreen extends ConsumerWidget {
   }
 }
 
-class _MapPreview extends StatefulWidget {
+class _MapPreview extends StatelessWidget {
   const _MapPreview({required this.point, required this.onTap});
 
   final LatLng? point;
   final VoidCallback onTap;
 
-
-  @override
-  State<_MapPreview> createState() => __MapPreviewState();
-}
-
-class __MapPreviewState extends State<_MapPreview> {
-
-  late GoogleMapController mapController;
-
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selected = widget.point;
+    final selected = point;
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: SizedBox(
@@ -175,17 +183,20 @@ class __MapPreviewState extends State<_MapPreview> {
             else
               IgnorePointer(
                 child: GoogleMap(
-                  onMapCreated: _onMapCreated,
+                  key: ValueKey(selected),
                   initialCameraPosition: CameraPosition(
                     target: selected,
                     zoom: 15,
                   ),
+                  zoomControlsEnabled: false,
+                  mapToolbarEnabled: false,
+                  myLocationButtonEnabled: false,
                 ),
               ),
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: widget.onTap,
+                onTap: onTap,
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
