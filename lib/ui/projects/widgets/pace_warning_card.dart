@@ -29,10 +29,12 @@ class PaceWarningCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBE2E2),
+        color: colorScheme.errorContainer,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -42,15 +44,15 @@ class PaceWarningCard extends StatelessWidget {
             width: 20,
             height: 20,
             margin: const EdgeInsets.only(top: 1),
-            decoration: const BoxDecoration(
-              color: Color(0xFFD63B3B),
+            decoration: BoxDecoration(
+              color: colorScheme.error,
               shape: BoxShape.circle,
             ),
-            child: const Center(
+            child: Center(
               child: Text(
                 '!',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colorScheme.onError,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                   height: 1,
@@ -63,10 +65,10 @@ class PaceWarningCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Pace too slow',
                   style: TextStyle(
-                    color: Color(0xFFB02424),
+                    color: colorScheme.onErrorContainer,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     height: 1.3,
@@ -80,8 +82,8 @@ class PaceWarningCard extends StatelessWidget {
                           ? '$remainingTasks tasks are still incomplete.'
                           : "Your current pace won't complete all planned "
                             'tasks before the deadline.',
-                  style: const TextStyle(
-                    color: Color(0xFFB02424),
+                  style: TextStyle(
+                    color: colorScheme.onErrorContainer,
                     fontSize: 13,
                     height: 1.35,
                   ),

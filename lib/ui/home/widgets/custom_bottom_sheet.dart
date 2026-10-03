@@ -33,7 +33,7 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
         context.push(Routes.createTask);
         break;
       case 2:
-        context.go('/home'); // Replace with the actual route for creating a new group
+        context.push(Routes.createGroup);
         break;
     }
   }
@@ -52,7 +52,11 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
         children: [
           Text(
             'Quick Actions',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           ...bottomSheetIems.map((item) {
             return bottomSheetItem(

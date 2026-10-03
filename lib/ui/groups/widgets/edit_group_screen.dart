@@ -382,13 +382,15 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
                 });
               },
               secondary: CircleAvatar(
-                backgroundColor: const Color(0xFF397376),
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .secondaryContainer,
                 child: Text(
                   user.firstName.isNotEmpty
                       ? user.firstName[0].toUpperCase()
                       : 'A',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSecondaryContainer,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -416,12 +418,12 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
                 ? null
                 : () => _updateGroup(users),
             icon: isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                   )
                 : const Icon(Icons.check),
@@ -429,12 +431,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
               isLoading ? 'Editing...' : 'Edit Group',
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF5455A9),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                vertical: 10,
-                horizontal: 20,
-              ),
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(40),
               ),
@@ -449,17 +448,14 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
                 : () {
                     context.pop();
                   },
-            icon: const Icon(
-              Icons.delete_outline,
-            ),
+            icon: const Icon(Icons.close),
             label: const Text('Cancel'),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE0E0E0),
-              foregroundColor: const Color(0xFF5455A9),
-              padding: const EdgeInsets.symmetric(
-                vertical: 10,
-                horizontal: 20,
-              ),
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(40),
               ),

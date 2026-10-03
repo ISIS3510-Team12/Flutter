@@ -37,6 +37,10 @@ class GroupEditViewModel extends AsyncNotifier<TaskGroup> {
         );
       }
 
+      for (final userId in userIdsToRemove) {
+        await repository.removeMember(groupId, userId);
+      }
+
       return repository.getGroup(groupId);
     });
 

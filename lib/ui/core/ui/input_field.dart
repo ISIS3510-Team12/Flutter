@@ -38,7 +38,7 @@ class InputField extends StatelessWidget {
                 icon: Icon(
                   obscureText == true ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                 ),
-                color: obscureText == true ? Colors.grey : Colors.grey[700],
+                color: theme.colorScheme.onSurfaceVariant,
                 onPressed: onTogglePasswordVisibility,
               )
             : null,

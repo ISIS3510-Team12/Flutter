@@ -14,6 +14,7 @@ class TaskFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -22,14 +23,16 @@ class TaskFilter extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF2F5D54)
-              : const Color(0xFFEDEDED),
+              ? colorScheme.secondary
+              : colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           text,
           style: TextStyle(
-            color: selected ? Colors.white : Colors.black54,
+            color: selected
+                ? colorScheme.onSecondary
+                : colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
             fontSize: 13,
           ),

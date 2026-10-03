@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
@@ -23,19 +24,10 @@ class GroupsScreen extends ConsumerWidget {
       body: Column(
         children: [
           _buildSearchBar(context, ref),
-          Expanded(
-            child: _buildGroupsContent(
-              context,
-              groupsState,
-              ref,
-            ),
-          ),
-          _buildCreateGroupButton(
-            context,
-            ref,
-          ),
+          Expanded(child: _buildGroupsContent(context, groupsState, ref)),
         ],
       ),
+      floatingActionButton: _buildCreateGroupButton(context, ref),
       bottomNavigationBar: const CustomNavigationBar(),
     );
   }
@@ -130,43 +122,23 @@ class GroupsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCreateGroupButton(
-    BuildContext context,
-    WidgetRef ref,
-  ) {
-    final theme = Theme.of(context);
+  Widget _buildCreateGroupButton(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: FilledButton.icon(
-          onPressed: () async {
-            final groupCreated = await context.push<bool>(
-              Routes.createGroup,
-            );
+    return FloatingActionButton.extended(
+      onPressed: () async {
+        final groupCreated = await context.push<bool>(Routes.createGroup);
 
-            if (!context.mounted) return;
+        if (!context.mounted) return;
 
-            if (groupCreated == true) {
-              ref.invalidate(groupsViewModelProvider);
-            }
-          },
-          icon: const Icon(Icons.add),
-          label: const Text('Create Group'),
-          style: FilledButton.styleFrom(
-            backgroundColor: theme.colorScheme.secondaryContainer,
-            foregroundColor: theme.colorScheme.primary,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 14,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
-          ),
-        ),
-      ),
+        if (groupCreated == true) {
+          ref.invalidate(groupsViewModelProvider);
+        }
+      },
+      backgroundColor: colorScheme.primaryFixed,
+      foregroundColor: colorScheme.onPrimaryFixed,
+      icon: const Icon(Symbols.add_circle),
+      label: const Text('Create group'),
     );
   }
 }
