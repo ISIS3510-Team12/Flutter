@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
-import 'package:team12_flutter_juggle/ui/groups/view_models/new_group_view_model_provider.dart';
-import 'package:team12_flutter_juggle/data/repositories/user/user_repository_provider.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:team12_flutter_juggle/domain/models/user/user.dart';
+import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/groups/view_models/new_group_view_model_provider.dart';
 
 class NewGroupScreen extends ConsumerStatefulWidget {
   const NewGroupScreen({
@@ -19,66 +20,8 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
   final TextEditingController classController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
 
-  List<GroupUserOption> users = [];
-  bool isLoadingUsers = true;
   final Set<String> selectedUserIds = {};
   String searchQuery = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUsers();
-  }
-
-  Future<void> _loadUsers() async {
-    try {
-      final currentUser = await ref.read(currentUserProvider.future);
-      final userRepository = ref.read(userRepositoryProvider);
-      final loadedUsers = await userRepository.getUsers();
-
-      final availableUsers = loadedUsers
-          .where(
-            (user) => user.userId != currentUser?.userId,
-          )
-          .map(
-            (user) => GroupUserOption(
-              userId: user.userId,
-              name: '${user.firstName} ${user.lastName}',
-              email: user.email,
-              initial: user.firstName.isNotEmpty
-                  ? user.firstName[0].toUpperCase()
-                  : '?',
-            ),
-          )
-          .toList();
-
-      if (!mounted) return;
-
-      setState(() {
-        users = availableUsers;
-        isLoadingUsers = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        isLoadingUsers = false;
-      });
-    }
-  }
-
-  List<GroupUserOption> get filteredUsers {
-    final query = searchQuery.trim().toLowerCase();
-
-    if (query.isEmpty) {
-      return users;
-    }
-
-    return users.where((user) {
-      return user.name.toLowerCase().contains(query) ||
-          user.email.toLowerCase().contains(query);
-    }).toList();
-  }
 
   @override
   void dispose() {
@@ -88,14 +31,15 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
     super.dispose();
   }
 
+    
   Future<void> _createGroup() async {
-    final viewModel = ref.read(newGroupViewModelProvider);
-
-    final success = await viewModel.createGroup(
-      name: nameController.text.trim(),
-      description: classController.text.trim(),
-      selectedUserIds: selectedUserIds.toList(),
-    );
+    final success = await ref
+        .read(newGroupViewModelProvider.notifier)
+        .createGroup(
+          name: nameController.text.trim(),
+          description: classController.text.trim(),
+          selectedUserIds: selectedUserIds.toList(),
+        );
 
     if (!mounted) return;
 
@@ -103,18 +47,18 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
       context.pop(true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            viewModel.errorMessage ?? 'Error creating group',
-          ),
+        const SnackBar(
+          content: Text('Could not create the group.'),
         ),
       );
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
-    final viewModel = ref.watch(newGroupViewModelProvider);
+    final usersState = ref.watch(groupUsersViewModelProvider);
+    final groupState = ref.watch(newGroupViewModelProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -150,21 +94,87 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
             const SizedBox(height: 12),
             _buildSearchField(context),
             const SizedBox(height: 12),
+            _buildUsersContent(
+              context,
+              usersState,
+            ),
+            const SizedBox(height: 24),
+            _buildActionButtons(
+              context,
+              groupState.isLoading,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUsersContent(
+    BuildContext context,
+    AsyncValue<List<User>> usersState,
+  ) {
+    return usersState.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (error, stackTrace) => Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Could not load users.',
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.invalidate(groupUsersViewModelProvider);
+            },
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+      data: (users) {
+        final filteredUsers = _filteredUsers(users);
+
+        if (filteredUsers.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              'No users found.',
+            ),
+          );
+        }
+
+        return Column(
+          children: [
             ...filteredUsers.map(
               (user) => _buildUserTile(
                 context: context,
                 user: user,
               ),
             ),
-            const SizedBox(height: 24),
-            _buildActionButtons(
-              context,
-              viewModel.isLoading,
-            ),
           ],
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  List<User> _filteredUsers(List<User> users) {
+    final query = searchQuery.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return users;
+    }
+
+    return users.where((user) {
+      final fullName =
+          '${user.firstName} ${user.lastName}'.toLowerCase();
+
+      return fullName.contains(query) ||
+          user.email.toLowerCase().contains(query);
+    }).toList();
   }
 
   Widget _buildTextField({
@@ -248,9 +258,15 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
 
   Widget _buildUserTile({
     required BuildContext context,
-    required GroupUserOption user,
+    required User user,
   }) {
     final theme = Theme.of(context);
+
+    final name = '${user.firstName} ${user.lastName}'.trim();
+
+    final initial = user.firstName.isNotEmpty
+        ? user.firstName[0].toUpperCase()
+        : '?';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -259,7 +275,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
           CircleAvatar(
             backgroundColor: theme.colorScheme.primaryContainer,
             child: Text(
-              user.initial,
+              initial,
               style: TextStyle(
                 color: theme.colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.bold,
@@ -272,7 +288,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.name,
+                  name,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -369,18 +385,4 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
       ],
     );
   }
-}
-
-class GroupUserOption {
-  const GroupUserOption({
-    required this.userId,
-    required this.name,
-    required this.email,
-    required this.initial,
-  });
-
-  final String userId;
-  final String name;
-  final String email;
-  final String initial;
 }

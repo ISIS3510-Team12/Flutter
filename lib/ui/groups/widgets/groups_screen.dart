@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
-
-
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/groups/widgets/group_card.dart';
-import 'package:go_router/go_router.dart';
 
 class GroupsScreen extends ConsumerWidget {
   const GroupsScreen({
@@ -19,25 +16,23 @@ class GroupsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final viewModel = ref.watch(groupsViewModelProvider);
-    final groupRepository = ref.watch(groupRepositoryProvider);
+    final groupsState = ref.watch(groupsViewModelProvider);
 
     return Scaffold(
       appBar: const CustomAppBar(),
       body: Column(
         children: [
-          _buildSearchBar(context, viewModel),
+          _buildSearchBar(context, ref),
           Expanded(
             child: _buildGroupsContent(
               context,
-              viewModel,
-              groupRepository,
+              groupsState,
+              ref,
             ),
           ),
           _buildCreateGroupButton(
             context,
-            viewModel,
-            groupRepository,
+            ref,
           ),
         ],
       ),
@@ -47,14 +42,18 @@ class GroupsScreen extends ConsumerWidget {
 
   Widget _buildSearchBar(
     BuildContext context,
-    GroupsViewModel viewModel,
+    WidgetRef ref,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SizedBox(
         height: 60,
         child: TextField(
-          onChanged: viewModel.onQueryChange,
+          onChanged: (query) {
+            ref
+                .read(groupsViewModelProvider.notifier)
+                .onQueryChange(query);
+          },
           decoration: InputDecoration(
             hintText: 'Search group',
             suffixIcon: const Icon(Icons.search),
@@ -81,52 +80,49 @@ class GroupsScreen extends ConsumerWidget {
 
   Widget _buildGroupsContent(
     BuildContext context,
-    GroupsViewModel viewModel,
-    GroupRepository groupRepository,
+    AsyncValue<GroupsState> groupsState,
+    WidgetRef ref,
   ) {
-    if (viewModel.isLoading) {
-      return const Center(
+    return groupsState.when(
+      loading: () => const Center(
         child: CircularProgressIndicator(),
-      );
-    }
-
-    if (viewModel.errorMessage != null) {
-      return Center(
+      ),
+      error: (error, stackTrace) => Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('Could not load groups.'),
-            const SizedBox(height: 8),
-            Text(
-              viewModel.errorMessage!,
-              textAlign: TextAlign.center,
-            ),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: viewModel.loadGroups,
+              onPressed: () {
+                ref.invalidate(groupsViewModelProvider);
+              },
               child: const Text('Retry'),
             ),
           ],
         ),
-      );
-    }
+      ),
+      data: (state) {
+        final groups = state.filteredGroups;
 
-    if (viewModel.filteredGroups.isEmpty) {
-      return const Center(
-        child: Text('No groups found.'),
-      );
-    }
+        if (groups.isEmpty) {
+          return const Center(
+            child: Text('No groups found.'),
+          );
+        }
 
-    return ListView.builder(
-      itemCount: viewModel.filteredGroups.length,
-      itemBuilder: (context, index) {
-        final group = viewModel.filteredGroups[index];
+        return ListView.builder(
+          itemCount: groups.length,
+          itemBuilder: (context, index) {
+            final group = groups[index];
 
-        return GroupCard(
-          group: group,
-          onClick: () {
-            context.push(
-              Routes.groupDetailPath(group.id),
+            return GroupCard(
+              group: group,
+              onClick: () {
+                context.push(
+                  Routes.groupDetailPath(group.id),
+                );
+              },
             );
           },
         );
@@ -136,8 +132,7 @@ class GroupsScreen extends ConsumerWidget {
 
   Widget _buildCreateGroupButton(
     BuildContext context,
-    GroupsViewModel viewModel,
-    GroupRepository groupRepository,
+    WidgetRef ref,
   ) {
     final theme = Theme.of(context);
 
@@ -145,30 +140,29 @@ class GroupsScreen extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Align(
         alignment: Alignment.centerRight,
-        child: SizedBox(
-          width: 190,
-          height: 50,
-          child: FilledButton.icon(
-            onPressed: () async {
-              final groupCreated = await context.push<bool>(
-                Routes.createGroup,
-              );
+        child: FilledButton.icon(
+          onPressed: () async {
+            final groupCreated = await context.push<bool>(
+              Routes.createGroup,
+            );
 
-              if (!context.mounted) return;
+            if (!context.mounted) return;
 
-              if (groupCreated == true) {
-                await viewModel.loadGroups();
-              }
-            },
-            icon: const Icon(Icons.add_circle_outline),
-            label: const Text('Create Group'),
-            style: FilledButton.styleFrom(
-              backgroundColor:
-                  theme.colorScheme.surfaceContainerHighest,
-              foregroundColor: theme.colorScheme.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+            if (groupCreated == true) {
+              ref.invalidate(groupsViewModelProvider);
+            }
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('Create Group'),
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.secondaryContainer,
+            foregroundColor: theme.colorScheme.primary,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 14,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
             ),
           ),
         ),

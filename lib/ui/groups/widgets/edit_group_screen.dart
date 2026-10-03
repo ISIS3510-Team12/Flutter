@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:team12_flutter_juggle/data/repositories/user/user_repository_provider.dart';
-import 'package:team12_flutter_juggle/domain/models/group/group.dart';
+
+import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
-import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_edit_view_model_provider.dart';
-
-final groupEditUsersProvider = FutureProvider.autoDispose<List<User>>((ref) {
-  final userRepository = ref.watch(userRepositoryProvider);
-  return userRepository.getUsers();
-});
+import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_model_provider.dart';
 
 class GroupEditScreen extends ConsumerWidget {
   const GroupEditScreen({
@@ -42,7 +37,7 @@ class GroupEditScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'No se pudo cargar el grupo.',
+                  'Could not load the group.',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -52,7 +47,7 @@ class GroupEditScreen extends ConsumerWidget {
                       groupEditViewModelProvider(groupId),
                     );
                   },
-                  child: const Text('Intentar nuevamente'),
+                  child: const Text('Retry'),
                 ),
               ],
             ),
@@ -74,11 +69,12 @@ class _GroupEditForm extends ConsumerStatefulWidget {
     required this.groupId,
   });
 
-  final Group group;
+  final TaskGroup group;
   final int groupId;
 
   @override
-  ConsumerState<_GroupEditForm> createState() => _GroupEditFormState();
+  ConsumerState<_GroupEditForm> createState() =>
+      _GroupEditFormState();
 }
 
 class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
@@ -104,7 +100,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
     searchController = TextEditingController();
 
     selectedUserIds.addAll(
-      widget.group.users.map((user) => user.userId),
+      widget.group.members.map((member) => member.id),
     );
   }
 
@@ -123,8 +119,8 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
       groupEditViewModelProvider(widget.groupId).notifier,
     );
 
-    final originalUserIds = widget.group.users
-        .map((user) => user.userId)
+    final originalUserIds = widget.group.members
+        .map((member) => member.id)
         .toSet();
 
     final emailsToAdd = users
@@ -157,7 +153,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'No se pudo actualizar el grupo. Intenta nuevamente.',
+            'Could not update the group. Please try again.',
           ),
         ),
       );
@@ -189,8 +185,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
       groupEditViewModelProvider(widget.groupId),
     );
 
-    final usersState = ref.watch(groupEditUsersProvider);
-    final currentUserAsync = ref.watch(currentUserProvider);
+    final usersState = ref.watch(groupUsersViewModelProvider);
 
     final isLoading = groupState.isLoading;
 
@@ -205,27 +200,21 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'No se pudieron cargar los usuarios.',
+                'Could not load users.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () {
-                  ref.invalidate(groupEditUsersProvider);
+                  ref.invalidate(groupUsersViewModelProvider);
                 },
-                child: const Text('Intentar nuevamente'),
+                child: const Text('Retry'),
               ),
             ],
           ),
         ),
       ),
       data: (users) {
-        final currentUserId = currentUserAsync.when(
-          data: (user) => user?.userId,
-          loading: () => null,
-          error: (_, _) => null,
-        );
-
         final availableUsers = filteredUsers(users);
 
         return SingleChildScrollView(
@@ -240,7 +229,6 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
               _buildEditPeopleSection(
                 context,
                 availableUsers,
-                currentUserId,
               ),
               const SizedBox(height: 28),
               _buildButtons(
@@ -331,7 +319,6 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
   Widget _buildEditPeopleSection(
     BuildContext context,
     List<User> users,
-    String? currentUserId,
   ) {
     final theme = Theme.of(context);
 
@@ -385,17 +372,15 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
             (user) => CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: selectedUserIds.contains(user.userId),
-              onChanged: user.userId == currentUserId
-                  ? null
-                  : (value) {
-                      setState(() {
-                        if (value == true) {
-                          selectedUserIds.add(user.userId);
-                        } else {
-                          selectedUserIds.remove(user.userId);
-                        }
-                      });
-                    },
+              onChanged: (value) {
+                setState(() {
+                  if (value == true) {
+                    selectedUserIds.add(user.userId);
+                  } else {
+                    selectedUserIds.remove(user.userId);
+                  }
+                });
+              },
               secondary: CircleAvatar(
                 backgroundColor: const Color(0xFF397376),
                 child: Text(

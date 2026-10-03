@@ -1,46 +1,32 @@
-import 'package:flutter/foundation.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
-import 'package:team12_flutter_juggle/domain/models/group/group_create.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class NewGroupViewModel extends ChangeNotifier {
-  NewGroupViewModel({
-    required GroupRepository groupRepository,
-  }) : _groupRepository = groupRepository;
+import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 
-  final GroupRepository _groupRepository;
-
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
-
-  String? _errorMessage;
-  String? get errorMessage => _errorMessage;
+class NewGroupViewModel extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
 
   Future<bool> createGroup({
     required String name,
     required String description,
     required List<String> selectedUserIds,
   }) async {
-    _isLoading = true;
-    _errorMessage = null;
+    final repository = ref.read(groupRepositoryProvider);
 
-    notifyListeners();
-
-    try {
-      final group = GroupCreate(
-        name: name,
+    final result = await AsyncValue.guard(() async {
+      await repository.createGroup(
+        name,
         description: description,
         userIds: selectedUserIds,
       );
+    });
 
-      await _groupRepository.createGroup(group);
-
-      return true;
-    } catch (e) {
-      _errorMessage = 'No se pudo crear el grupo. Intenta nuevamente.';
+    if (!ref.mounted) {
       return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
+
+    state = result;
+
+    return result.hasValue;
   }
 }

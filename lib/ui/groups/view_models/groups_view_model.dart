@@ -1,64 +1,64 @@
-import 'package:flutter/foundation.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
-import 'package:team12_flutter_juggle/domain/models/group/group.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class GroupsViewModel extends ChangeNotifier {
-  GroupsViewModel({
-    required GroupRepository groupRepository,
-  }) : _groupRepository = groupRepository {
-    loadGroups();
+import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
+
+class GroupsViewModel extends AsyncNotifier<GroupsState> {
+  @override
+  Future<GroupsState> build() async {
+    final repository = ref.watch(groupRepositoryProvider);
+    final groups = await repository.getGroups();
+
+    return GroupsState(
+      groups: groups,
+      query: '',
+    );
   }
 
-  final GroupRepository _groupRepository;
 
-  List<Group> _groups = [];
-  List<Group> get groups => _groups;
+  void onQueryChange(String query) {
+    final currentState = state;
 
-  List<Group> _filteredGroups = [];
-  List<Group> get filteredGroups => _filteredGroups;
-
-  bool _isLoading = false;
-
-  bool get isLoading => _isLoading;
-
-  String? _errorMessage;
-
-  String? get errorMessage => _errorMessage;
-
-  Future<void> loadGroups() async {
-    _isLoading = true;
-    _errorMessage = null;
-
-    notifyListeners();
-
-    try {
-      _groups = await _groupRepository.getGroups();
-      _filteredGroups = List.from(_groups);
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-
-      notifyListeners();
+    if (currentState is AsyncData<GroupsState>) {
+      state = AsyncData(
+        currentState.value.copyWith(query: query),
+      );
     }
   }
 
-  void onQueryChange(String query) {
+}
+
+class GroupsState {
+  const GroupsState({
+    required this.groups,
+    this.query = '',
+  });
+
+  final List<TaskGroup> groups;
+  final String query;
+
+  List<TaskGroup> get filteredGroups {
     final normalizedQuery = query.toLowerCase().trim();
 
     if (normalizedQuery.isEmpty) {
-      _filteredGroups = List.from(_groups);
-    } else {
-      _filteredGroups = _groups
-          .where(
-            (group) =>
-                group.name
-                    .toLowerCase()
-                    .contains(normalizedQuery),
-          )
-          .toList();
+      return groups;
     }
 
-    notifyListeners();
+    return groups
+        .where(
+          (group) =>
+              group.name.toLowerCase().contains(normalizedQuery),
+        )
+        .toList();
+  }
+
+  GroupsState copyWith({
+    List<TaskGroup>? groups,
+    String? query,
+  }) {
+    return GroupsState(
+      groups: groups ?? this.groups,
+      query: query ?? this.query,
+    );
   }
 }

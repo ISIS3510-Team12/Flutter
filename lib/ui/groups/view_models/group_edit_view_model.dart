@@ -1,15 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
-import 'package:team12_flutter_juggle/domain/models/group/group.dart';
-import 'package:team12_flutter_juggle/domain/models/group/group_update.dart';
 
-class GroupEditViewModel extends AsyncNotifier<Group> {
+import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
+
+class GroupEditViewModel extends AsyncNotifier<TaskGroup> {
   GroupEditViewModel(this.groupId);
 
   final int groupId;
 
   @override
-  Future<Group> build() async {
+  Future<TaskGroup> build() async {
     final repository = ref.watch(groupRepositoryProvider);
 
     return repository.getGroup(groupId);
@@ -24,14 +24,10 @@ class GroupEditViewModel extends AsyncNotifier<Group> {
     final repository = ref.read(groupRepositoryProvider);
 
     final result = await AsyncValue.guard(() async {
-      final group = GroupUpdate(
-        name: name,
-        description: description,
-      );
-
       await repository.updateGroup(
         groupId,
-        group,
+        name: name,
+        description: description,
       );
 
       for (final email in emailsToAdd) {
@@ -41,17 +37,12 @@ class GroupEditViewModel extends AsyncNotifier<Group> {
         );
       }
 
-      for (final userId in userIdsToRemove) {
-        await repository.removeMember(
-          groupId,
-          userId,
-        );
-      }
-
       return repository.getGroup(groupId);
     });
 
-    if (!ref.mounted) return false;
+    if (!ref.mounted) {
+      return false;
+    }
 
     state = result;
 

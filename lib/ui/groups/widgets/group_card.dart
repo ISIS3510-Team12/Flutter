@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:team12_flutter_juggle/domain/models/group/group.dart';
+
+import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 
 class GroupCard extends StatelessWidget {
   const GroupCard({
@@ -8,7 +9,7 @@ class GroupCard extends StatelessWidget {
     required this.onClick,
   });
 
-  final Group group;
+  final TaskGroup group;
   final VoidCallback onClick;
 
   @override
@@ -17,7 +18,7 @@ class GroupCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      color: const Color(0xFFF5F0EE), // beige claro
+      color: const Color(0xFFF5F0EE),
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.symmetric(
         horizontal: 16,
@@ -26,7 +27,7 @@ class GroupCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(
-          color: Color(0xFFCFCAC8), // borde gris fino
+          color: Color(0xFFCFCAC8),
           width: 1,
         ),
       ),
@@ -41,7 +42,7 @@ class GroupCard extends StatelessWidget {
             children: [
               const CircleAvatar(
                 radius: 24,
-                backgroundColor: Color(0xFF3B7A7A), // verde azulado
+                backgroundColor: Color(0xFF3B7A7A),
                 child: Icon(
                   Icons.person_outline,
                   color: Colors.white,

@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
-import 'package:team12_flutter_juggle/domain/models/group/group.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 
 class GroupDetailViewModel extends AsyncNotifier<GroupDetailState> {
   GroupDetailViewModel(this.groupId);
@@ -16,7 +16,7 @@ class GroupDetailViewModel extends AsyncNotifier<GroupDetailState> {
     final projectRepository = ref.watch(projectRepositoryProvider);
 
     final group = await groupRepository.getGroup(groupId);
-    final projects = await projectRepository.getProjectsByGroup(groupId);
+    final projects = await projectRepository.getGroupProjects(groupId);
 
     if (!ref.mounted) {
       throw StateError('Group detail provider was disposed.');
@@ -35,6 +35,6 @@ class GroupDetailState {
     required this.projects,
   });
 
-  final Group group;
+  final TaskGroup group;
   final List<Project> projects;
 }

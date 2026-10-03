@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_detail_view_model_provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:team12_flutter_juggle/domain/models/group/group.dart';
-import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 
 class GroupDetailScreen extends ConsumerWidget {
   const GroupDetailScreen({
@@ -54,7 +56,7 @@ class GroupDetailScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'No se pudo cargar el grupo.',
+                  'Could not load the group.',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -64,7 +66,7 @@ class GroupDetailScreen extends ConsumerWidget {
                       groupDetailViewModelProvider(groupId),
                     );
                   },
-                  child: const Text('Intentar nuevamente'),
+                  child: const Text('Retry'),
                 ),
               ],
             ),
@@ -73,7 +75,6 @@ class GroupDetailScreen extends ConsumerWidget {
         data: (state) {
           return _buildContent(
             context,
-            ref,
             state.group,
             state.projects,
           );
@@ -93,7 +94,7 @@ class GroupDetailScreen extends ConsumerWidget {
           );
         },
         backgroundColor:
-            Theme.of(context).colorScheme.surfaceContainerHighest,
+            Theme.of(context).colorScheme.secondaryContainer,
         foregroundColor:
             Theme.of(context).colorScheme.primary,
         icon: const Icon(Icons.add),
@@ -104,8 +105,7 @@ class GroupDetailScreen extends ConsumerWidget {
 
   Widget _buildContent(
     BuildContext context,
-    WidgetRef ref,
-    Group group,
+    TaskGroup group,
     List<Project> projects,
   ) {
     final theme = Theme.of(context);
@@ -121,11 +121,6 @@ class GroupDetailScreen extends ConsumerWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            group.description,
-            style: theme.textTheme.bodyLarge,
-          ),
           const SizedBox(height: 28),
           Text(
             'Members',
@@ -134,7 +129,10 @@ class GroupDetailScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildMembers(context, group),
+          _buildMembers(
+            context,
+            group.members,
+          ),
           const SizedBox(height: 32),
           Text(
             'Related projects',
@@ -143,12 +141,15 @@ class GroupDetailScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ...projects.map(
-            (project) => _buildProjectCard(
-              context,
-              project,
+          if (projects.isEmpty)
+            const Text('No projects found.')
+          else
+            ...projects.map(
+              (project) => _buildProjectCard(
+                context,
+                project,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -156,35 +157,37 @@ class GroupDetailScreen extends ConsumerWidget {
 
   Widget _buildMembers(
     BuildContext context,
-    Group group,
+    List<TaskMember> members,
   ) {
     final theme = Theme.of(context);
+
+    if (members.isEmpty) {
+      return const Text('No members found.');
+    }
 
     return Wrap(
       spacing: 16,
       runSpacing: 12,
-      children: group.users.map<Widget>((user) {
-        final initial = user.firstName.isNotEmpty
-            ? user.firstName[0].toUpperCase()
-            : 'A';
-
+      children: members.map<Widget>((member) {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor: theme.colorScheme.primaryContainer,
+              backgroundColor:
+                  theme.colorScheme.primaryContainer,
               child: Text(
-                initial,
+                member.initial,
                 style: TextStyle(
-                  color: theme.colorScheme.onPrimaryContainer,
+                  color:
+                      theme.colorScheme.onPrimaryContainer,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              user.firstName,
+              member.name,
               style: theme.textTheme.bodySmall,
             ),
           ],
@@ -217,7 +220,8 @@ class GroupDetailScreen extends ConsumerWidget {
                     theme.colorScheme.primaryContainer,
                 child: Icon(
                   Icons.folder_outlined,
-                  color: theme.colorScheme.onPrimaryContainer,
+                  color:
+                      theme.colorScheme.onPrimaryContainer,
                 ),
               ),
               const SizedBox(width: 12),
