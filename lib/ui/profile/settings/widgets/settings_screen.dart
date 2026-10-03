@@ -1,32 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/domain/models/profile/app_settings.dart';
+import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/auth/view_models/auth_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/view_models/settings_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
-
-  Future<void> _pickThemeMode(BuildContext context, WidgetRef ref) async {
-    final selected = await showDialog<AppThemeMode>(
-      context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('Theme'),
-        children: AppThemeMode.values
-            .map(
-              (mode) => SimpleDialogOption(
-                onPressed: () => Navigator.of(context).pop(mode),
-                child: Text(_capitalize(mode.name)),
-              ),
-            )
-            .toList(),
-      ),
-    );
-    if (selected != null) {
-      ref.read(settingsViewModelProvider.notifier).updateThemeMode(selected);
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,11 +30,6 @@ class SettingsScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   SettingsMenuTile(
-                    title: 'Theme',
-                    subtitle: 'Use ${settings.themeMode.name} appearance',
-                    onTap: () => _pickThemeMode(context, ref),
-                  ),
-                  SettingsMenuTile(
                     title: 'Sound & vibration',
                     subtitle: 'Control app sounds and haptics',
                     showChevron: false,
@@ -63,6 +39,11 @@ class SettingsScreen extends ConsumerWidget {
                           .read(settingsViewModelProvider.notifier)
                           .updateSoundAndVibration(value),
                     ),
+                  ),
+                  SettingsMenuTile(
+                    title: 'Location reminders',
+                    subtitle: 'Get notified near a saved place',
+                    onTap: () => context.push(Routes.profileLocation),
                   ),
                 ],
               ),
@@ -92,6 +73,3 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 }
-
-String _capitalize(String value) =>
-    value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';

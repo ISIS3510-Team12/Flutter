@@ -25,3 +25,9 @@ STORAGEBUCKET=
 API_URL=http://10.0.2.2:8000
 ```
 
+3. In `android/local.properties`, add the following line with the Google Maps API key:
+
+```
+MAPS_API_KEY=GOOGLE_MAPS_API_KEY
+```
+
