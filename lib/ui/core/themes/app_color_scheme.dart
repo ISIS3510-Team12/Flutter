@@ -40,6 +40,9 @@ abstract final class AppColorScheme {
     surfaceContainer: Color(0xFFF1EDED),
     surfaceContainerHigh: Color(0xFFEBE7E7),
     surfaceContainerHighest: Color(0xFFE5E1E2),
+    onSurfaceVariant: Color(0xFF444748),
+    outline: Color(0xFF737878),
+    outlineVariant: Color(0xFFC4C7C7),
   );
 
   static ColorScheme get darkScheme => const ColorScheme(
@@ -81,5 +84,8 @@ abstract final class AppColorScheme {
     surfaceContainer: Color(0xFF201F20),
     surfaceContainerHigh: Color(0xFF2B2A2A),
     surfaceContainerHighest: Color(0xFF353435),
+    onSurfaceVariant: Color(0xFFC4C7C7),
+    outline: Color(0xFF8E9192),
+    outlineVariant: Color(0xFF444748),
   );
 }

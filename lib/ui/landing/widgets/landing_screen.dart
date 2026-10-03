@@ -1,0 +1,97 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+
+class LandingScreen extends StatelessWidget {
+  const LandingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final Size screenSize = MediaQuery.of(context).size;
+    final theme = Theme.of(context);
+
+    double width = screenSize.width;
+    double height = screenSize.height;
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: theme.colorScheme.onSurface,
+                  width: 1.0,
+                ),
+              ),
+              color: theme.colorScheme.primaryContainer,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(height: 120),
+                SvgPicture.asset(
+                  'assets/juggle_logo_light.svg',
+                  fit: BoxFit.contain,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: width,
+            height: height,
+            margin: EdgeInsets.only(top: height / 2.2),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(40),
+                topRight: Radius.circular(40),
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                spacing: height <= 914 ? 14 : 20,
+                children: [
+                  SvgPicture.asset(
+                    'assets/landing_icon.svg',
+                    fit: BoxFit.contain,
+                  ),
+                  Column(
+                    children: [
+                      Text(
+                        'Worried about your tasks?',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      Text(
+                        'Manage them all in one place.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 5),
+                    ],
+                  ),
+                  FilledButton(
+                    onPressed: () => context.go('/signup'),
+                    style: FilledButton.styleFrom(
+                      fixedSize: const Size(251, 40),
+                      backgroundColor: theme.colorScheme.primary,
+                    ),
+                    child: Text(
+                      'Get started',
+                      style: theme.textTheme.labelMedium!.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      resizeToAvoidBottomInset: false,
+    );
+  }
+}

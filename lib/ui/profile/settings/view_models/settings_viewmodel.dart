@@ -1,51 +1,28 @@
-import 'package:flutter/foundation.dart';
-import 'package:team12_flutter_juggle/data/repositories/profile/settings_repository.dart';
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/repositories/profile/settings_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_settings.dart';
 
-class SettingsViewModel extends ChangeNotifier {
-  SettingsViewModel({
-    required SettingsRepository settingsRepository,
-    required VoidCallback onSignedOut,
-  }) : _settingsRepository = settingsRepository,
-       _onSignedOut = onSignedOut {
-    _load();
-  }
-
-  final SettingsRepository _settingsRepository;
-  final VoidCallback _onSignedOut;
-
-  AppSettings? _settings;
-  AppSettings? get settings => _settings;
-
-  bool isSigningOut = false;
-
-  Future<void> _load() async {
-    _settings = await _settingsRepository.getSettings();
-    notifyListeners();
-  }
-
-  Future<void> updateThemeMode(AppThemeMode mode) async {
-    if (_settings == null) return;
-    await _persist(_settings!.copyWith(themeMode: mode));
+class SettingsViewModel extends AsyncNotifier<AppSettings> {
+  @override
+  Future<AppSettings> build() {
+    return ref.watch(settingsRepositoryProvider).getSettings();
   }
 
   Future<void> updateSoundAndVibration(bool enabled) async {
-    if (_settings == null) return;
-    await _persist(_settings!.copyWith(soundAndVibrationEnabled: enabled));
+    final current = state.value;
+    if (current == null) return;
+    await _persist(current.copyWith(soundAndVibrationEnabled: enabled));
   }
 
   Future<void> _persist(AppSettings updated) async {
-    _settings = updated;
-    await _settingsRepository.updateSettings(updated);
-    notifyListeners();
-  }
-
-  Future<void> signOut() async {
-    isSigningOut = true;
-    notifyListeners();
-    // TODO: call the real auth service here (clear session/tokens)
-    _onSignedOut();
-    isSigningOut = false;
-    notifyListeners();
+    final previous = state.value;
+    state = AsyncData(updated);
+    final result = await AsyncValue.guard(
+      () => ref.read(settingsRepositoryProvider).updateSettings(updated),
+    );
+    if (!ref.mounted) return;
+    if (result.hasError && previous != null) state = AsyncData(previous);
   }
 }

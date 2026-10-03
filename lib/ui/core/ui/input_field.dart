@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class InputField extends StatelessWidget {
-  const InputField({super.key, required this.labelText, required this.icon, this.validator, this.onSaved});
+  const InputField({
+    super.key,
+    required this.labelText,
+    this.icon,
+    this.validator,
+    this.obscureText,
+    this.onSaved,
+    this.onTogglePasswordVisibility,
+    this.keyboardType,
+    this.inputFormatters,
+  });
 
   final String labelText;
-  final IconData icon;
+  final IconData? icon;
   final String? Function(String?)? validator;
   final void Function(String?)? onSaved;
+  final bool? obscureText;
+  final Function()? onTogglePasswordVisibility;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +31,23 @@ class InputField extends StatelessWidget {
         labelText: labelText,
         labelStyle: theme.textTheme.bodyMedium,
         border: OutlineInputBorder(),
-        prefixIcon: Icon(icon),
+        prefixIcon: icon != null ? Icon(icon) : null,
         floatingLabelBehavior: FloatingLabelBehavior.always,
+        suffixIcon: onTogglePasswordVisibility != null
+            ? IconButton(
+                icon: Icon(
+                  obscureText == true ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                ),
+                color: theme.colorScheme.onSurfaceVariant,
+                onPressed: onTogglePasswordVisibility,
+              )
+            : null,
       ),
       validator: validator,
       onSaved: onSaved,
+      obscureText: obscureText ?? false,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
     );
   }
 }
