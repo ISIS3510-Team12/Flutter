@@ -23,7 +23,10 @@ class BottomAuthOptions extends StatelessWidget {
         children: [
           Column(
             children: [
-              Divider(color: Colors.grey[400], thickness: 1),
+              Divider(
+                color: theme.colorScheme.surfaceContainerHighest,
+                thickness: 1,
+              ),
               Text(
                 'OR',
                 style: theme.textTheme.bodySmall!.copyWith(
@@ -47,13 +50,13 @@ class BottomAuthOptions extends StatelessWidget {
             child: FilledButton(
               onPressed: onPressed,
               style: FilledButton.styleFrom(
-                backgroundColor: theme.primaryColor,
+                backgroundColor: theme.colorScheme.primary,
                 fixedSize: const Size(100, 40),
               ),
               child: Text(
                 buttonText,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.colorScheme.onPrimary,
                   fontWeight: .bold,
                   fontSize: 14,
                 ),

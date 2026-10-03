@@ -139,14 +139,11 @@ class _SignupFormState extends State<SignupForm> {
               Center(
                 child: FilledButton(
                   onPressed: widget.isLoading ? null : _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF585992),
-                    fixedSize: const Size(100, 40),
-                  ),
-                  child: const Text(
+                  style: FilledButton.styleFrom(fixedSize: const Size(100, 40)),
+                  child: Text(
                     'Sign Up',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: .bold,
                       fontSize: 14,
                     ),

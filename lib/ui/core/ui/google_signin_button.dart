@@ -15,10 +15,10 @@ class GoogleSigninButton extends StatelessWidget {
       child: FilledButton.icon(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFFFFFFFF),
+          backgroundColor: theme.colorScheme.surfaceContainerLowest,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Colors.black, width: 0.5),
+            side: BorderSide(color: theme.colorScheme.onSurface, width: 0.5),
           ),
         ),
         icon: Image.asset(
@@ -32,7 +32,8 @@ class GoogleSigninButton extends StatelessWidget {
           style: theme.textTheme.labelMedium!.copyWith(
             fontFamily: GoogleFonts.googleSans().fontFamily,
             fontWeight: .bold,
-          )
+            color: theme.colorScheme.onSurface,
+          ),
         ),
       ),
     );
