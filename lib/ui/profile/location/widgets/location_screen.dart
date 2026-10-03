@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
@@ -54,12 +55,42 @@ class LocationScreen extends ConsumerWidget {
   Future<void> _save(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
     final outcome = await ref.read(locationViewModelProvider.notifier).save();
-    final message = switch (outcome) {
-      SaveOutcome.saved => 'Location saved. Notifications are on.',
-      SaveOutcome.savedWithoutNotifications => 'Location saved, but turn on notifications in Settings to receive reminders.',
-      SaveOutcome.failed => 'The location could not be saved',
+    final (message, openSettings) = switch (outcome) {
+      SaveOutcome.saved => (
+        'Location saved. We’ll remind you when you’re nearby.',
+        false,
+      ),
+      SaveOutcome.savedWithoutLocationPermission => (
+        'Location saved, but reminders need location access.',
+        true,
+      ),
+      SaveOutcome.savedWithoutBackgroundPermission => (
+        'Location saved. Allow location “all the time” to get '
+            'reminders when the app is closed.',
+        true,
+      ),
+      SaveOutcome.savedWithoutNotificationPermission => (
+        'Location saved, but turn on notifications to receive reminders.',
+        true,
+      ),
+      SaveOutcome.savedWithoutReminders => (
+        'Location saved, but reminders couldn’t be turned on.',
+        false,
+      ),
+      SaveOutcome.failed => ('The location could not be saved', false),
     };
-    messenger.showSnackBar(SnackBar(content: Text(message)));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: openSettings
+            ? SnackBarAction(
+                label: 'Settings',
+                onPressed: () =>
+                    ref.read(deviceLocationRepositoryProvider).openSettings(),
+              )
+            : null,
+      ),
+    );
   }
 
   @override

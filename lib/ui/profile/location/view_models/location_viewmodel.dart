@@ -3,15 +3,23 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/arrival_reminder_repository_provider.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/location_repository_provider.dart';
-import 'package:team12_flutter_juggle/data/repositories/profile/settings_repository_provider.dart';
-import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/user_location.dart';
+import 'package:team12_flutter_juggle/ui/core/background/arrival_geofence_callback.dart';
 
 const notifyWithinOptions = [100, 250, 500, 750, 1000];
 const defaultNotifyWithin = 500;
 
-enum SaveOutcome { saved, savedWithoutNotifications, failed }
+enum SaveOutcome {
+  saved,
+  savedWithoutLocationPermission,
+  savedWithoutBackgroundPermission,
+  savedWithoutNotificationPermission,
+  savedWithoutReminders,
+  failed,
+}
 
 class LocationState {
   const LocationState({this.point, this.notifyWithin = defaultNotifyWithin});
@@ -67,25 +75,26 @@ class LocationViewModel extends AsyncNotifier<LocationState> {
       ),
     );
     if (result.hasError) return SaveOutcome.failed;
-    final enabled = await _enableNotifications();
-    return enabled ? SaveOutcome.saved : SaveOutcome.savedWithoutNotifications;
+    return _enableReminders(result.requireValue);
   }
 
-  Future<bool> _enableNotifications() async {
+  Future<SaveOutcome> _enableReminders(UserLocation location) async {
+    final device = ref.read(deviceLocationRepositoryProvider);
+    final reminders = ref.read(arrivalReminderRepositoryProvider);
     try {
-      final reminders = ref.read(arrivalReminderRepositoryProvider);
-      if (!await reminders.requestNotificationPermission()) return false;
-      if (!ref.mounted) return true;
-      final summary = await ref.read(taskRepositoryProvider).getTodaySummary();
-      if (summary.pendingCount == 0 || !ref.mounted) return true;
-      final settings = await ref.read(settingsRepositoryProvider).getSettings();
-      await reminders.showArrivalNotification(
-        summary,
-        withSound: settings.soundAndVibrationEnabled,
-      );
-      return true;
+      if (await device.requestWhileInUse() != LocationAccess.granted) {
+        return SaveOutcome.savedWithoutLocationPermission;
+      }
+      if (!await device.requestBackgroundAccess()) {
+        return SaveOutcome.savedWithoutBackgroundPermission;
+      }
+      if (!await reminders.requestNotificationPermission()) {
+        return SaveOutcome.savedWithoutNotificationPermission;
+      }
+      await reminders.enable(location, arrivalGeofenceTriggered);
+      return SaveOutcome.saved;
     } catch (_) {
-      return false;
+      return SaveOutcome.savedWithoutReminders;
     }
   }
 }
