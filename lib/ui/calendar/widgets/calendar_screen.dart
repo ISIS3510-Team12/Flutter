@@ -7,6 +7,7 @@ import 'package:team12_flutter_juggle/ui/calendar/widgets/schedule_card.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
@@ -16,9 +17,9 @@ class CalendarScreen extends ConsumerWidget {
     final calendarState = ref.watch(calendarViewModelProvider);
 
     return ScreenLoadTracker(
-      screen: 'calendar_screen',
-      isLoading: calendarState.isLoading,
-      child:  Scaffold(
+      screen: ScreenNames.calendar,
+      state: calendarState,
+      child: Scaffold(
       appBar: const CustomAppBar(),
       body: calendarState.when(
         loading: () => const Center(

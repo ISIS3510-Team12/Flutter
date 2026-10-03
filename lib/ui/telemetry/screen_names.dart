@@ -1,0 +1,19 @@
+abstract final class ScreenNames {
+  static const home = 'home';
+  static const tasks = 'tasks';
+  static const allTasks = 'all_tasks';
+  static const createTask = 'create_task';
+  static const editTask = 'edit_task';
+  static const viewTask = 'view_task';
+  static const calendar = 'calendar';
+  static const groups = 'groups';
+  static const groupDetail = 'group_detail';
+  static const newGroup = 'new_group';
+  static const editGroup = 'edit_group';
+  static const projectDetail = 'project_detail';
+  static const profile = 'profile';
+  static const profileInformation = 'profile_information';
+  static const notifications = 'notifications';
+  static const settings = 'settings';
+  static const locationReminders = 'location_reminders';
+}

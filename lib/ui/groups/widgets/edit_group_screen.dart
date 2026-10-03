@@ -8,6 +8,7 @@ import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_edit_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class GroupEditScreen extends ConsumerWidget {
   const GroupEditScreen({
@@ -24,9 +25,9 @@ class GroupEditScreen extends ConsumerWidget {
     );
 
     return ScreenLoadTracker(
-      screen: 'new_group',
-      isLoading: groupState.isLoading,
-      child:  Scaffold(
+      screen: ScreenNames.editGroup,
+      state: groupState,
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Edit Group'),
       ),

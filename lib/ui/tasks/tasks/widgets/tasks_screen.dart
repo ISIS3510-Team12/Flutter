@@ -11,6 +11,7 @@ import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/group_drawer.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class TasksScreen extends ConsumerWidget {
   const TasksScreen({super.key});
@@ -37,9 +38,9 @@ class TasksScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final state = ref.watch(tasksViewModelProvider);
     return ScreenLoadTracker(
-      screen:'task_screen',
-      isLoading: state.isLoading,
-      child:  Scaffold(
+      screen: ScreenNames.tasks,
+      state: state,
+      child: Scaffold(
       appBar: const CustomAppBar(),
       drawer: const GroupDrawer(),
       bottomNavigationBar: const CustomNavigationBar(),

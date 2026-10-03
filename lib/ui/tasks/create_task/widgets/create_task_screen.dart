@@ -12,6 +12,7 @@ import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_sections.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_picker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class CreateTaskScreen extends ConsumerStatefulWidget {
   const CreateTaskScreen({super.key});
@@ -82,9 +83,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     final theme = Theme.of(context);
     final state = ref.watch(createTaskViewModelProvider);
     return ScreenLoadTracker(
-    screen: 'create_tasks',
-    isLoading: state.isLoading,
-    child:  Scaffold(
+    screen: ScreenNames.createTask,
+    state: state,
+    child: Scaffold(
       appBar: AppBar(title: const Text('Create Task')),
       bottomNavigationBar: const CustomNavigationBar(),
       body: state.when(

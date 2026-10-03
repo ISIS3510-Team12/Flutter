@@ -11,6 +11,7 @@ import 'package:team12_flutter_juggle/ui/projects/widgets/pace_warning_card.dart
 import 'package:team12_flutter_juggle/ui/projects/widgets/task_filter_card.dart';
 import 'package:team12_flutter_juggle/ui/projects/widgets/task_card.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   const ProjectDetailScreen({super.key, required this.projectId});
@@ -56,9 +57,9 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     );
 
     return ScreenLoadTracker(
-    screen:'project_detail',
-    isLoading: projectState.isLoading,
-    child:  Scaffold(
+    screen: ScreenNames.projectDetail,
+    state: projectState,
+    child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Symbols.arrow_back),

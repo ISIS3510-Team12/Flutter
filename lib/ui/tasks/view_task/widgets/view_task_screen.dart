@@ -11,6 +11,7 @@ import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/scheduled_card.
 import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/task_actions_fab.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/task_chip.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class ViewTaskScreen extends ConsumerWidget {
   const ViewTaskScreen({super.key, required this.taskId});
@@ -67,8 +68,8 @@ class ViewTaskScreen extends ConsumerWidget {
     final state = ref.watch(viewTaskViewModelProvider(taskId));
     final me = ref.watch(currentUserProvider).value;
     return ScreenLoadTracker(
-      screen: 'view_task_screen',
-      isLoading: state.isLoading,
+      screen: ScreenNames.viewTask,
+      state: state,
       child: Scaffold(
       appBar: AppBar(title: const Text('View task')),
       bottomNavigationBar: const CustomNavigationBar(),

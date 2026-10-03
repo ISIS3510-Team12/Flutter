@@ -10,6 +10,7 @@ import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model.da
 import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/groups/widgets/group_card.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class GroupsScreen extends ConsumerWidget {
   const GroupsScreen({
@@ -21,9 +22,9 @@ class GroupsScreen extends ConsumerWidget {
     final groupsState = ref.watch(groupsViewModelProvider);
 
     return ScreenLoadTracker(
-      screen: 'group_screen',
-      isLoading: groupsState.isLoading,
-      child:  Scaffold(
+      screen: ScreenNames.groups,
+      state: groupsState,
+      child: Scaffold(
       appBar: const CustomAppBar(),
       body: Column(
         children: [

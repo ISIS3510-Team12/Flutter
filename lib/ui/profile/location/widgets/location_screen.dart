@@ -11,6 +11,7 @@ import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_v
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class LocationScreen extends ConsumerWidget {
   const LocationScreen({super.key});
@@ -102,9 +103,9 @@ class LocationScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final state = ref.watch(locationViewModelProvider);
     return ScreenLoadTracker(
-      screen:'location_screen',
-      isLoading: state.isLoading,
-      child:  Scaffold(
+      screen: ScreenNames.locationReminders,
+      state: state,
+      child: Scaffold(
       appBar: AppBar(title: const Text('Location reminders')),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
