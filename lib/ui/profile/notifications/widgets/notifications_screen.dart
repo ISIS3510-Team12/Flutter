@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/ui/profile/notifications/view_models/notifications_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/notifications/widgets/notification_card.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -9,7 +10,10 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(notificationsViewModelProvider);
-    return Scaffold(
+    return ScreenLoadTracker(
+      screen:'notificacions_screen',
+      isLoading: state.isLoading,
+      child:  Scaffold(
       appBar: AppBar(title: const Text('Notifications')),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -33,6 +37,7 @@ class NotificationsScreen extends ConsumerWidget {
           );
         },
       ),
+    ),
     );
   }
 }

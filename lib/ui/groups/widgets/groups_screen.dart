@@ -9,6 +9,7 @@ import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/groups/widgets/group_card.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 
 class GroupsScreen extends ConsumerWidget {
   const GroupsScreen({
@@ -19,7 +20,10 @@ class GroupsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final groupsState = ref.watch(groupsViewModelProvider);
 
-    return Scaffold(
+    return ScreenLoadTracker(
+      screen: 'group_screen',
+      isLoading: groupsState.isLoading,
+      child:  Scaffold(
       appBar: const CustomAppBar(),
       body: Column(
         children: [
@@ -29,6 +33,7 @@ class GroupsScreen extends ConsumerWidget {
       ),
       floatingActionButton: _buildCreateGroupButton(context, ref),
       bottomNavigationBar: const CustomNavigationBar(),
+    ),
     );
   }
 

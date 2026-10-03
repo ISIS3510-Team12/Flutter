@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/new_group_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 
 class NewGroupScreen extends ConsumerStatefulWidget {
   const NewGroupScreen({
@@ -60,7 +61,10 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
     final usersState = ref.watch(groupUsersViewModelProvider);
     final groupState = ref.watch(newGroupViewModelProvider);
 
-    return Scaffold(
+    return ScreenLoadTracker(
+      screen: 'new_group',
+      isLoading: usersState.isLoading,
+      child:  Scaffold(
       appBar: AppBar(
         title: const Text('New Group'),
       ),
@@ -106,6 +110,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

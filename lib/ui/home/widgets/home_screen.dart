@@ -9,6 +9,7 @@ import 'package:team12_flutter_juggle/ui/home/widgets/overview_cards.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_tabs.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -29,11 +30,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(homeViewModelProvider);
-    return Scaffold(
+    return ScreenLoadTracker(
+      screen: 'home_screen',
+      isLoading: state.isLoading,
+      child: Scaffold(
       appBar: CustomAppBar(),
       body: _buildHomeContent(context, ref, state),
       bottomNavigationBar: CustomNavigationBar(),
       resizeToAvoidBottomInset: false,
+    ),
     );
   }
 

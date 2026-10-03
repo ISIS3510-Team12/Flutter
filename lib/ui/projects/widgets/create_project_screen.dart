@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
   const CreateProjectScreen({super.key, required this.groupId});
@@ -73,7 +74,10 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
 
     final isLoading = projectState.isLoading;
 
-    return Scaffold(
+    return ScreenLoadTracker(
+      screen:'project_create',
+      isLoading: projectState.isLoading,
+      child:  Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -193,6 +197,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         ),
       ),
       bottomNavigationBar: const CustomNavigationBar(),
+    ),
     );
   }
 }
