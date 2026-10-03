@@ -4,7 +4,7 @@ import 'package:team12_flutter_juggle/ui/home/widgets/home_screen.dart';
 import 'package:team12_flutter_juggle/ui/landing/widgets/landing_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signin/widgets/signin_screen.dart';
 import 'package:team12_flutter_juggle/ui/auth/signup/widgets/signup_screen.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/widgets/information_screen.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/widgets/location_map_picker.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/widgets/location_screen.dart';

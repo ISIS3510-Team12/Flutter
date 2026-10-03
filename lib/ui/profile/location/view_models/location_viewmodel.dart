@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/arrival_reminder_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository_provider.dart';

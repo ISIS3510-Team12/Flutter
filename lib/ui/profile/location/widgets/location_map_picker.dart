@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 const defaultMapCenter = LatLng(4.6014, -74.0661);
@@ -19,46 +18,35 @@ class LocationMapPicker extends StatefulWidget {
 
 class _LocationMapPickerState extends State<LocationMapPicker> {
   late LatLng? _selected = widget.initial;
+  late GoogleMapController mapController;
+
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final hsv = HSVColor.fromColor(primaryColor);
     return Scaffold(
       appBar: AppBar(title: const Text('Choose a place')),
       body: Stack(
         children: [
-          FlutterMap(
-            options: MapOptions(
-              initialCenter: widget.initial ?? defaultMapCenter,
-              initialZoom: 15,
-              onTap: (_, point) => setState(() => _selected = point),
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: widget.initial ?? defaultMapCenter,
+              zoom: 15,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: mapTilesUrl,
-                userAgentPackageName: mapUserAgent,
-              ),
+            onTap: (point) => setState(() => _selected = point),
+            markers: {
               if (_selected case final point?)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: point,
-                      width: 48,
-                      height: 48,
-                      alignment: Alignment.topCenter,
-                      child: Icon(
-                        Symbols.location_on,
-                        fill: 1,
-                        size: 48,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
+                Marker(
+                  markerId: const MarkerId('selected'),
+                  position: point,
+                  icon: BitmapDescriptor.defaultMarkerWithHue(hsv.hue),
                 ),
-              const SimpleAttributionWidget(
-                source: Text('OpenStreetMap contributors'),
-              ),
-            ],
+            },
           ),
           Positioned(
             left: 24,

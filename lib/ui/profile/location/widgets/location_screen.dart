@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
+
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
-import 'package:team12_flutter_juggle/ui/profile/location/widgets/location_map_picker.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class LocationScreen extends ConsumerWidget {
   const LocationScreen({super.key});
@@ -141,16 +140,29 @@ class LocationScreen extends ConsumerWidget {
   }
 }
 
-class _MapPreview extends StatelessWidget {
+class _MapPreview extends StatefulWidget {
   const _MapPreview({required this.point, required this.onTap});
 
   final LatLng? point;
   final VoidCallback onTap;
 
+
+  @override
+  State<_MapPreview> createState() => __MapPreviewState();
+}
+
+class __MapPreviewState extends State<_MapPreview> {
+
+  late GoogleMapController mapController;
+
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selected = point;
+    final selected = widget.point;
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: SizedBox(
@@ -162,27 +174,18 @@ class _MapPreview extends StatelessWidget {
               ColoredBox(color: theme.colorScheme.surfaceContainerHighest)
             else
               IgnorePointer(
-                child: FlutterMap(
-                  key: ValueKey(selected),
-                  options: MapOptions(
-                    initialCenter: selected,
-                    initialZoom: 15,
-                    interactionOptions: const InteractionOptions(
-                      flags: InteractiveFlag.none,
-                    ),
+                child: GoogleMap(
+                  onMapCreated: _onMapCreated,
+                  initialCameraPosition: CameraPosition(
+                    target: selected,
+                    zoom: 15,
                   ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: mapTilesUrl,
-                      userAgentPackageName: mapUserAgent,
-                    ),
-                  ],
                 ),
               ),
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: onTap,
+                onTap: widget.onTap,
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
