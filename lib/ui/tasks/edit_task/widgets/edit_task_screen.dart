@@ -9,6 +9,8 @@ import 'package:team12_flutter_juggle/ui/tasks/edit_task/view_models/edit_task_v
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_sections.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_picker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class EditTaskScreen extends ConsumerStatefulWidget {
   const EditTaskScreen({super.key, required this.taskId});
@@ -88,7 +90,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
     final scheme = theme.colorScheme;
     final provider = editTaskViewModelProvider(widget.taskId);
     final state = ref.watch(provider);
-    return Scaffold(
+    return ScreenLoadTracker(
+    screen: ScreenNames.editTask,
+    state: state,
+    child: Scaffold(
       appBar: AppBar(title: const Text('Edit Task')),
       bottomNavigationBar: const CustomNavigationBar(),
       body: state.when(
@@ -240,6 +245,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
           );
         },
       ),
+    ),
     );
   }
 }

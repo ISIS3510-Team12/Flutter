@@ -6,6 +6,8 @@ import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/tasks/all_tasks/view_models/all_tasks_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/tasks/all_tasks/view_models/all_tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class AllTasksScreen extends ConsumerWidget {
   const AllTasksScreen({super.key});
@@ -18,7 +20,10 @@ class AllTasksScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final state = ref.watch(allTasksViewModelProvider);
-    return Scaffold(
+    return ScreenLoadTracker(
+      screen: ScreenNames.allTasks,
+      state: state,
+      child: Scaffold(
       appBar: AppBar(title: const Text('All tasks')),
       bottomNavigationBar: const CustomNavigationBar(),
       body: state.when(
@@ -53,6 +58,7 @@ class AllTasksScreen extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

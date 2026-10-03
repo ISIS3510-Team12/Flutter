@@ -5,6 +5,8 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/profile/profile/widgets/profile_menu_tile.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -13,7 +15,10 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final user = ref.watch(currentUserProvider);
-    return Scaffold(
+    return ScreenLoadTracker(
+      screen: ScreenNames.profile,
+      state: user,
+      child: Scaffold(
       appBar: AppBar(),
       body: user.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -72,6 +77,7 @@ class ProfileScreen extends ConsumerWidget {
           );
         },
       ),
+    ),
     );
   }
 }
