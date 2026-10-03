@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
@@ -93,11 +94,9 @@ class GroupDetailScreen extends ConsumerWidget {
             groupDetailViewModelProvider(groupId),
           );
         },
-        backgroundColor:
-            Theme.of(context).colorScheme.secondaryContainer,
-        foregroundColor:
-            Theme.of(context).colorScheme.primary,
-        icon: const Icon(Icons.add),
+        backgroundColor: Theme.of(context).colorScheme.primaryFixed,
+        foregroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
+        icon: const Icon(Symbols.add_circle),
         label: const Text('Create project'),
       ),
     );

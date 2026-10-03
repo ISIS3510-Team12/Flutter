@@ -98,6 +98,14 @@ class GroupRepository {
     }
   }
 
+  Future<void> removeMember(int groupId, String userId) async {
+    try {
+      await _dio.delete<void>('/groups/$groupId/members/$userId');
+    } catch (e) {
+      throw Exception('Failed to remove member: $e');
+    }
+  }
+
   Future<void> leaveGroup(int groupId) async {
     try {
       await _dio.delete<void>('/groups/$groupId/members/me');

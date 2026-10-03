@@ -98,14 +98,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             OutlinedButton(
               onPressed: () => _showBottomSheet(context),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.grey.shade400),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(100),
                 ),
               ),
               child: Text(
                 'Quick Actions',
-                style: TextStyle(fontSize: 14, color: Colors.black),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ),
           ],

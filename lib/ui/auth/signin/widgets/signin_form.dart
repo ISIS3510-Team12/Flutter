@@ -83,14 +83,11 @@ class _SigninFormState extends State<SigninForm> {
               Center(
                 child: FilledButton(
                   onPressed: _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF585992),
-                    fixedSize: const Size(100, 40),
-                  ),
-                  child: const Text(
+                  style: FilledButton.styleFrom(fixedSize: const Size(100, 40)),
+                  child: Text(
                     'Sign In',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: .bold,
                       fontSize: 14,
                     ),

@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 
@@ -94,6 +96,8 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
     if (result.hasError) return;
     ref.invalidate(tasksViewModelProvider);
     ref.invalidate(tasksOverviewProvider);
+    ref.invalidate(calendarViewModelProvider);
+    ref.invalidate(homeViewModelProvider);
   }
 
   Future<void> deleteTask() async {
@@ -102,5 +106,7 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
     if (!ref.mounted) return;
     ref.invalidate(tasksViewModelProvider);
     ref.invalidate(tasksOverviewProvider);
+    ref.invalidate(calendarViewModelProvider);
+    ref.invalidate(homeViewModelProvider);
   }
 }

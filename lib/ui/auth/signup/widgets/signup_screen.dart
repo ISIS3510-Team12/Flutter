@@ -24,7 +24,7 @@ class SignupScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         surfaceTintColor: theme.canvasColor,
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
         title: Text('Sign Up', style: theme.textTheme.titleMedium),
         leading: BackButton(
           onPressed: () {
@@ -32,7 +32,7 @@ class SignupScreen extends ConsumerWidget {
           },
         ),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       body: SignupForm(
         isLoading: auth.isLoading,
         onSubmit:

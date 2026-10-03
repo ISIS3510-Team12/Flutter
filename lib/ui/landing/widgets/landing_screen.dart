@@ -19,11 +19,14 @@ class LandingScreen extends StatelessWidget {
           Container(
             width: width,
             height: height,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(color: Colors.black, width: 1.0),
+                bottom: BorderSide(
+                  color: theme.colorScheme.onSurface,
+                  width: 1.0,
+                ),
               ),
-              color: Color(0xFF585992),
+              color: theme.colorScheme.primaryContainer,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -40,9 +43,9 @@ class LandingScreen extends StatelessWidget {
             width: width,
             height: height,
             margin: EdgeInsets.only(top: height / 2.2),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(40),
                 topRight: Radius.circular(40),
               ),
@@ -73,12 +76,12 @@ class LandingScreen extends StatelessWidget {
                     onPressed: () => context.go('/signup'),
                     style: FilledButton.styleFrom(
                       fixedSize: const Size(251, 40),
-                      backgroundColor: theme.primaryColor,
+                      backgroundColor: theme.colorScheme.primary,
                     ),
                     child: Text(
                       'Get started',
                       style: theme.textTheme.labelMedium!.copyWith(
-                        color: Colors.white,
+                        color: theme.colorScheme.onPrimary,
                       ),
                     ),
                   ),

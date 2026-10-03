@@ -24,8 +24,8 @@ class AppTheme {
       shadowColor: Colors.transparent,
     ),
     bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: Color(0xFFE5E1E2),
-      dragHandleColor: Color(0xFF737878),
+      backgroundColor: colorScheme.surfaceContainerHighest,
+      dragHandleColor: colorScheme.onSurfaceVariant,
       modalBarrierColor: Colors.transparent,
       showDragHandle: true,
       dragHandleSize: Size(32, 4),

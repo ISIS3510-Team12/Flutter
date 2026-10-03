@@ -24,11 +24,11 @@ class SigninScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
         title: Text('Sign In', style: theme.textTheme.titleMedium),
         leading: BackButton(onPressed: () => context.go('/signup')),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       body: SigninForm(
         isLoading: auth.isLoading,
         onSubmit: ({required String email, required String password}) {

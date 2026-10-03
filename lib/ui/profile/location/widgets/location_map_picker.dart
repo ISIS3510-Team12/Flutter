@@ -7,6 +7,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/themes/map_style.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/place_name_provider.dart';
 
@@ -130,8 +131,10 @@ class _LocationMapPickerState extends ConsumerState<LocationMapPicker> {
               target: widget.initial ?? defaultMapCenter,
               zoom: 15,
             ),
+            style: AppMapStyle.of(Theme.of(context).colorScheme),
             padding: const EdgeInsets.only(bottom: _panelHeight),
             myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
             mapToolbarEnabled: false,
             onTap: (point) => setState(() => _selected = point),
             markers: {

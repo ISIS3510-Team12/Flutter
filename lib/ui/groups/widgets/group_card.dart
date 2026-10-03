@@ -18,7 +18,7 @@ class GroupCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      color: const Color(0xFFF5F0EE),
+      color: theme.colorScheme.surfaceContainerLow,
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.symmetric(
         horizontal: 16,
@@ -26,8 +26,8 @@ class GroupCard extends StatelessWidget {
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(
-          color: Color(0xFFCFCAC8),
+        side: BorderSide(
+          color: theme.colorScheme.surfaceContainerHighest,
           width: 1,
         ),
       ),
@@ -40,12 +40,12 @@ class GroupCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 24,
-                backgroundColor: Color(0xFF3B7A7A),
+                backgroundColor: theme.colorScheme.secondaryContainer,
                 child: Icon(
                   Icons.person_outline,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSecondaryContainer,
                   size: 30,
                 ),
               ),
@@ -57,14 +57,11 @@ class GroupCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1C1B1F),
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
-              const Icon(
-                Icons.arrow_forward,
-                color: Color(0xFF1C1B1F),
-              ),
+              Icon(Icons.arrow_forward, color: theme.colorScheme.onSurface),
             ],
           ),
         ),

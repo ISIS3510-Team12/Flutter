@@ -10,6 +10,8 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
+import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
@@ -271,6 +273,8 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       if (ref.mounted) {
         ref.invalidate(tasksViewModelProvider);
         ref.invalidate(tasksOverviewProvider);
+        ref.invalidate(calendarViewModelProvider);
+        ref.invalidate(homeViewModelProvider);
       }
     }
   }

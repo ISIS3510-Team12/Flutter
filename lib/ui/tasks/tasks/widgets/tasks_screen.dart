@@ -22,6 +22,15 @@ class TasksScreen extends ConsumerWidget {
     context.push(Routes.taskPath(taskId));
   }
 
+  Future<void> _openEditGroup(
+    BuildContext context,
+    WidgetRef ref,
+    int groupId,
+  ) async {
+    final updated = await context.push<bool>(Routes.editGroupPath(groupId));
+    if (updated == true) ref.invalidate(tasksViewModelProvider);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -53,12 +62,12 @@ class TasksScreen extends ConsumerWidget {
                 children: [
                   Text('Current group', style: theme.textTheme.titleSmall),
                   const Spacer(),
-                  Builder(
-                    builder: (context) => TextButton.icon(
-                      onPressed: () => Scaffold.of(context).openDrawer(),
-                      icon: const Icon(Symbols.edit, size: 18),
-                      label: const Text('Edit Group'),
-                    ),
+                  TextButton.icon(
+                    onPressed: data.group == null
+                        ? null
+                        : () => _openEditGroup(context, ref, data.group!.id),
+                    icon: const Icon(Symbols.edit, size: 18),
+                    label: const Text('Edit Group'),
                   ),
                 ],
               ),

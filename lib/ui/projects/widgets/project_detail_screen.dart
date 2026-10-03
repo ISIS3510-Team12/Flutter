@@ -69,12 +69,24 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(
-              'Could not load the project. Please try again.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.error,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Could not load the project. Please try again.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton(
+                  onPressed: () => ref.invalidate(
+                    projectDetailViewModelProvider(widget.projectId),
+                  ),
+                  child: const Text('Retry'),
+                ),
+              ],
             ),
           ),
         ),
@@ -229,7 +241,12 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () => context.push(Routes.createTask),
         icon: const Icon(Symbols.stars, fill: 1),
-        label: Text('Add task', style: theme.textTheme.labelLarge),
+        label: Text(
+          'Add task',
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.primaryContainer,
+          ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: const CustomNavigationBar(),
@@ -272,9 +289,10 @@ class _ProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final remaining = total - completed;
 
-    const purple = Color(0xFF6C5DD3);
-    const teal = Color(0xFF2F8F7C);
-    const trackColor = Color(0xFFE5E5E5);
+    final colorScheme = Theme.of(context).colorScheme;
+    final purple = colorScheme.primary;
+    final teal = colorScheme.secondary;
+    final trackColor = colorScheme.surfaceContainerHighest;
 
     Widget segment(Color color) => ClipRRect(
       borderRadius: BorderRadius.circular(3),

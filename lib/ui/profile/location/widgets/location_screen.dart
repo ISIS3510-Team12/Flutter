@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
+import 'package:team12_flutter_juggle/ui/core/themes/map_style.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
@@ -184,6 +185,7 @@ class _MapPreview extends StatelessWidget {
               IgnorePointer(
                 child: GoogleMap(
                   key: ValueKey(selected),
+                  style: AppMapStyle.of(theme.colorScheme),
                   initialCameraPosition: CameraPosition(
                     target: selected,
                     zoom: 15,

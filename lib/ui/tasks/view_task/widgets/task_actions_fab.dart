@@ -41,7 +41,12 @@ class TaskActionsFabState extends State<TaskActionsFab> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () => setState(() => _expanded = true),
         icon: const Icon(Symbols.stars, fill: 1),
-        label: Text('Task Actions', style: theme.textTheme.labelLarge),
+        label: Text(
+          'Task Actions',
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: scheme.primaryContainer,
+          ),
+        ),
       );
     }
 
@@ -81,7 +86,7 @@ class TaskActionsFabState extends State<TaskActionsFab> {
         const SizedBox(height: 8),
         FloatingActionButton(
           backgroundColor: scheme.primaryContainer,
-          foregroundColor: scheme.onPrimary,
+          foregroundColor: scheme.onPrimaryContainer,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
           ),
