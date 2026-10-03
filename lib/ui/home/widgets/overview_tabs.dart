@@ -27,7 +27,7 @@ class OverviewTabs extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              color: Color(0xFFF7F3F3),
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
               child: TabBar(
                 onTap: changeTab,
                 labelColor: Theme.of(context).colorScheme.primary,
@@ -39,7 +39,9 @@ class OverviewTabs extends StatelessWidget {
                   fontSize: 14,
                   fontFamily: GoogleFonts.rubik().fontFamily,
                 ),
-                dividerColor: Colors.grey.shade300,
+                dividerColor: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest,
                 tabs: [
                   Tab(text: 'Upcoming tasks'),
                   Tab(text: 'Recent activity'),
@@ -65,7 +67,7 @@ class OverviewTabs extends StatelessWidget {
     String? assignee,
   }) {
     return Card(
-      color: Color(0xFFF7F3F3),
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -124,7 +126,10 @@ class OverviewTabs extends StatelessWidget {
       return Center(
         child: Text(
           'No upcoming tasks',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       );
     }
@@ -154,7 +159,10 @@ class OverviewTabs extends StatelessWidget {
       return Center(
         child: Text(
           'No recent activity',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       );
     }
