@@ -1,63 +1,60 @@
-import 'package:flutter/foundation.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/domain/models/group/group.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group_update.dart';
 
-class GroupEditViewModel extends ChangeNotifier {
-  GroupEditViewModel({
-    required GroupRepository groupRepository,
-  }) : _groupRepository = groupRepository;
+class GroupEditViewModel extends AsyncNotifier<Group> {
+  GroupEditViewModel(this.groupId);
 
-  final GroupRepository _groupRepository;
+  final int groupId;
 
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  @override
+  Future<Group> build() async {
+    final repository = ref.watch(groupRepositoryProvider);
 
-  String? _errorMessage;
-  String? get errorMessage => _errorMessage;
+    return repository.getGroup(groupId);
+  }
 
   Future<bool> updateGroup({
-    required int groupId,
     required String name,
     required String description,
     required List<String> emailsToAdd,
     required List<String> userIdsToRemove,
   }) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+    final repository = ref.read(groupRepositoryProvider);
 
-    try {
+    final result = await AsyncValue.guard(() async {
       final group = GroupUpdate(
         name: name,
         description: description,
       );
 
-      await _groupRepository.updateGroup(
+      await repository.updateGroup(
         groupId,
         group,
       );
 
       for (final email in emailsToAdd) {
-        await _groupRepository.addMember(
+        await repository.addMember(
           groupId,
           email,
         );
       }
 
       for (final userId in userIdsToRemove) {
-        await _groupRepository.removeMember(
+        await repository.removeMember(
           groupId,
           userId,
         );
       }
 
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+      return repository.getGroup(groupId);
+    });
+
+    if (!ref.mounted) return false;
+
+    state = result;
+
+    return result.hasValue;
   }
 }

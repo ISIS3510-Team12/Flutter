@@ -16,46 +16,54 @@ class GroupCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      elevation: 0,
+      color: const Color(0xFFF5F0EE), // beige claro
+      clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 6,
       ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(
+          color: Color(0xFFCFCAC8), // borde gris fino
+          width: 1,
+        ),
+      ),
       child: InkWell(
         onTap: onClick,
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 18,
+          ),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: theme.colorScheme.primaryContainer,
+              const CircleAvatar(
+                radius: 24,
+                backgroundColor: Color(0xFF3B7A7A), // verde azulado
                 child: Icon(
-                  Icons.groups,
-                  color: theme.colorScheme.onPrimaryContainer,
+                  Icons.person_outline,
+                  color: Colors.white,
+                  size: 30,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      group.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      group.description,
-                      style: theme.textTheme.bodyMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                child: Text(
+                  group.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1C1B1F),
+                  ),
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              const Icon(
+                Icons.arrow_forward,
+                color: Color(0xFF1C1B1F),
+              ),
             ],
           ),
         ),

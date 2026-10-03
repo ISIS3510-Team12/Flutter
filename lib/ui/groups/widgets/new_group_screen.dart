@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/new_group_view_model_provider.dart';
+import 'package:team12_flutter_juggle/data/repositories/user/user_repository_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class NewGroupScreen extends ConsumerStatefulWidget {
   const NewGroupScreen({
@@ -21,6 +22,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
   List<GroupUserOption> users = [];
   bool isLoadingUsers = true;
   final Set<String> selectedUserIds = {};
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -33,6 +35,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
       final currentUser = await ref.read(currentUserProvider.future);
       final userRepository = ref.read(userRepositoryProvider);
       final loadedUsers = await userRepository.getUsers();
+
       final availableUsers = loadedUsers
           .where(
             (user) => user.userId != currentUser?.userId,
@@ -64,6 +67,19 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
     }
   }
 
+  List<GroupUserOption> get filteredUsers {
+    final query = searchQuery.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return users;
+    }
+
+    return users.where((user) {
+      return user.name.toLowerCase().contains(query) ||
+          user.email.toLowerCase().contains(query);
+    }).toList();
+  }
+
   @override
   void dispose() {
     nameController.dispose();
@@ -78,16 +94,13 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
     final success = await viewModel.createGroup(
       name: nameController.text.trim(),
       description: classController.text.trim(),
-      selectedEmails: users
-          .where((user) => selectedUserIds.contains(user.userId))
-          .map((user) => user.email)
-          .toList(),
+      selectedUserIds: selectedUserIds.toList(),
     );
 
     if (!mounted) return;
 
     if (success) {
-      Navigator.pop(context);
+      context.pop(true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -137,23 +150,16 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
             const SizedBox(height: 12),
             _buildSearchField(context),
             const SizedBox(height: 12),
-            ...users.map(
+            ...filteredUsers.map(
               (user) => _buildUserTile(
                 context: context,
                 user: user,
               ),
             ),
-            ElevatedButton(
-              onPressed: viewModel.isLoading ? null : _createGroup,
-              child: viewModel.isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text('Create Group'),
+            const SizedBox(height: 24),
+            _buildActionButtons(
+              context,
+              viewModel.isLoading,
             ),
           ],
         ),
@@ -232,6 +238,11 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
           ),
         ),
       ),
+      onChanged: (value) {
+        setState(() {
+          searchQuery = value;
+        });
+      },
     );
   }
 
@@ -288,6 +299,74 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildActionButtons(
+    BuildContext context,
+    bool isLoading,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: isLoading ? null : _createGroup,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF5455A9),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                vertical: 10,
+                horizontal: 20,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(40),
+              ),
+            ),
+            icon: isLoading
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(
+                    Icons.check,
+                    size: 20,
+                  ),
+            label: Text(
+              isLoading ? 'Creating...' : 'Create Group',
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: isLoading
+                ? null
+                : () {
+                    context.pop();
+                  },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE0E0E0),
+              foregroundColor: const Color(0xFF5455A9),
+              padding: const EdgeInsets.symmetric(
+                vertical: 10,
+                horizontal: 20,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(40),
+              ),
+            ),
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 20,
+            ),
+            label: const Text('Cancel'),
+          ),
+        ),
+      ],
     );
   }
 }

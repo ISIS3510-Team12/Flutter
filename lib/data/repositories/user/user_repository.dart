@@ -1,12 +1,22 @@
-import 'package:team12_flutter_juggle/data/services/user/user_api_client.dart';
+import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
 
 class UserRepository {
-  UserRepository(this._apiClient);
+  UserRepository(this._dio);
 
-  final UserApiClient _apiClient;
+  final Dio _dio;
 
-  Future<List<User>> getUsers() {
-    return _apiClient.fetchUsers();
+  Future<List<User>> getUsers() async {
+    final response = await _dio.get<List<dynamic>>(
+      '/users/',
+    );
+
+    return response.data!
+        .map(
+          (json) => User.fromJson(
+            json as Map<String, dynamic>,
+          ),
+        )
+        .toList();
   }
 }

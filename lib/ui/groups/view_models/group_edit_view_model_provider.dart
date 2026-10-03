@@ -1,13 +1,9 @@
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/domain/models/group/group.dart';
 
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
-import 'package:team12_flutter_juggle/ui/groups/view_models/group_edit_view_model.dart';
+import 'group_edit_view_model.dart';
 
-final groupEditViewModelProvider =
-    ChangeNotifierProvider<GroupEditViewModel>((ref) {
-  final groupRepository = ref.watch(groupRepositoryProvider);
-
-  return GroupEditViewModel(
-    groupRepository: groupRepository,
-  );
-});
+final groupEditViewModelProvider = AsyncNotifierProvider.autoDispose
+    .family<GroupEditViewModel, Group, int>(
+  GroupEditViewModel.new,
+);

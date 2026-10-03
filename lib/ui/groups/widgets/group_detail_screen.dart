@@ -1,92 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
-import 'package:team12_flutter_juggle/domain/models/group/group.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
-import 'package:team12_flutter_juggle/ui/groups/widgets/edit_group_screen.dart';
-import 'package:team12_flutter_juggle/ui/projects/widgets/create_project_screen.dart';
-import 'package:team12_flutter_juggle/ui/projects/widgets/project_detail_screen.dart';
+import 'package:team12_flutter_juggle/ui/groups/view_models/group_detail_view_model_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/domain/models/group/group.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 
-class GroupDetailScreen extends ConsumerStatefulWidget {
+class GroupDetailScreen extends ConsumerWidget {
   const GroupDetailScreen({
     super.key,
-    required this.group,
+    required this.groupId,
   });
 
-  final Group group;
-
-  final List<Map<String, String>> projects = const [
-    {
-      'title': 'Project 1',
-      'subtitle': 'Project description',
-    },
-    {
-      'title': 'Project 2',
-      'subtitle': 'Project description',
-    },
-    {
-      'title': 'Project 3',
-      'subtitle': 'Project description',
-    },
-  ];
+  final int groupId;
 
   @override
-  ConsumerState<GroupDetailScreen> createState() =>
-      _GroupDetailScreenState();
-}
-
-class _GroupDetailScreenState
-    extends ConsumerState<GroupDetailScreen> {
-  late Group group;
-
-  @override
-  void initState() {
-    super.initState();
-    group = widget.group;
-    _reloadGroup();
-  }
-
-  Future<void> _reloadGroup() async {
-    final groupRepository = ref.read(groupRepositoryProvider);
-
-    final updatedGroup = await groupRepository.getGroup(
-      group.id,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupState = ref.watch(
+      groupDetailViewModelProvider(groupId),
     );
-
-    if (!mounted) return;
-
-    setState(() {
-      group = updatedGroup;
-    });
-  }
-
-  Future<void> _createProject() async {
-    final createdProject = await Navigator.push<Project>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreateProjectScreen(
-          groupId: group.id,
-        ),
-      ),
-    );
-
-    if (!mounted || createdProject == null) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProjectDetailScreen(
-          projectId: createdProject.id,
-        ),
-      ),
-    );
-  }
-
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -94,99 +27,143 @@ class _GroupDetailScreenState
         actions: [
           IconButton(
             onPressed: () async {
-              final updated = await Navigator.push<bool>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GroupEditScreen(
-                    group: group,
-                  ),
-                ),
+              final updated = await context.push<bool>(
+                Routes.editGroupPath(groupId),
               );
 
-              if (!mounted) return;
+              if (!context.mounted) return;
 
               if (updated == true) {
-                await _reloadGroup();
+                ref.invalidate(
+                  groupDetailViewModelProvider(groupId),
+                );
               }
             },
             icon: const Icon(Icons.edit_outlined),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              group.name,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              group.description,
-              style: theme.textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 28),
-            Text(
-              'Members',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildMembers(context),
-            const SizedBox(height: 32),
-            Text(
-              'Related projects',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...widget.projects.map(
-              (project) => _buildProjectCard(
-                context,
-                project,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                onPressed: _createProject,
-                icon: const Icon(Icons.add),
-                label: const Text('Create project'),
-                style: FilledButton.styleFrom(
-                  backgroundColor:
-                      theme.colorScheme.surfaceContainerHighest,
-                  foregroundColor: theme.colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          ],
+      body: groupState.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
         ),
+        error: (error, stackTrace) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'No se pudo cargar el grupo.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () {
+                    ref.invalidate(
+                      groupDetailViewModelProvider(groupId),
+                    );
+                  },
+                  child: const Text('Intentar nuevamente'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        data: (state) {
+          return _buildContent(
+            context,
+            ref,
+            state.group,
+            state.projects,
+          );
+        },
       ),
       bottomNavigationBar: const CustomNavigationBar(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await context.push(
+            Routes.createProjectPath(groupId),
+          );
+
+          if (!context.mounted) return;
+
+          ref.invalidate(
+            groupDetailViewModelProvider(groupId),
+          );
+        },
+        backgroundColor:
+            Theme.of(context).colorScheme.surfaceContainerHighest,
+        foregroundColor:
+            Theme.of(context).colorScheme.primary,
+        icon: const Icon(Icons.add),
+        label: const Text('Create project'),
+      ),
     );
   }
 
-  Widget _buildMembers(BuildContext context) {
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    Group group,
+    List<Project> projects,
+  ) {
+    final theme = Theme.of(context);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            group.name,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            group.description,
+            style: theme.textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'Members',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildMembers(context, group),
+          const SizedBox(height: 32),
+          Text(
+            'Related projects',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...projects.map(
+            (project) => _buildProjectCard(
+              context,
+              project,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMembers(
+    BuildContext context,
+    Group group,
+  ) {
     final theme = Theme.of(context);
 
     return Wrap(
       spacing: 16,
       runSpacing: 12,
-      children: group.users.map((user) {
+      children: group.users.map<Widget>((user) {
         final initial = user.firstName.isNotEmpty
             ? user.firstName[0].toUpperCase()
             : 'A';
@@ -218,57 +195,54 @@ class _GroupDetailScreenState
 
   Widget _buildProjectCard(
     BuildContext context,
-    Map<String, String> project,
+    Project project,
   ) {
     final theme = Theme.of(context);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(
-                Icons.folder_outlined,
-                color: theme.colorScheme.onPrimaryContainer,
+      child: InkWell(
+        onTap: () {
+          context.push(
+            Routes.projectDetailPath(project.id),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor:
+                    theme.colorScheme.primaryContainer,
+                child: Icon(
+                  Icons.folder_outlined,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    project['title']!,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      project.name,
+                      style:
+                          theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    project['subtitle']!,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      project.description,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.change_history,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 6),
-                Icon(
-                  Icons.settings_outlined,
-                  color: theme.colorScheme.primary,
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

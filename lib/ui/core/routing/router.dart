@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/calendar/widgets/calendar_screen.dart';
+import 'package:team12_flutter_juggle/ui/groups/widgets/edit_group_screen.dart';
 import 'package:team12_flutter_juggle/ui/groups/widgets/groups_screen.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/home_screen.dart';
 import 'package:team12_flutter_juggle/ui/landing/widgets/landing_screen.dart';
@@ -18,6 +19,8 @@ import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/tasks_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/view_task_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_viewer.dart';
 
+import 'package:team12_flutter_juggle/ui/groups/widgets/group_detail_screen.dart';
+import 'package:team12_flutter_juggle/ui/groups/widgets/new_group_screen.dart';
 import './routes.dart';
 
 final routes = <RouteBase>[
@@ -94,5 +97,34 @@ final routes = <RouteBase>[
   ),
   GoRoute( 
     path: Routes.groups,
-    builder: (context, state) => const GroupsScreen())
+    builder: (context, state) => const GroupsScreen()),
+  GoRoute(
+    path: Routes.createGroup,
+    builder: (context, state) => const NewGroupScreen(),
+  ),
+  GoRoute(
+    path: Routes.groupDetail,
+    builder: (context, state) {
+      final groupId = int.parse(
+        state.pathParameters['groupId']!,
+      );
+
+      return GroupDetailScreen(
+        groupId: groupId,
+      );
+    },
+  ),
+  GoRoute(
+    path: Routes.editGroup,
+    builder: (context, state) {
+      final groupId = int.parse(
+        state.pathParameters['groupId']!,
+      );
+
+      return GroupEditScreen(
+        groupId: groupId,
+      );
+    },
+  ),
+  
 ];

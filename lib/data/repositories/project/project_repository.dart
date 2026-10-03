@@ -63,4 +63,17 @@ class ProjectRepository {
       throw Exception('Failed to delete project: $e');
     }
   }
+
+  Future<List<Project>> getProjectsByGroup(int groupId) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/projects/group/$groupId',
+      );
+      return response.data!
+          .map((json) => Project.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to load projects: $e');
+    }
+  }
 }

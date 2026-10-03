@@ -1,56 +1,93 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/data/repositories/user/user_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group.dart';
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_edit_view_model_provider.dart';
-import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 
-class GroupEditScreen extends ConsumerStatefulWidget {
+final groupEditUsersProvider = FutureProvider.autoDispose<List<User>>((ref) {
+  final userRepository = ref.watch(userRepositoryProvider);
+  return userRepository.getUsers();
+});
+
+class GroupEditScreen extends ConsumerWidget {
   const GroupEditScreen({
     super.key,
+    required this.groupId,
+  });
+
+  final int groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupState = ref.watch(
+      groupEditViewModelProvider(groupId),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Edit Group'),
+      ),
+      body: groupState.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, stackTrace) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'No se pudo cargar el grupo.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () {
+                    ref.invalidate(
+                      groupEditViewModelProvider(groupId),
+                    );
+                  },
+                  child: const Text('Intentar nuevamente'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        data: (group) => _GroupEditForm(
+          group: group,
+          groupId: groupId,
+        ),
+      ),
+      bottomNavigationBar: const CustomNavigationBar(),
+    );
+  }
+}
+
+class _GroupEditForm extends ConsumerStatefulWidget {
+  const _GroupEditForm({
     required this.group,
+    required this.groupId,
   });
 
   final Group group;
+  final int groupId;
 
   @override
-  ConsumerState<GroupEditScreen> createState() => _GroupEditScreenState();
+  ConsumerState<_GroupEditForm> createState() => _GroupEditFormState();
 }
 
-class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
+class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
   late final TextEditingController nameController;
   late final TextEditingController descriptionController;
+  late final TextEditingController searchController;
 
   final Set<String> selectedUserIds = {};
-  List<User> users = [];
-  String? currentUserId;
-  bool isLoadingUsers = true;
-
-  Future<void> _loadUsers() async {
-    try {
-      final currentUser = await ref.read(currentUserProvider.future);
-
-      final userRepository = ref.read(userRepositoryProvider);
-
-      final loadedUsers = await userRepository.getUsers();
-
-      if (!mounted) return;
-
-      setState(() {
-        currentUserId = currentUser?.userId;
-        users = loadedUsers;
-        isLoadingUsers = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        isLoadingUsers = false;
-      });
-    }
-  }
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -64,22 +101,27 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
       text: widget.group.description,
     );
 
+    searchController = TextEditingController();
+
     selectedUserIds.addAll(
       widget.group.users.map((user) => user.userId),
     );
-
-    _loadUsers();
   }
 
   @override
   void dispose() {
     nameController.dispose();
     descriptionController.dispose();
+    searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _updateGroup() async {
-    final viewModel = ref.read(groupEditViewModelProvider);
+  Future<void> _updateGroup(
+    List<User> users,
+  ) async {
+    final viewModel = ref.read(
+      groupEditViewModelProvider(widget.groupId).notifier,
+    );
 
     final originalUserIds = widget.group.users
         .map((user) => user.userId)
@@ -101,7 +143,6 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
         .toList();
 
     final success = await viewModel.updateGroup(
-      groupId: widget.group.id,
       name: nameController.text.trim(),
       description: descriptionController.text.trim(),
       emailsToAdd: emailsToAdd,
@@ -111,40 +152,106 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     if (!mounted) return;
 
     if (success) {
-      Navigator.pop(context, true);
+      context.pop(true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            viewModel.errorMessage ?? 'Error updating group',
+            'No se pudo actualizar el grupo. Intenta nuevamente.',
           ),
         ),
       );
     }
   }
 
+  List<User> filteredUsers(
+    List<User> users,
+  ) {
+    final query = searchQuery.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return users;
+    }
+
+    return users.where((user) {
+      final fullName =
+          '${user.firstName} ${user.lastName}'.toLowerCase();
+      final email = user.email.toLowerCase();
+
+      return fullName.contains(query) ||
+          email.contains(query);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Group'),
+    final groupState = ref.watch(
+      groupEditViewModelProvider(widget.groupId),
+    );
+
+    final usersState = ref.watch(groupEditUsersProvider);
+    final currentUserAsync = ref.watch(currentUserProvider);
+
+    final isLoading = groupState.isLoading;
+
+    return usersState.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildGroupNameField(context),
-            const SizedBox(height: 24),
-            _buildDescriptionField(context),
-            const SizedBox(height: 32),
-            _buildEditPeopleSection(context),
-            const SizedBox(height: 32),
-            _buildButtons(context),
-          ],
+      error: (error, stackTrace) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'No se pudieron cargar los usuarios.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () {
+                  ref.invalidate(groupEditUsersProvider);
+                },
+                child: const Text('Intentar nuevamente'),
+              ),
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: const CustomNavigationBar(),
+      data: (users) {
+        final currentUserId = currentUserAsync.when(
+          data: (user) => user?.userId,
+          loading: () => null,
+          error: (_, _) => null,
+        );
+
+        final availableUsers = filteredUsers(users);
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildGroupNameField(context),
+              const SizedBox(height: 20),
+              _buildDescriptionField(context),
+              const SizedBox(height: 28),
+              _buildEditPeopleSection(
+                context,
+                availableUsers,
+                currentUserId,
+              ),
+              const SizedBox(height: 28),
+              _buildButtons(
+                context,
+                isLoading,
+                users,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -160,17 +267,22 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextField(
           controller: nameController,
           decoration: InputDecoration(
             hintText: 'Enter group name',
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 5),
         Text(
           'This is the current name of the group',
           style: theme.textTheme.bodySmall,
@@ -191,18 +303,23 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextField(
           controller: descriptionController,
-          maxLines: 3,
+          maxLines: 2,
           decoration: InputDecoration(
             hintText: 'Enter group description',
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 9,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 5),
         Text(
           'This is the current description of the group',
           style: theme.textTheme.bodySmall,
@@ -211,113 +328,157 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     );
   }
 
- Widget _buildEditPeopleSection(BuildContext context) {
+  Widget _buildEditPeopleSection(
+    BuildContext context,
+    List<User> users,
+    String? currentUserId,
+  ) {
     final theme = Theme.of(context);
-
-    if (isLoadingUsers) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Edit People',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
+        Center(
+          child: Text(
+            'Edit People',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        const SizedBox(height: 16),
-        ...users.map(
-          (user) => CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: selectedUserIds.contains(user.userId),
-            onChanged: user.userId == currentUserId
-              ? null
-              : (value) {
+        const SizedBox(height: 14),
+        SearchBar(
+          controller: searchController,
+          hintText: 'Search users',
+          trailing: [
+            if (searchQuery.isNotEmpty)
+              IconButton(
+                onPressed: () {
+                  searchController.clear();
+
                   setState(() {
-                    if (value == true) {
-                      selectedUserIds.add(user.userId);
-                    } else {
-                      selectedUserIds.remove(user.userId);
-                    }
+                    searchQuery = '';
                   });
                 },
-            secondary: CircleAvatar(
-              backgroundColor: theme.colorScheme.primaryContainer,
+                icon: const Icon(Icons.clear),
+              ),
+            const Icon(Icons.search),
+          ],
+          onChanged: (value) {
+            setState(() {
+              searchQuery = value;
+            });
+          },
+        ),
+        const SizedBox(height: 14),
+        if (users.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(
               child: Text(
-                user.firstName.isNotEmpty
-                    ? user.firstName[0].toUpperCase()
-                    : 'A',
-                style: TextStyle(
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
+                'No users found.',
               ),
             ),
-            title: Text(
-              '${user.firstName} ${user.lastName}',
+          )
+        else
+          ...users.map(
+            (user) => CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: selectedUserIds.contains(user.userId),
+              onChanged: user.userId == currentUserId
+                  ? null
+                  : (value) {
+                      setState(() {
+                        if (value == true) {
+                          selectedUserIds.add(user.userId);
+                        } else {
+                          selectedUserIds.remove(user.userId);
+                        }
+                      });
+                    },
+              secondary: CircleAvatar(
+                backgroundColor: const Color(0xFF397376),
+                child: Text(
+                  user.firstName.isNotEmpty
+                      ? user.firstName[0].toUpperCase()
+                      : 'A',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              title: Text(
+                '${user.firstName} ${user.lastName}',
+              ),
+              subtitle: Text(user.email),
             ),
-            subtitle: Text(user.email),
           ),
-        ),
       ],
     );
   }
 
-  Widget _buildButtons(BuildContext context) {
-    final theme = Theme.of(context);
-    final viewModel = ref.watch(groupEditViewModelProvider);
-
+  Widget _buildButtons(
+    BuildContext context,
+    bool isLoading,
+    List<User> users,
+  ) {
     return Row(
       children: [
         Expanded(
           child: FilledButton.icon(
-            onPressed: viewModel.isLoading ? null : _updateGroup,
-            icon: viewModel.isLoading
+            onPressed: isLoading
+                ? null
+                : () => _updateGroup(users),
+            icon: isLoading
                 ? const SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
+                      color: Colors.white,
                     ),
                   )
                 : const Icon(Icons.check),
             label: Text(
-              viewModel.isLoading ? 'Editing...' : 'Edit Group',
+              isLoading ? 'Editing...' : 'Edit Group',
             ),
             style: FilledButton.styleFrom(
-              backgroundColor:
-                  theme.colorScheme.surfaceContainerHighest,
-              foregroundColor: theme.colorScheme.primary,
+              backgroundColor: const Color(0xFF5455A9),
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(
-                vertical: 14,
+                vertical: 10,
+                horizontal: 20,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(40),
               ),
             ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: OutlinedButton(
-            onPressed: viewModel.isLoading
+          child: FilledButton.icon(
+            onPressed: isLoading
                 ? null
                 : () {
-                    Navigator.pop(context);
+                    context.pop();
                   },
-            style: OutlinedButton.styleFrom(
+            icon: const Icon(
+              Icons.delete_outline,
+            ),
+            label: const Text('Cancel'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE0E0E0),
+              foregroundColor: const Color(0xFF5455A9),
               padding: const EdgeInsets.symmetric(
-                vertical: 14,
+                vertical: 10,
+                horizontal: 20,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(40),
               ),
             ),
-            child: const Text('Cancel'),
           ),
         ),
       ],

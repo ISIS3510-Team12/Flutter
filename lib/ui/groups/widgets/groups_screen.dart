@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/group/group_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/group/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 
 
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/groups_view_model_provider.dart';
-import 'package:team12_flutter_juggle/ui/groups/widgets/group_detail_screen.dart';
 import 'package:team12_flutter_juggle/ui/groups/widgets/group_card.dart';
-import 'package:team12_flutter_juggle/ui/groups/widgets/new_group_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class GroupsScreen extends ConsumerWidget {
   const GroupsScreen({
@@ -125,13 +125,8 @@ class GroupsScreen extends ConsumerWidget {
         return GroupCard(
           group: group,
           onClick: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => GroupDetailScreen(
-                    group: group,
-                  ),
-                ),
+            context.push(
+              Routes.groupDetailPath(group.id),
             );
           },
         );
@@ -155,12 +150,8 @@ class GroupsScreen extends ConsumerWidget {
           height: 50,
           child: FilledButton.icon(
             onPressed: () async {
-              final groupCreated = await Navigator.push<bool>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NewGroupScreen(
-                  ),
-                ),
+              final groupCreated = await context.push<bool>(
+                Routes.createGroup,
               );
 
               if (!context.mounted) return;
