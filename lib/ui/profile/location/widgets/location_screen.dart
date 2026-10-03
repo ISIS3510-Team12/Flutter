@@ -53,14 +53,13 @@ class LocationScreen extends ConsumerWidget {
 
   Future<void> _save(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
-    final saved = await ref.read(locationViewModelProvider.notifier).save();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          saved ? 'Location saved' : 'The location could not be saved',
-        ),
-      ),
-    );
+    final outcome = await ref.read(locationViewModelProvider.notifier).save();
+    final message = switch (outcome) {
+      SaveOutcome.saved => 'Location saved. Notifications are on.',
+      SaveOutcome.savedWithoutNotifications => 'Location saved, but turn on notifications in Settings to receive reminders.',
+      SaveOutcome.failed => 'The location could not be saved',
+    };
+    messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

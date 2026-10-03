@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/today_summary.dart';
 
 class TaskRepository {
   TaskRepository(this._dio);
@@ -63,6 +64,24 @@ class TaskRepository {
       for (final json in response.data!)
         (json as Map<String, dynamic>)['id'] as int: json['name'] as String,
     };
+  }
+
+  Future<TodaySummary> getTodaySummary() async {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day);
+    final end = start.add(const Duration(days: 1));
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/tasks/today/summary',
+        queryParameters: {
+          'start': start.toUtc().toIso8601String(),
+          'end': end.toUtc().toIso8601String(),
+        },
+      );
+      return TodaySummary.fromJson(response.data!);
+    } catch (e) {
+      throw Exception('Failed to load today summary: $e');
+    }
   }
 
   Future<List<Task>> getProjectTasks(int projectId) async {
