@@ -9,7 +9,7 @@ class CustomNavigationBar extends StatelessWidget {
   static final items = [
     (Symbols.home, 'Home', Routes.home),
     (Symbols.checklist_rtl, 'Tasks', Routes.tasks),
-    (Symbols.groups, 'Groups', null),
+    (Symbols.groups, 'Groups', Routes.groups),
     (Symbols.calendar_today, 'Calendar', Routes.calendar),
   ];
 
@@ -32,9 +32,8 @@ class CustomNavigationBar extends StatelessWidget {
             final item = items[index];
             final route = item.$3;
             final isSelected =
-                route != null &&
-                (route == currentLocation ||
-                    currentLocation.startsWith('$route/'));
+              route == currentLocation ||
+              currentLocation.startsWith('$route/');
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -51,7 +50,7 @@ class CustomNavigationBar extends StatelessWidget {
                   ),
                   child: GestureDetector(
                     onTap: () {
-                      if (route != null) context.go(route);
+                      context.go(route);
                     },
                     child: Icon(
                       item.$1,

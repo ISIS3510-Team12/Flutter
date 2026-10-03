@@ -63,4 +63,5 @@ class ProjectRepository {
       throw Exception('Failed to delete project: $e');
     }
   }
+
 }
