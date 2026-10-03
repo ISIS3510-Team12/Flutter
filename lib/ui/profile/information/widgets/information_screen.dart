@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/view_models/information_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/view_models/information_viewmodel_provider.dart';
-import 'package:team12_flutter_juggle/ui/profile/information/widgets/clearable_field.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/widgets/read_only_field.dart';
 
 class InformationScreen extends ConsumerWidget {
@@ -67,24 +66,18 @@ class _InformationFormState extends ConsumerState<_InformationForm> {
             ),
           ),
           const SizedBox(height: 24),
-          ClearableField(
+          ReadOnlyField(
             controller: _firstNameController,
             label: 'First Name',
             icon: Symbols.person,
-            onChanged: (value) => ref
-                .read(informationViewModelProvider.notifier)
-                .updateFirstName(value),
           ),
-          const SizedBox(height: 12),
-          ClearableField(
+          const SizedBox(height: 20),
+          ReadOnlyField(
             controller: _lastNameController,
             label: 'Last Name',
             icon: Symbols.person,
-            onChanged: (value) => ref
-                .read(informationViewModelProvider.notifier)
-                .updateLastName(value),
           ),
-          const SizedBox(height: 36),
+          const SizedBox(height: 40),
           ReadOnlyField(
             controller: _emailController,
             label: 'Email',

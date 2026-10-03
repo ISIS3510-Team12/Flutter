@@ -241,7 +241,12 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () => context.push(Routes.createTask),
         icon: const Icon(Symbols.stars, fill: 1),
-        label: Text('Add task', style: theme.textTheme.labelLarge),
+        label: Text(
+          'Add task',
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.primaryContainer,
+          ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: const CustomNavigationBar(),
