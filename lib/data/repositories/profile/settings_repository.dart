@@ -1,31 +1,32 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_settings.dart';
 
 class SettingsRepository {
-  SettingsRepository(this._preferences);
+  SettingsRepository(this._dio);
 
-  static const _themeModeKey = 'settings_theme_mode';
-  static const _soundAndVibrationKey = 'settings_sound_and_vibration';
-
-  final SharedPreferencesAsync _preferences;
+  final Dio _dio;
 
   Future<AppSettings> getSettings() async {
-    final themeName = await _preferences.getString(_themeModeKey);
-    final soundAndVibration = await _preferences.getBool(_soundAndVibrationKey);
-    return AppSettings(
-      themeMode: AppThemeMode.values.firstWhere(
-        (mode) => mode.name == themeName,
-        orElse: () => AppThemeMode.system,
-      ),
-      soundAndVibrationEnabled: soundAndVibration ?? true,
-    );
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/users/preferences',
+      );
+      return AppSettings(
+        soundAndVibrationEnabled: response.data!['push_enabled'] as bool,
+      );
+    } on DioException {
+      return const AppSettings(soundAndVibrationEnabled: true);
+    }
   }
 
   Future<void> updateSettings(AppSettings settings) async {
-    await _preferences.setString(_themeModeKey, settings.themeMode.name);
-    await _preferences.setBool(
-      _soundAndVibrationKey,
-      settings.soundAndVibrationEnabled,
-    );
+    try {
+      await _dio.patch<Map<String, dynamic>>(
+        '/users/preferences',
+        data: {'push_enabled': settings.soundAndVibrationEnabled},
+      );
+    } catch (e) {
+      throw Exception('Failed to update settings: $e');
+    }
   }
 }
