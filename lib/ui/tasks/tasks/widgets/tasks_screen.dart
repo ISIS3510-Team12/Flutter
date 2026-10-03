@@ -30,17 +30,20 @@ class TasksScreen extends ConsumerWidget {
       appBar: const CustomAppBar(),
       drawer: const GroupDrawer(),
       bottomNavigationBar: const CustomNavigationBar(),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: theme.colorScheme.primaryFixed,
-        foregroundColor: theme.colorScheme.onPrimaryFixed,
-        onPressed: () => _openCreateTask(context),
-        icon: const Icon(Symbols.add),
-        label: const Text('Create task'),
-      ),
+      floatingActionButton: (state.value?.groups.isEmpty ?? false)
+          ? null
+          : FloatingActionButton.extended(
+              backgroundColor: theme.colorScheme.primaryFixed,
+              foregroundColor: theme.colorScheme.onPrimaryFixed,
+              onPressed: () => _openCreateTask(context),
+              icon: const Icon(Symbols.add),
+              label: const Text('Create task'),
+            ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
         data: (data) {
+          if (data.groups.isEmpty) return const _NoGroupsMessage();
           final myTasks = data.myTasks;
           final groupTasks = data.groupTasks;
           return ListView(
@@ -105,6 +108,46 @@ class TasksScreen extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _NoGroupsMessage extends StatelessWidget {
+  const _NoGroupsMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'You don\u2019t have any groups yet',
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Create a group to start adding tasks.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Builder(
+              builder: (context) => FilledButton.icon(
+                onPressed: () => Scaffold.of(context).openDrawer(),
+                icon: const Icon(Symbols.add_circle),
+                label: const Text('New group'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -112,6 +112,15 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                       )
                       .toList(),
                 ),
+                if (form.groups.isEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Create a group first from the Tasks tab to add tasks.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 19),
                 const TaskFieldLabel('ASSOCIATED PROJECT'),
                 const SizedBox(height: 8),
@@ -174,6 +183,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   members: form.members,
                   selectedIds: form.selectedMemberIds,
                   onToggle: notifier.toggleMember,
+                  lockedId: form.lockedMemberId,
                 ),
                 const SizedBox(height: 19),
                 const TaskFieldLabel('DEADLINE & TIMING', required: true),

@@ -11,10 +11,7 @@ class SelectedTaskGroupId extends Notifier<int?> {
     if (groups.isEmpty) return null;
     return groups.firstWhere(
       (group) => group.id == state,
-      orElse: () => groups.firstWhere(
-        (group) => group.isPersonal,
-        orElse: () => groups.first,
-      ),
+      orElse: () => groups.first,
     );
   }
 }

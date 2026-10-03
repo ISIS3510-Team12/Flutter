@@ -3,7 +3,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
+import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
@@ -15,9 +18,8 @@ import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_v
 class EditTaskFormState {
   const EditTaskFormState({
     required this.task,
-    required this.groups,
     required this.group,
-    required this.projects,
+    required this.projectOptions,
     required this.selectedProject,
     required this.members,
     required this.type,
@@ -31,9 +33,8 @@ class EditTaskFormState {
   });
 
   final Task task;
-  final List<TaskGroup> groups;
   final TaskGroup? group;
-  final List<String> projects;
+  final List<Project> projectOptions;
   final String? selectedProject;
   final List<TaskMember> members;
   final TaskType type;
@@ -45,12 +46,18 @@ class EditTaskFormState {
   final Uint8List? currentPhoto;
   final String? newPhotoPath;
 
+  List<String> get projects =>
+      projectOptions.map((project) => project.name).toList();
+
+  String? get lockedMemberId => task.ownerId;
+
+  int? get selectedProjectId => projectOptions
+      .where((project) => project.name == selectedProject)
+      .map((project) => project.id)
+      .firstOrNull;
+
   EditTaskFormState copyWith({
-    TaskGroup? group,
-    List<TaskMember>? members,
-    List<String>? projects,
     String? selectedProject,
-    bool clearProject = false,
     TaskType? type,
     Set<String>? selectedMemberIds,
     DateTime? deadline,
@@ -61,13 +68,10 @@ class EditTaskFormState {
   }) {
     return EditTaskFormState(
       task: task,
-      groups: groups,
-      group: group ?? this.group,
-      projects: projects ?? this.projects,
-      selectedProject: clearProject
-          ? null
-          : selectedProject ?? this.selectedProject,
-      members: members ?? this.members,
+      group: group,
+      projectOptions: projectOptions,
+      selectedProject: selectedProject ?? this.selectedProject,
+      members: members,
       type: type ?? this.type,
       selectedMemberIds: selectedMemberIds ?? this.selectedMemberIds,
       deadline: deadline ?? this.deadline,
@@ -91,58 +95,34 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     final currentUser = ref.watch(currentUserProvider.future);
     final task = await repository.getTask(taskId);
     final photo = task.hasPhoto ? await repository.getTaskPhoto(taskId) : null;
-    final groups = await repository.getTaskGroups();
+    final groups = await ref.watch(groupRepositoryProvider).getGroups();
     TaskGroup? group;
     for (final candidate in groups) {
       if (candidate.id == task.groupId) group = candidate;
     }
     group ??= groups.isEmpty ? null : groups.first;
     final projects = group == null
-        ? <String>[]
-        : await repository.getProjects(group);
+        ? <Project>[]
+        : await ref.watch(projectRepositoryProvider).getGroupProjects(group.id);
     final me = (await currentUser)!;
     final members = membersWithYou(group, me);
     return EditTaskFormState(
       task: task,
-      groups: groups,
       group: group,
-      projects: projects,
-      selectedProject: repository.projectNameFor(task.projectId),
+      projectOptions: projects,
+      selectedProject: projects
+          .where((project) => project.id == task.projectId)
+          .map((project) => project.name)
+          .firstOrNull,
       members: members,
       type: task.type,
-      selectedMemberIds: task.assigneeIds.toSet(),
+      selectedMemberIds: {...task.assigneeIds, ?task.ownerId},
       deadline: task.deadline,
       time: TimeOfDay.fromDateTime(task.deadline),
       isPriority: task.isPriority,
       needsHelp: task.needsHelp,
       currentPhoto: photo,
     );
-  }
-
-  Future<void> updateGroup(TaskGroup group) async {
-    final current = state.value;
-    if (current == null || current.group?.id == group.id) return;
-    final repository = ref.read(taskRepositoryProvider);
-    final result = await AsyncValue.guard(() async {
-      final projects = await repository.getProjects(group);
-      final you = current.members.first;
-      final members = [
-        you,
-        ...group.members.where((member) => member.id != you.id),
-      ];
-      final memberIds = members.map((member) => member.id).toSet();
-      return current.copyWith(
-        group: group,
-        projects: projects,
-        clearProject: true,
-        members: members,
-        selectedMemberIds: current.selectedMemberIds
-            .where(memberIds.contains)
-            .toSet(),
-      );
-    });
-    if (!ref.mounted) return;
-    state = result;
   }
 
   void updateSelectedProject(String value) =>
@@ -153,6 +133,7 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
   void toggleMember(String memberId) {
     final current = state.value;
     if (current == null) return;
+    if (memberId == current.lockedMemberId) return;
     final selected = Set<String>.from(current.selectedMemberIds);
     if (!selected.add(memberId)) selected.remove(memberId);
     state = AsyncData(current.copyWith(selectedMemberIds: selected));
@@ -189,6 +170,7 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
       type: current.type,
       assignees: selectedMembers.map((member) => member.name).toList(),
       assigneeIds: selectedMembers.map((member) => member.id).toList(),
+      projectId: current.selectedProjectId,
       projectName: current.selectedProject,
       deadline: DateTime(
         date.year,

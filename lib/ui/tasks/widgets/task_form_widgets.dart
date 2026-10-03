@@ -27,6 +27,18 @@ InputDecoration taskMenuDecoration(ThemeData theme) {
   );
 }
 
+InputDecoration taskInactiveDecoration(ThemeData theme) {
+  return InputDecoration(
+    prefixIcon: const Icon(Symbols.stars, size: 20),
+    filled: true,
+    fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(4),
+      borderSide: BorderSide.none,
+    ),
+  );
+}
+
 InputDecoration taskTimingDecoration(
   ThemeData theme, {
   required String label,
@@ -106,13 +118,13 @@ class TaskMemberChip extends StatelessWidget {
     required this.name,
     required this.initial,
     required this.selected,
-    required this.onTap,
+    this.onTap,
   });
 
   final String name;
   final String initial;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -159,11 +171,13 @@ class TaskMembersSelector extends StatelessWidget {
     required this.members,
     required this.selectedIds,
     required this.onToggle,
+    this.lockedId,
   });
 
   final List<TaskMember> members;
   final Set<String> selectedIds;
   final ValueChanged<String> onToggle;
+  final String? lockedId;
 
   @override
   Widget build(BuildContext context) {
@@ -180,7 +194,9 @@ class TaskMembersSelector extends StatelessWidget {
                   name: member.name,
                   initial: member.initial,
                   selected: selectedIds.contains(member.id),
-                  onTap: () => onToggle(member.id),
+                  onTap: member.id == lockedId
+                      ? null
+                      : () => onToggle(member.id),
                 ),
               ),
           ],

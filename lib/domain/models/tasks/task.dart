@@ -1,3 +1,5 @@
+import 'package:team12_flutter_juggle/domain/models/shared/server_date.dart';
+
 enum TaskType { coding, design, writing, research }
 
 enum TaskStatus { pending, inProgress, done }
@@ -18,6 +20,7 @@ class Task {
     this.assigneeIds = const [],
     this.hasPhoto = false,
     this.groupId,
+    this.ownerId,
     this.projectId,
     this.projectName,
     this.relatedTaskIds = const [],
@@ -38,6 +41,7 @@ class Task {
   final List<String> assigneeIds;
   final bool hasPhoto;
   final int? groupId;
+  final String? ownerId;
   final int? projectId;
   final String? projectName;
   final List<String> relatedTaskIds;
@@ -80,6 +84,7 @@ class Task {
       needsHelp: needsHelp ?? this.needsHelp,
       hasPhoto: hasPhoto ?? this.hasPhoto,
       groupId: groupId,
+      ownerId: ownerId,
       projectId: projectId ?? this.projectId,
       projectName: projectName ?? this.projectName,
       relatedTaskIds: relatedTaskIds ?? this.relatedTaskIds,
@@ -108,13 +113,14 @@ class Task {
           (user as Map<String, dynamic>)['user_id'] as String,
       ],
       deadline: json['deadline'] != null
-          ? _parseServerDate(json['deadline'] as String)
+          ? parseServerDate(json['deadline'] as String)
           : DateTime.now(),
       isMine: isMine,
       isPriority: json['is_priority'] as bool? ?? false,
       needsHelp: json['needs_help'] as bool? ?? false,
       hasPhoto: json['has_photo'] as bool? ?? false,
       groupId: json['group_id'] as int?,
+      ownerId: json['user_id'] as String?,
       projectId: json['project_id'] as int?,
       relatedTaskIds: [
         for (final related
@@ -145,7 +151,7 @@ class Task {
       groupName: groupName,
       assignees: const [],
       deadline: json['deadline'] != null
-          ? _parseServerDate(json['deadline'] as String)
+          ? parseServerDate(json['deadline'] as String)
           : DateTime.now(),
       isMine: true,
       isPriority: false,
@@ -167,18 +173,6 @@ class Task {
   Map<String, dynamic> toUpdateJson() => toCreateJson();
 }
 
-DateTime _parseServerDate(String value) {
-  final parsed = DateTime.parse(value);
-  if (parsed.isUtc) return parsed.toLocal();
-  return DateTime.utc(
-    parsed.year,
-    parsed.month,
-    parsed.day,
-    parsed.hour,
-    parsed.minute,
-    parsed.second,
-  ).toLocal();
-}
 
 TaskType taskTypeFromJson(String value) {
   return TaskType.values.firstWhere(

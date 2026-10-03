@@ -224,25 +224,12 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          context.push(Routes.createTask);
-        },
-        backgroundColor: const Color(0xFFDDEBFF),
-        foregroundColor: const Color(0xFF2F3A4A),
-        elevation: 2,
-        icon: Container(
-          width: 28,
-          height: 28,
-          decoration: const BoxDecoration(
-            color: Color(0xFF6C5DD3),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Symbols.add, size: 16, color: Colors.white),
-        ),
-        label: const Text(
-          'Add task',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        backgroundColor: theme.colorScheme.onPrimaryContainer,
+        foregroundColor: theme.colorScheme.primaryContainer,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onPressed: () => context.push(Routes.createTask),
+        icon: const Icon(Symbols.stars, fill: 1),
+        label: Text('Add task', style: theme.textTheme.labelLarge),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: const CustomNavigationBar(),

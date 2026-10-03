@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
+import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
@@ -16,7 +19,7 @@ class CreateTaskFormState {
     required this.groups,
     required this.group,
     required this.members,
-    required this.projects,
+    required this.projectOptions,
     required this.candidateTasks,
     this.title = '',
     this.type = TaskType.coding,
@@ -34,7 +37,7 @@ class CreateTaskFormState {
   final List<TaskGroup> groups;
   final TaskGroup? group;
   final List<TaskMember> members;
-  final List<String> projects;
+  final List<Project> projectOptions;
   final List<Task> candidateTasks;
   final String title;
   final TaskType type;
@@ -47,6 +50,14 @@ class CreateTaskFormState {
   final Set<String> relatedTaskIds;
   final String relatedQuery;
   final String? photoPath;
+
+  List<String> get projects =>
+      projectOptions.map((project) => project.name).toList();
+
+  int? get selectedProjectId => projectOptions
+      .where((project) => project.name == selectedProject)
+      .map((project) => project.id)
+      .firstOrNull;
 
   List<Task> get filteredCandidates {
     final query = relatedQuery.trim().toLowerCase();
@@ -61,13 +72,15 @@ class CreateTaskFormState {
 
   String get groupName => group?.name ?? 'No group';
 
+  String? get lockedMemberId => members.isEmpty ? null : members.first.id;
+
   bool get canSubmit =>
       group != null && title.isNotEmpty && deadline != null && time != null;
 
   CreateTaskFormState copyWith({
     TaskGroup? group,
     List<TaskMember>? members,
-    List<String>? projects,
+    List<Project>? projectOptions,
     List<Task>? candidateTasks,
     bool clearProject = false,
     String? title,
@@ -86,7 +99,7 @@ class CreateTaskFormState {
       groups: groups,
       group: group ?? this.group,
       members: members ?? this.members,
-      projects: projects ?? this.projects,
+      projectOptions: projectOptions ?? this.projectOptions,
       candidateTasks: candidateTasks ?? this.candidateTasks,
       title: title ?? this.title,
       type: type ?? this.type,
@@ -111,13 +124,13 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     final repository = ref.watch(taskRepositoryProvider);
     final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
     final currentUser = ref.watch(currentUserProvider.future);
-    final groups = await repository.getTaskGroups();
+    final groups = await ref.watch(groupRepositoryProvider).getGroups();
     final group = selectedGroup.resolve(groups);
     final me = (await currentUser)!;
     final members = membersWithYou(group, me);
     final projects = group == null
-        ? <String>[]
-        : await repository.getProjects(group);
+        ? <Project>[]
+        : await ref.watch(projectRepositoryProvider).getGroupProjects(group.id);
     final candidateTasks = group == null
         ? <Task>[]
         : await repository.getGroupTasks(group);
@@ -125,7 +138,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       groups: groups,
       group: group,
       members: members,
-      projects: projects,
+      projectOptions: projects,
       candidateTasks: candidateTasks,
       selectedMemberIds: {me.userId},
     );
@@ -136,7 +149,9 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     if (current == null || current.group?.id == group.id) return;
     final repository = ref.read(taskRepositoryProvider);
     final result = await AsyncValue.guard(() async {
-      final projects = await repository.getProjects(group);
+      final projects = await ref
+          .read(projectRepositoryProvider)
+          .getGroupProjects(group.id);
       final candidateTasks = await repository.getGroupTasks(group);
       final you = current.members.first;
       final members = [
@@ -146,7 +161,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       final memberIds = members.map((member) => member.id).toSet();
       return current.copyWith(
         group: group,
-        projects: projects,
+        projectOptions: projects,
         candidateTasks: candidateTasks,
         relatedTaskIds: const {},
         clearProject: true,
@@ -167,6 +182,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
   void toggleMember(String memberId) {
     final current = state.value;
     if (current == null) return;
+    if (memberId == current.lockedMemberId) return;
     final selected = Set<String>.from(current.selectedMemberIds);
     if (!selected.add(memberId)) selected.remove(memberId);
     state = AsyncData(current.copyWith(selectedMemberIds: selected));
@@ -237,6 +253,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       isMine: true,
       isPriority: current.isPriority,
       needsHelp: current.needsHelp,
+      projectId: current.selectedProjectId,
       projectName: current.selectedProject,
       relatedTaskIds: current.relatedTaskIds.toList(),
     );
