@@ -5,6 +5,8 @@ import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/auth/view_models/auth_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/view_models/settings_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -14,7 +16,10 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final settingsState = ref.watch(settingsViewModelProvider);
     final authState = ref.watch(authViewModelProvider);
-    return Scaffold(
+    return ScreenLoadTracker(
+      screen: ScreenNames.settings,
+      state: settingsState,
+      child: Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: settingsState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -70,6 +75,7 @@ class SettingsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

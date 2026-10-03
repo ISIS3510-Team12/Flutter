@@ -9,6 +9,8 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_detail_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class GroupDetailScreen extends ConsumerWidget {
   const GroupDetailScreen({
@@ -24,7 +26,10 @@ class GroupDetailScreen extends ConsumerWidget {
       groupDetailViewModelProvider(groupId),
     );
 
-    return Scaffold(
+    return ScreenLoadTracker(
+    screen: ScreenNames.groupDetail,
+    state: groupState,
+    child: Scaffold(
       appBar: AppBar(
         title: const Text('Group detail'),
         actions: [
@@ -99,6 +104,7 @@ class GroupDetailScreen extends ConsumerWidget {
         icon: const Icon(Symbols.add_circle),
         label: const Text('Create project'),
       ),
+    ),
     );
   }
 

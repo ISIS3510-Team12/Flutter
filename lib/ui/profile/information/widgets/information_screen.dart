@@ -4,6 +4,8 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/view_models/information_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/view_models/information_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/widgets/read_only_field.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class InformationScreen extends ConsumerWidget {
   const InformationScreen({super.key});
@@ -11,13 +13,17 @@ class InformationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(informationViewModelProvider);
-    return Scaffold(
+    return ScreenLoadTracker(
+      screen: ScreenNames.profileInformation,
+      state: state,
+      child: Scaffold(
       appBar: AppBar(title: const Text('Profile Information')),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
         data: (info) => _InformationForm(info: info),
       ),
+    ),
     );
   }
 }
