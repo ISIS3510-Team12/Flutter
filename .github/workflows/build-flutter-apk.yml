@@ -1,6 +1,7 @@
 name: Build Flutter APK
 
 on:
+  push:
   workflow_dispatch:
 
 permissions:
