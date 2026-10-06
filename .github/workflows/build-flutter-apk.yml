@@ -1,0 +1,70 @@
+name: Build Flutter APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    name: Build Juggle APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create local.properties
+        shell: bash
+        env:
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+        run: bash .github/workflows/scripts/create-local-properties.sh
+
+      - name: Create environment file
+        shell: bash
+        env:
+          APIKEY: ${{ secrets.APIKEY }}
+          APPID: ${{ secrets.APPID }}
+          MESSAGINGSENDERID: ${{ secrets.MESSAGINGSENDERID }}
+          PROJECTID: ${{ secrets.PROJECTID }}
+          STORAGEBUCKET: ${{ secrets.STORAGEBUCKET }}
+          API_URL: ${{ secrets.API_URL }}
+        run: bash .github/workflows/scripts/create-environment-file.sh
+
+      - name: Create google-services.json
+        shell: bash
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: bash .github/workflows/scripts/create-google-services.sh
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Rename APK
+        shell: bash
+        run: |
+          cp build/app/outputs/flutter-apk/app-debug.apk \
+             build/app/outputs/flutter-apk/Juggle.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Juggle
+          path: build/app/outputs/flutter-apk/Juggle.apk
+          if-no-files-found: error
