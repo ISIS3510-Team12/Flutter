@@ -45,6 +45,12 @@ jobs:
           API_URL: ${{ secrets.API_URL }}
         run: bash .github/workflows/scripts/create-environment-file.sh
 
+      - name: Create google-services.json
+        shell: bash
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: bash .github/workflows/scripts/create-google-services.sh
+
       - name: Install dependencies
         run: flutter pub get
 
