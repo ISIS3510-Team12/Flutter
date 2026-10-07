@@ -32,7 +32,7 @@ fi
 printf '%s\n' \
   "sdk.dir=${ANDROID_SDK_PATH}" \
   "flutter.sdk=${FLUTTER_SDK_PATH}" \
-  "flutter.buildMode=debug" \
+  "flutter.buildMode=release" \
   "flutter.versionName=1.0.0" \
   "flutter.versionCode=1" \
   "MAPS_API_KEY=${MAPS_API_KEY}" \
