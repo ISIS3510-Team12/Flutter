@@ -13,6 +13,13 @@ final homeViewModelProvider = FutureProvider.autoDispose<HomeState>((
       .watch(notificationsRepositoryProvider)
       .getNotifications();
 
+  final todayNotifications = notifications.where((notification) {
+    final now = DateTime.now();
+    return notification.timestamp.year == now.year &&
+        notification.timestamp.month == now.month &&
+        notification.timestamp.day == now.day;
+  }).toList();
+
   if (user == null) {
     throw StateError('User is not logged in');
   }
@@ -20,8 +27,8 @@ final homeViewModelProvider = FutureProvider.autoDispose<HomeState>((
   return HomeState(
     user: user,
     numTasks: tasks.dueTodayItems.length,
-    numNotifications: notifications.length,
+    numNotifications: todayNotifications.length,
     dueTodayTasks: tasks.dueTodayItems,
-    recentActivity: notifications
+    recentActivity: todayNotifications
   );
 });
