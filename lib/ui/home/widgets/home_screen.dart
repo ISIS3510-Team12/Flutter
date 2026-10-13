@@ -2,80 +2,63 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:team12_flutter_juggle/domain/models/profile/app_notification.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/custom_bottom_sheet.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_cards.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_tabs.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
-import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _selectedTab = 0;
-
-  void _changeTab(int index) {
-    setState(() {
-      _selectedTab = index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeViewModelProvider);
     return ScreenLoadTracker(
       screen: ScreenNames.home,
       state: state,
       child: Scaffold(
-      appBar: CustomAppBar(),
-      body: _buildHomeContent(context, ref, state),
-      bottomNavigationBar: CustomNavigationBar(),
-      resizeToAvoidBottomInset: false,
-    ),
-    );
-  }
-
-  Widget _buildHomeContent(
-    BuildContext context,
-    WidgetRef ref,
-    AsyncValue<HomeState> state,
-  ) {
-    return state.when(
-      data: (data) => Padding(
-        padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
-        child: SingleChildScrollView(
-          child: Column(
-            spacing: 20,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              userSection(context, data.user.firstName),
-              overviewSection(
-                context,
-                _selectedTab,
-                _changeTab,
-                data.dueTodayTasks,
-                data.recentActivity,
-                data.numTasks,
-                numNotifications: data.numNotifications,
+        appBar: CustomAppBar(),
+        body: state.when(
+          data: (data) => Padding(
+            padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
+            child: SingleChildScrollView(
+              child: Column(
+                spacing: 20,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  UserSection(firstName: data.user.firstName),
+                  OverviewSection(
+                    dueTodayTasks: data.dueTodayTasks,
+                    recentActivity: data.recentActivity,
+                    numTasks: data.numTasks,
+                    numNotifications: data.numNotifications,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Center(child: Text('Error: $error')),
         ),
+        bottomNavigationBar: CustomNavigationBar(),
+        resizeToAvoidBottomInset: false,
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => Center(child: Text('Error: $error')),
     );
   }
+}
 
-  Widget userSection(BuildContext context, String firstName) {
+class UserSection extends StatelessWidget {
+  final String firstName;
+
+  const UserSection({super.key, required this.firstName});
+
+  @override
+  Widget build(BuildContext context) {
     final now = DateTime.now();
     final month = DateFormat('MMMM').format(now);
     final day = DateFormat('EEEE').format(now);
@@ -100,7 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 softWrap: true,
               ),
             ),
-            Spacer(),
+            SizedBox(width: 10),
             OutlinedButton(
               onPressed: () => _showBottomSheet(context),
               style: OutlinedButton.styleFrom(
@@ -125,15 +108,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget overviewSection(
-    BuildContext context,
-    int selectedTab,
-    Function(int) changeTab,
-    List<Map<String, dynamic>> dueTodayTasks,
-    List<Map<String, dynamic>> recentActivity,
-    int numTasks, {
-    numNotifications = 5,
-  }) {
+  void _showBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) {
+        return CustomBottomSheet();
+      },
+    );
+  }
+}
+
+class OverviewSection extends StatelessWidget {
+  final List<Map<String, dynamic>> dueTodayTasks;
+  final List<AppNotification> recentActivity;
+  final int numTasks;
+  final int numNotifications;
+
+  const OverviewSection({
+    super.key,
+    required this.dueTodayTasks,
+    required this.recentActivity,
+    required this.numTasks,
+    required this.numNotifications,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 15,
@@ -146,22 +148,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         OverviewTabs(
           dueTodayTasks: dueTodayTasks,
           recentActivity: recentActivity,
-          selectedTab: selectedTab,
-          changeTab: changeTab,
         ),
         SizedBox(height: 10),
       ],
-    );
-  }
-
-  void _showBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) {
-        return CustomBottomSheet();
-      },
     );
   }
 }

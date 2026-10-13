@@ -31,27 +31,37 @@ class OverviewCards extends StatelessWidget {
     return Row(
       children: cardsInfo.map((card) {
         return Expanded(
-          child: cardItem(
-            context,
-            card.icon,
-            card.title,
-            card.description,
-            numTasks ?? 0,
-            numNotifications ?? 0,
+          child: CardItem(
+            icon: card.icon,
+            title: card.title,
+            description: card.description,
+            numTasks: numTasks ?? 0,
+            numNotifications: numNotifications ?? 0,
           ),
         );
       }).toList(),
     );
   }
+}
 
-  Widget cardItem(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String description,
-    int numTasks,
-    int numNotifications,
-  ) {
+class CardItem extends StatelessWidget {
+  const CardItem({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.numTasks,
+    required this.numNotifications,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final int numTasks;
+  final int numNotifications;
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       color: Theme.of(context).colorScheme.primaryContainer,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
