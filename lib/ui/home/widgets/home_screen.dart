@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_notification.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/home_state.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/custom_bottom_sheet.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_cards.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_tabs.dart';
@@ -121,7 +122,7 @@ class UserSection extends StatelessWidget {
 }
 
 class OverviewSection extends StatelessWidget {
-  final List<Map<String, dynamic>> dueTodayTasks;
+  final List<HomeTaskItem> dueTodayTasks;
   final List<AppNotification> recentActivity;
   final int numTasks;
   final int numNotifications;

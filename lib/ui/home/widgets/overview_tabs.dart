@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_notification.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/home_state.dart';
 
 class OverviewTabs extends StatefulWidget {
   const OverviewTabs({
@@ -10,7 +11,7 @@ class OverviewTabs extends StatefulWidget {
     required this.recentActivity,
   });
 
-  final List<Map<String, dynamic>> dueTodayTasks;
+  final List<HomeTaskItem> dueTodayTasks;
   final List<AppNotification> recentActivity;
   @override
   State<OverviewTabs> createState() => _OverviewTabsState();
@@ -59,9 +60,32 @@ class _OverviewTabsState extends State<OverviewTabs> {
               ),
             ),
             if (_selectedTab == 0)
-              TabTaskViewBuilder(items: widget.dueTodayTasks)
+              OverviewList(
+                emptyText: 'No upcoming tasks',
+                items: [
+                  for (final task in widget.dueTodayTasks)
+                    CardItem(
+                      title: task.title,
+                      icon: task.isPriority
+                          ? Icons.priority_high
+                          : Icons.task_alt,
+                      description: task.description,
+                    ),
+                ],
+              )
             else
-              TabActivityViewBuilder(items: widget.recentActivity),
+              OverviewList(
+                emptyText: 'No recent activity',
+                items: [
+                  for (final activity in widget.recentActivity)
+                    CardItem(
+                      title: activity.title,
+                      icon: _notificationIcon(activity.type),
+                      description: _formatDateTime(activity.timestamp),
+                      group: activity.groupName,
+                    ),
+                ],
+              ),
           ],
         ),
       ),
@@ -136,17 +160,18 @@ class CardItem extends StatelessWidget {
   }
 }
 
-class TabTaskViewBuilder extends StatelessWidget {
-  final List<Map<String, dynamic>> items;
+class OverviewList extends StatelessWidget {
+  const OverviewList({super.key, required this.items, required this.emptyText});
 
-  const TabTaskViewBuilder({super.key, required this.items});
+  final List<CardItem> items;
+  final String emptyText;
 
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          'No upcoming tasks',
+          emptyText,
           style: TextStyle(
             fontSize: 14,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -159,68 +184,25 @@ class TabTaskViewBuilder extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return CardItem(
-          title: item['title'] as String,
-          icon: item['icon'] as IconData,
-          description: item['description'] as String,
-        );
-      },
+      itemBuilder: (context, index) => items[index],
     );
   }
 }
 
-class TabActivityViewBuilder extends StatelessWidget {
-  const TabActivityViewBuilder({super.key, required this.items});
-
-  final List<AppNotification> items;
-
-  @override
-  Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return Center(
-        child: Text(
-          'No recent activity',
-          style: TextStyle(
-            fontSize: 14,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      );
-    }
-
-    IconData getIconForNotificationType(NotificationType type) {
-      switch (type) {
-        case NotificationType.taskCreated:
-          return Icons.add_circle_outline;
-        case NotificationType.taskEdited:
-          return Icons.edit;
-        case NotificationType.taskFinished:
-          return Icons.check_box_outlined;
-      }
-    }
-
-    String formatDateTime(DateTime dateTime) {
-      return DateFormat('EEEE, MMMM d yyyy h:mma')
-          .format(dateTime)
-          .replaceAll('AM', 'am')
-          .replaceAll('PM', 'pm');
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return CardItem(
-          title: item.title,
-          icon: getIconForNotificationType(item.type),
-          description: formatDateTime(item.timestamp),
-          group: item.groupName,
-        );
-      },
-    );
+IconData _notificationIcon(NotificationType type) {
+  switch (type) {
+    case NotificationType.taskCreated:
+      return Icons.add_circle_outline;
+    case NotificationType.taskEdited:
+      return Icons.edit;
+    case NotificationType.taskFinished:
+      return Icons.check_box_outlined;
   }
+}
+
+String _formatDateTime(DateTime dateTime) {
+  return DateFormat('EEEE, MMMM d yyyy h:mma')
+      .format(dateTime)
+      .replaceAll('AM', 'am')
+      .replaceAll('PM', 'pm');
 }

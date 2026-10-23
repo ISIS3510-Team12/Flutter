@@ -1,24 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/repositories/profile/notifications_repository_provider.dart';
-import 'package:team12_flutter_juggle/ui/home/view_models/home_state.dart';
-import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/home_state.dart';
+import 'package:team12_flutter_juggle/ui/profile/notifications/view_models/today_notifications_provider.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 
 final homeViewModelProvider = FutureProvider.autoDispose<HomeState>((
   ref,
 ) async {
-  final user = await ref.watch(currentUserProvider.future);
-  final tasks = await ref.watch(tasksOverviewProvider.future);
-  final notifications = await ref
-      .watch(notificationsRepositoryProvider)
-      .getNotifications();
-
-  final todayNotifications = notifications.where((notification) {
-    final now = DateTime.now();
-    return notification.timestamp.year == now.year &&
-        notification.timestamp.month == now.month &&
-        notification.timestamp.day == now.day;
-  }).toList();
+  final (user, overview, todayNotifications) = await (
+    ref.watch(currentUserProvider.future),
+    ref.watch(tasksOverviewProvider.future),
+    ref.watch(todayNotificationsProvider.future),
+  ).wait;
 
   if (user == null) {
     throw StateError('User is not logged in');
@@ -26,9 +19,7 @@ final homeViewModelProvider = FutureProvider.autoDispose<HomeState>((
 
   return HomeState(
     user: user,
-    numTasks: tasks.dueTodayItems.length,
-    numNotifications: todayNotifications.length,
-    dueTodayTasks: tasks.dueTodayItems,
-    recentActivity: todayNotifications
+    dueTodayTasks: overview.dueToday.map(HomeTaskItem.fromTask).toList(),
+    recentActivity: todayNotifications,
   );
 });

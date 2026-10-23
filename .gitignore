@@ -55,3 +55,6 @@ pubspec.lock
 
 # Firebase related
 google-services.json
+
+# Generated code
+*.freezed.dart

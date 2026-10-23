@@ -32,26 +32,25 @@ class CustomNavigationBar extends StatelessWidget {
             final item = items[index];
             final route = item.$3;
             final isSelected =
-              route == currentLocation ||
-              currentLocation.startsWith('$route/');
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 17,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? theme.colorScheme.primaryContainer
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(32),
-                  ),
-                  child: GestureDetector(
-                    onTap: () {
-                      context.go(route);
-                    },
+                route == currentLocation ||
+                currentLocation.startsWith('$route/');
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => context.go(route),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 17,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? theme.colorScheme.primaryContainer
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(32),
+                    ),
                     child: Icon(
                       item.$1,
                       color: isSelected
@@ -61,17 +60,17 @@ class CustomNavigationBar extends StatelessWidget {
                       weight: 700,
                     ),
                   ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  item.$2,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurfaceVariant,
+                  SizedBox(height: 4),
+                  Text(
+                    item.$2,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           }),
         ),

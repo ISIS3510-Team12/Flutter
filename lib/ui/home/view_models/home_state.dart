@@ -1,35 +1,43 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:team12_flutter_juggle/domain/models/auth/app_user.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_notification.dart';
+import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 
-class HomeState {
-  const HomeState({
-    required this.user,
-    required this.numTasks,
-    required this.numNotifications,
-    required this.dueTodayTasks,
-    required this.recentActivity,
-  });
+part 'home_state.freezed.dart';
 
-  final AppUser user;
-  final int numTasks;
-  final int numNotifications;
-  final List<Map<String, dynamic>> dueTodayTasks;
-  final List<AppNotification> recentActivity;
+@freezed
+abstract class HomeTaskItem with _$HomeTaskItem {
+  const factory HomeTaskItem({
+    required String title,
+    required bool isPriority,
+    required String description,
+    String? group,
+    String? assignee,
+  }) = _HomeTaskItem;
 
-  HomeState copyWith({
-    AppUser? user,
-    int? numTasks,
-    int? numNotifications,
-    List<Map<String, dynamic>>? dueTodayTasks,
-    List<AppNotification>? recentActivity,
-  }) {
-    return HomeState(
-      user: user ?? this.user,
-      numTasks: numTasks ?? this.numTasks,
-      numNotifications: numNotifications ?? this.numNotifications,
-      dueTodayTasks: dueTodayTasks ?? this.dueTodayTasks,
-      recentActivity: recentActivity ?? this.recentActivity,
+  factory HomeTaskItem.fromTask(Task task) {
+    return HomeTaskItem(
+      title: task.title,
+      isPriority: task.isPriority,
+      description: deadlineText(task.deadline),
+      group: task.groupName.isEmpty ? null : task.groupName,
+      assignee: task.assigneeName.isEmpty ? null : task.assigneeName,
     );
   }
 }
 
+@freezed
+abstract class HomeState with _$HomeState {
+  const HomeState._();
+
+  const factory HomeState({
+    required AppUser user,
+
+    required List<HomeTaskItem> dueTodayTasks,
+    required List<AppNotification> recentActivity,
+  }) = _HomeState;
+
+  int get numTasks => dueTodayTasks.length;
+  int get numNotifications => recentActivity.length;
+}
