@@ -16,8 +16,8 @@ class OverviewCards extends StatelessWidget {
   final cardsInfo = const [
     (
       id: 1,
-      icon: Symbols.list_alt,
-      title: "Today's Tasks",
+      icon: Symbols.assignment_late,
+      title: 'Urgent Tasks',
       description: 'Tasks',
       route: Routes.allTasks,
     ),

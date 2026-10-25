@@ -36,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
                   OverviewSection(
                     dueTodayTasks: data.dueTodayTasks,
                     recentActivity: data.recentActivity,
-                    numTasks: data.numTasks,
+                    numTasks: data.numUrgentTasks,
                     numNotifications: data.numNotifications,
                   ),
                 ],

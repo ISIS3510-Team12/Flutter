@@ -34,10 +34,10 @@ abstract class HomeState with _$HomeState {
   const factory HomeState({
     required AppUser user,
 
+    required int numUrgentTasks,
     required List<HomeTaskItem> dueTodayTasks,
     required List<AppNotification> recentActivity,
   }) = _HomeState;
 
-  int get numTasks => dueTodayTasks.length;
   int get numNotifications => recentActivity.length;
 }

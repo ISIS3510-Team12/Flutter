@@ -19,6 +19,7 @@ final homeViewModelProvider = FutureProvider.autoDispose<HomeState>((
 
   return HomeState(
     user: user,
+    numUrgentTasks: overview.urgentCount,
     dueTodayTasks: overview.dueToday.map(HomeTaskItem.fromTask).toList(),
     recentActivity: todayNotifications,
   );
