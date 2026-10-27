@@ -6,19 +6,20 @@ import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_pr
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class TasksState {
-  const TasksState({
-    required this.group,
-    required this.groups,
-    required this.tasks,
-    required this.query,
-  });
+part 'tasks_viewmodel.freezed.dart';
 
-  final TaskGroup? group;
-  final List<TaskGroup> groups;
-  final List<Task> tasks;
-  final String query;
+@freezed
+abstract class TasksState with _$TasksState {
+  const TasksState._();
+
+  const factory TasksState({
+    required TaskGroup? group,
+    required List<TaskGroup> groups,
+    required List<Task> tasks,
+    required String query,
+  }) = _TasksState;
 
   String get groupName => group?.name ?? 'No group';
 
@@ -42,20 +43,6 @@ class TasksState {
   bool _matchesQuery(Task task) {
     if (query.isEmpty) return true;
     return task.title.toLowerCase().contains(query.toLowerCase());
-  }
-
-  TasksState copyWith({
-    String? query,
-    TaskGroup? group,
-    List<TaskGroup>? groups,
-    List<Task>? tasks,
-  }) {
-    return TasksState(
-      group: group ?? this.group,
-      groups: groups ?? this.groups,
-      tasks: tasks ?? this.tasks,
-      query: query ?? this.query,
-    );
   }
 }
 

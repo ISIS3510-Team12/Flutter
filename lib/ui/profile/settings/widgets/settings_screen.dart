@@ -27,11 +27,10 @@ class SettingsScreen extends ConsumerWidget {
         data: (settings) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
+            Material(
+              color: theme.colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [
                   SettingsMenuTile(

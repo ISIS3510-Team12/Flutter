@@ -3,15 +3,21 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+
+part 'all_tasks_viewmodel.freezed.dart';
 
 enum TaskFilter { urgent, dueSoon, assignedToMe }
 
-class AllTasksState {
-  const AllTasksState({required this.tasks, required this.filter});
+@freezed
+abstract class AllTasksState with _$AllTasksState {
+  const AllTasksState._();
 
-  final List<Task> tasks;
-  final TaskFilter filter;
+  const factory AllTasksState({
+    required List<Task> tasks,
+    required TaskFilter filter,
+  }) = _AllTasksState;
 
   List<Task> get filteredTasks => tasks;
 }

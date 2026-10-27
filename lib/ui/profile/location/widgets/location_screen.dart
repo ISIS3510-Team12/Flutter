@@ -142,11 +142,10 @@ class LocationScreen extends ConsumerWidget {
               onTap: () => _pickPlace(context, ref, location.point),
             ),
             const SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
+            Material(
+              color: theme.colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.antiAlias,
               child: SettingsMenuTile(
                 title: 'Notify within',
                 subtitle: '${location.notifyWithin} m',

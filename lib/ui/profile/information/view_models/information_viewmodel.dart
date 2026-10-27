@@ -2,27 +2,21 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class InformationState {
-  const InformationState({
-    required this.firstName,
-    required this.lastName,
-    required this.email,
-  });
+part 'information_viewmodel.freezed.dart';
 
-  final String firstName;
-  final String lastName;
-  final String email;
+@freezed
+abstract class InformationState with _$InformationState {
+  const InformationState._();
+
+  const factory InformationState({
+    required String firstName,
+    required String lastName,
+    required String email,
+  }) = _InformationState;
 
   String get initial => firstName.isEmpty ? '' : firstName[0].toUpperCase();
-
-  InformationState copyWith({String? firstName, String? lastName}) {
-    return InformationState(
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
-      email: email,
-    );
-  }
 }
 
 class InformationViewModel extends AsyncNotifier<InformationState> {

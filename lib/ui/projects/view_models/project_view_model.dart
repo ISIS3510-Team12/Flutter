@@ -4,7 +4,10 @@ import 'package:team12_flutter_juggle/data/repositories/project/project_reposito
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project_create.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+
+part 'project_view_model.freezed.dart';
 
 class ProjectDetailViewModel extends AsyncNotifier<ProjectDetailState> {
   ProjectDetailViewModel(this.projectId);
@@ -66,9 +69,10 @@ class ProjectCreateViewModel extends AsyncNotifier<Project?> {
   }
 }
 
-class ProjectDetailState {
-  const ProjectDetailState({required this.project, required this.tasks});
-
-  final Project project;
-  final List<Task> tasks;
+@freezed
+abstract class ProjectDetailState with _$ProjectDetailState {
+  const factory ProjectDetailState({
+    required Project project,
+    required List<Task> tasks,
+  }) = _ProjectDetailState;
 }
