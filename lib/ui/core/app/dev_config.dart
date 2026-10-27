@@ -1,9 +1,4 @@
-import './service_locator.dart';
-
 class DevConfig {
-  const DevConfig._();
-
-  static bool get enabled => useDevConfig;
 
   static String get host => Uri.parse(apiUrl).host;
 

@@ -10,7 +10,7 @@ final dioProvider = Provider<Dio>((ref) {
 
   final dio = Dio(
     BaseOptions(
-      baseUrl: DevConfig.enabled
+      baseUrl: useDevConfig
           ? DevConfig.apiUrl
           : dotenv.env['API_URL']!,
       contentType: Headers.jsonContentType,
