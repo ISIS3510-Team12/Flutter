@@ -13,71 +13,33 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final user = ref.watch(currentUserProvider);
     return ScreenLoadTracker(
       screen: ScreenNames.profile,
       state: user,
       child: Scaffold(
-      appBar: AppBar(),
-      body: user.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
-        data: (user) {
-          if (user == null) {
-            return const SizedBox.shrink();
-          }
-          return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: theme.colorScheme.primary,
-                    child: Text(
-                      user.initial,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(user.fullName, style: theme.textTheme.titleLarge),
-                      Text(
-                        'Student',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              ProfileMenuTile(
-                icon: Symbols.account_circle,
-                label: 'Profile Information',
-                onTap: () => context.push(Routes.profileInformation),
-              ),
-              ProfileMenuTile(
-                icon: Symbols.notifications,
-                label: 'Notifications',
-                onTap: () => context.push(Routes.profileNotifications),
-              ),
-              ProfileMenuTile(
-                icon: Symbols.settings,
-                label: 'Settings',
-                onTap: () => context.push(Routes.profileSettings),
-              ),
-            ],
-          );
-        },
+        appBar: AppBar(title: const Text('Profile')),
+        body: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          children: [
+            ProfileMenuTile(
+              icon: Symbols.account_circle,
+              label: 'Profile Information',
+              onTap: () => context.push(Routes.profileInformation),
+            ),
+            ProfileMenuTile(
+              icon: Symbols.notifications,
+              label: 'Notifications',
+              onTap: () => context.push(Routes.profileNotifications),
+            ),
+            ProfileMenuTile(
+              icon: Symbols.settings,
+              label: 'Settings',
+              onTap: () => context.push(Routes.profileSettings),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }

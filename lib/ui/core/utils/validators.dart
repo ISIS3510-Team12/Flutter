@@ -1,6 +1,19 @@
+import 'package:flutter/services.dart';
+
 class Validators {
+  static const int maxNameLength = 20;
+
+  static TextInputFormatter get emailTextInputFormatter =>
+      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]'));
+
+  static TextInputFormatter get nameTextInputFormatter =>
+      LengthLimitingTextInputFormatter(maxNameLength);
+
+  static TextInputFormatter get passwordTextInputFormatter =>
+      FilteringTextInputFormatter.deny(RegExp(r'\s'));
+
   static String? required(String? value) {
-    if (value == null || value.isEmpty) {
+    if (value == null || value.trim().isEmpty) {
       return 'This field is required';
     }
     return null;
@@ -11,7 +24,7 @@ class Validators {
     if (requiredError != null) {
       return requiredError;
     }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
     if (!emailRegex.hasMatch(value!.trim())) {
       return 'Please enter a valid email address';
     }
@@ -45,8 +58,8 @@ class Validators {
     if (requiredError != null) {
       return requiredError;
     }
-    if (value!.length < 3) {
-      return 'Name must be at least 3 characters long';
+    if (value!.trim().length > maxNameLength) {
+      return 'Name must be at most $maxNameLength characters long';
     }
     return null;
   }
