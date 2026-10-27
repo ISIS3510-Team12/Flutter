@@ -24,70 +24,95 @@ import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_viewer.dart';
 
 import 'package:team12_flutter_juggle/ui/groups/widgets/group_detail_screen.dart';
 import 'package:team12_flutter_juggle/ui/groups/widgets/new_group_screen.dart';
+import './route_transitions.dart';
 import './routes.dart';
 
 final routes = <RouteBase>[
   GoRoute(
     path: Routes.landing,
-    builder: (context, state) => const LandingScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const LandingScreen()),
   ),
   GoRoute(
     path: Routes.signin,
-    builder: (context, state) => const SigninScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const SigninScreen()),
   ),
   GoRoute(
     path: Routes.signup,
-    builder: (context, state) => const SignupScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const SignupScreen()),
   ),
-  GoRoute(path: Routes.home, builder: (context, state) => const HomeScreen()),
-  GoRoute(path: Routes.tasks, builder: (context, state) => const TasksScreen()),
+  GoRoute(
+    path: Routes.home,
+    builder: (context, state) => const HomeScreen(),
+  ),
+  GoRoute(
+    path: Routes.tasks,
+    builder: (context, state) => const TasksScreen(),
+  ),
   GoRoute(
     path: Routes.createTask,
-    builder: (context, state) => const CreateTaskScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const CreateTaskScreen()),
   ),
   GoRoute(
     path: Routes.allTasks,
-    builder: (context, state) => const AllTasksScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const AllTasksScreen()),
   ),
   GoRoute(
     path: Routes.task,
-    builder: (context, state) =>
-        ViewTaskScreen(taskId: state.pathParameters['taskId']!),
+    pageBuilder: (context, state) => sharedAxisPage(
+      state: state,
+      child: ViewTaskScreen(taskId: state.pathParameters['taskId']!),
+    ),
   ),
   GoRoute(
     path: Routes.editTask,
-    builder: (context, state) =>
-        EditTaskScreen(taskId: state.pathParameters['taskId']!),
+    pageBuilder: (context, state) => sharedAxisPage(
+      state: state,
+      child: EditTaskScreen(taskId: state.pathParameters['taskId']!),
+    ),
   ),
   GoRoute(
     path: Routes.taskPhoto,
-    builder: (context, state) =>
-        TaskPhotoViewer(taskId: state.pathParameters['taskId']!),
+    pageBuilder: (context, state) => sharedAxisPage(
+      state: state,
+      child: TaskPhotoViewer(taskId: state.pathParameters['taskId']!),
+    ),
   ),
   GoRoute(
     path: Routes.profile,
-    builder: (context, state) => const ProfileScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const ProfileScreen()),
   ),
   GoRoute(
     path: Routes.profileInformation,
-    builder: (context, state) => const InformationScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const InformationScreen()),
   ),
   GoRoute(
     path: Routes.profileNotifications,
-    builder: (context, state) => const NotificationsScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const NotificationsScreen()),
   ),
   GoRoute(
     path: Routes.profileSettings,
-    builder: (context, state) => const SettingsScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const SettingsScreen()),
   ),
   GoRoute(
     path: Routes.profileLocation,
-    builder: (context, state) => const LocationScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const LocationScreen()),
   ),
   GoRoute(
     path: Routes.profileLocationMap,
-    builder: (context, state) =>
-        LocationMapPicker(initial: state.extra as LatLng?),
+    pageBuilder: (context, state) => sharedAxisPage(
+      state: state,
+      child: LocationMapPicker(initial: state.extra as LatLng?),
+    ),
   ),
   GoRoute(
     path: Routes.calendar,
@@ -95,48 +120,51 @@ final routes = <RouteBase>[
   ),
   GoRoute(
     path: Routes.createProject,
-    builder: (context, state) {
+    pageBuilder: (context, state) {
       final groupId = int.parse(state.pathParameters['groupId']!);
-      return CreateProjectScreen(groupId: groupId);
+      return sharedAxisPage(
+        state: state,
+        child: CreateProjectScreen(groupId: groupId),
+      );
     },
   ),
   GoRoute(
     path: Routes.projectDetail,
-    builder: (context, state) {
+    pageBuilder: (context, state) {
       final projectId = int.parse(state.pathParameters['projectId']!);
-      return ProjectDetailScreen(projectId: projectId);
+      return sharedAxisPage(
+        state: state,
+        child: ProjectDetailScreen(projectId: projectId),
+      );
     },
   ),
-  GoRoute( 
+  GoRoute(
     path: Routes.groups,
-    builder: (context, state) => const GroupsScreen()),
+    builder: (context, state) => const GroupsScreen(),
+  ),
   GoRoute(
     path: Routes.createGroup,
-    builder: (context, state) => const NewGroupScreen(),
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const NewGroupScreen()),
   ),
   GoRoute(
     path: Routes.groupDetail,
-    builder: (context, state) {
-      final groupId = int.parse(
-        state.pathParameters['groupId']!,
-      );
-
-      return GroupDetailScreen(
-        groupId: groupId,
+    pageBuilder: (context, state) {
+      final groupId = int.parse(state.pathParameters['groupId']!);
+      return sharedAxisPage(
+        state: state,
+        child: GroupDetailScreen(groupId: groupId),
       );
     },
   ),
   GoRoute(
     path: Routes.editGroup,
-    builder: (context, state) {
-      final groupId = int.parse(
-        state.pathParameters['groupId']!,
-      );
-
-      return GroupEditScreen(
-        groupId: groupId,
+    pageBuilder: (context, state) {
+      final groupId = int.parse(state.pathParameters['groupId']!);
+      return sharedAxisPage(
+        state: state,
+        child: GroupEditScreen(groupId: groupId),
       );
     },
   ),
-  
 ];

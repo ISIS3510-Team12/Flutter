@@ -44,15 +44,15 @@ class TasksScreen extends ConsumerWidget {
       appBar: const CustomAppBar(),
       drawer: const GroupDrawer(),
       bottomNavigationBar: const CustomNavigationBar(),
-      floatingActionButton: (state.value?.groups.isEmpty ?? false)
-          ? null
-          : FloatingActionButton.extended(
+      floatingActionButton: (state.value?.groups.isNotEmpty ?? false)
+          ? FloatingActionButton.extended(
               backgroundColor: theme.colorScheme.primaryFixed,
               foregroundColor: theme.colorScheme.onPrimaryFixed,
               onPressed: () => _openCreateTask(context),
               icon: const Icon(Symbols.add),
               label: const Text('Create task'),
-            ),
+            )
+          : null,
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
