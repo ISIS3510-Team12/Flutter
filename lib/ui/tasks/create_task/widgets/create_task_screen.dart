@@ -155,6 +155,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 TextField(
                   controller: _titleController,
                   inputFormatters: Validators.taskTitleTextInputFormatters,
+                  maxLength: Validators.maxNameLength,
                   onChanged: notifier.updateTitle,
                   decoration: InputDecoration(
                     hintText: 'Enter the task title',

@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 
 class Validators {
-  static const int maxNameLength = 20;
+  static const int maxNameLength = 50;
   static const int maxDescriptionLength = 200;
 
   static TextInputFormatter get emailTextInputFormatter =>
@@ -40,6 +40,7 @@ class Validators {
 
   static TextInputFormatter get passwordTextInputFormatter =>
       FilteringTextInputFormatter.deny(RegExp(r'\s'));
+
 
   static String? required(String? value) {
     if (value == null || value.trim().isEmpty) {

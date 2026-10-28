@@ -88,6 +88,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
               controller: nameController,
               validator: Validators.name,
               inputFormatters: Validators.titleTextInputFormatters,
+              maxLength: Validators.maxNameLength,
             ),
             const SizedBox(height: 20),
             _buildTextField(
@@ -97,6 +98,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
               helperText: 'Enter the group description',
               controller: classController,
               inputFormatters: Validators.descriptionTextInputFormatters,
+              maxLength: Validators.maxDescriptionLength,
             ),
             const SizedBox(height: 28),
             Text(
@@ -201,6 +203,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
     required TextEditingController controller,
     FormFieldValidator<String>? validator,
     List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
   }) {
     final theme = Theme.of(context);
 
@@ -218,6 +221,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
           controller: controller,
           validator: validator,
           inputFormatters: inputFormatters,
+          maxLength: maxLength,
           decoration: InputDecoration(
             hintText: hintText,
             helperText: helperText,

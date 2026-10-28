@@ -110,6 +110,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               controller: nameController,
               validator: Validators.name,
               inputFormatters: Validators.titleTextInputFormatters,
+              maxLength: Validators.maxNameLength,
               decoration: InputDecoration(
                 labelText: 'Project name',
                 hintText: 'Enter project name',
@@ -123,6 +124,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               controller: descriptionController,
               inputFormatters: Validators.descriptionTextInputFormatters,
               maxLines: 2,
+              maxLength: Validators.maxDescriptionLength,
               decoration: InputDecoration(
                 labelText: 'Description',
                 hintText: 'Describe the project',
