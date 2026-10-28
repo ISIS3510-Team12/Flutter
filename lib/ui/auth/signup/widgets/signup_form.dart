@@ -88,9 +88,10 @@ class _SignupFormState extends State<SignupForm> {
                 onSaved: (value) {
                   firstName = value?.trim();
                 },
-                validator: Validators.name,
+                validator: Validators.personName,
                 keyboardType: TextInputType.name,
-                inputFormatters: [Validators.nameTextInputFormatter],
+                inputFormatters: [Validators.personNameTextInputFormatter],
+                maxLength: Validators.maxPersonNameLength,
               ),
               InputField(
                 labelText: 'Last Name',
@@ -98,9 +99,10 @@ class _SignupFormState extends State<SignupForm> {
                 onSaved: (value) {
                   lastName = value?.trim();
                 },
-                validator: Validators.name,
+                validator: Validators.personName,
                 keyboardType: TextInputType.name,
-                inputFormatters: [Validators.nameTextInputFormatter],
+                inputFormatters: [Validators.personNameTextInputFormatter],
+                maxLength: Validators.maxPersonNameLength,
               ),
               const SizedBox(height: 5),
               InputField(
