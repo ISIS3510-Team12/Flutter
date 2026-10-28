@@ -1,25 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:team12_flutter_juggle/domain/models/profile/app_notification.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/home_state.dart';
 
-class OverviewTabs extends StatelessWidget {
+class OverviewTabs extends StatefulWidget {
   const OverviewTabs({
     super.key,
     required this.dueTodayTasks,
     required this.recentActivity,
-    required this.selectedTab,
-    required this.changeTab,
   });
 
-  final List<Map<String, dynamic>> dueTodayTasks;
-  final List<Map<String, dynamic>> recentActivity;
-  final int selectedTab;
-  final Function(int) changeTab;
+  final List<HomeTaskItem> dueTodayTasks;
+  final List<AppNotification> recentActivity;
+  @override
+  State<OverviewTabs> createState() => _OverviewTabsState();
+}
+
+class _OverviewTabsState extends State<OverviewTabs> {
+  int _selectedTab = 0;
+
+  void _changeTab(int index) {
+    setState(() {
+      _selectedTab = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      initialIndex: selectedTab,
+      initialIndex: _selectedTab,
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: Column(
@@ -29,7 +40,7 @@ class OverviewTabs extends StatelessWidget {
             Container(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               child: TabBar(
-                onTap: changeTab,
+                onTap: _changeTab,
                 labelColor: Theme.of(context).colorScheme.primary,
                 unselectedLabelColor: Theme.of(context)
                     .colorScheme
@@ -48,24 +59,56 @@ class OverviewTabs extends StatelessWidget {
                 ],
               ),
             ),
-            if (selectedTab == 0)
-              _buildTaskTabView(context, dueTodayTasks)
+            if (_selectedTab == 0)
+              OverviewList(
+                emptyText: 'No upcoming tasks',
+                items: [
+                  for (final task in widget.dueTodayTasks)
+                    CardItem(
+                      title: task.title,
+                      icon: task.isPriority
+                          ? Icons.priority_high
+                          : Icons.task_alt,
+                      description: task.description,
+                    ),
+                ],
+              )
             else
-              _buildActivityTabView(context, recentActivity),
+              OverviewList(
+                emptyText: 'No recent activity',
+                items: [
+                  for (final activity in widget.recentActivity)
+                    CardItem(
+                      title: activity.title,
+                      icon: _notificationIcon(activity.type),
+                      description: _formatDateTime(activity.timestamp),
+                      group: activity.groupName,
+                    ),
+                ],
+              ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget cardItem(
-    BuildContext context,
-    String title,
-    IconData icon,
-    String description, {
-    String? group,
-    String? assignee,
-  }) {
+class CardItem extends StatelessWidget {
+  const CardItem({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.description,
+    this.group,
+  });
+
+  final String title;
+  final IconData icon;
+  final String description;
+  final String? group;
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -97,7 +140,7 @@ class OverviewTabs extends StatelessWidget {
             children: [
               if (group != null)
                 Text(
-                  group,
+                  group!,
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.primary,
@@ -108,8 +151,6 @@ class OverviewTabs extends StatelessWidget {
                 title,
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
-              if (assignee != null && assignee.isNotEmpty)
-                Text(assignee, style: TextStyle(fontSize: 12)),
             ],
           ),
           subtitle: Text(description, style: TextStyle(fontSize: 12)),
@@ -117,15 +158,20 @@ class OverviewTabs extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildTaskTabView(
-    BuildContext context,
-    List<Map<String, dynamic>> items,
-  ) {
+class OverviewList extends StatelessWidget {
+  const OverviewList({super.key, required this.items, required this.emptyText});
+
+  final List<CardItem> items;
+  final String emptyText;
+
+  @override
+  Widget build(BuildContext context) {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          'No upcoming tasks',
+          emptyText,
           style: TextStyle(
             fontSize: 14,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -138,48 +184,25 @@ class OverviewTabs extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return cardItem(
-          context,
-          item['title'] as String,
-          item['icon'] as IconData,
-          item['description'] as String,
-          assignee: item['assignee'] as String?,
-        );
-      },
+      itemBuilder: (context, index) => items[index],
     );
   }
+}
 
-  Widget _buildActivityTabView(
-    BuildContext context,
-    List<Map<String, dynamic>> items,
-  ) {
-    if (items.isEmpty) {
-      return Center(
-        child: Text(
-          'No recent activity',
-          style: TextStyle(
-            fontSize: 14,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      );
-    }
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return cardItem(
-          context,
-          item['title'] as String,
-          item['icon'] as IconData,
-          item['description'] as String,
-          group: item['group'] as String?,
-        );
-      },
-    );
+IconData _notificationIcon(NotificationType type) {
+  switch (type) {
+    case NotificationType.taskCreated:
+      return Icons.add_circle_outline;
+    case NotificationType.taskEdited:
+      return Icons.edit;
+    case NotificationType.taskFinished:
+      return Icons.check_box_outlined;
   }
+}
+
+String _formatDateTime(DateTime dateTime) {
+  return DateFormat('EEEE, MMMM d yyyy h:mma')
+      .format(dateTime)
+      .replaceAll('AM', 'am')
+      .replaceAll('PM', 'pm');
 }

@@ -27,7 +27,7 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
   ];
 
   void _onPressed(BuildContext context, int id) {
-    context.pop(); 
+    context.pop();
     switch (id) {
       case 1:
         context.push(Routes.createTask);
@@ -59,12 +59,11 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
             ),
           ),
           ...bottomSheetIems.map((item) {
-            return bottomSheetItem(
-              context,
-              item.icon,
-              item.title,
-              item.description,
-              () => _onPressed(context, item.id),
+            return BottomSheetItem(
+              icon: item.icon,
+              title: item.title,
+              description: item.description,
+              onPressed: () => _onPressed(context, item.id),
             );
           }),
           SizedBox(height: 30),
@@ -72,14 +71,24 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
       ),
     );
   }
+}
 
-  Widget bottomSheetItem(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String description,
-    VoidCallback onPressed,
-  ) {
+class BottomSheetItem extends StatelessWidget {
+  const BottomSheetItem({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 20, left: 20),
       child: TextButton(
