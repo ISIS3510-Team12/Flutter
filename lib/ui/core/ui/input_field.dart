@@ -15,6 +15,7 @@ class InputField extends StatelessWidget {
     this.keyboardType,
     this.inputFormatters,
     this.autovalidateMode,
+    this.maxLength,
   });
 
   final Key? fieldKey;
@@ -28,6 +29,7 @@ class InputField extends StatelessWidget {
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final AutovalidateMode? autovalidateMode;
+  final int? maxLength;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +61,7 @@ class InputField extends StatelessWidget {
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       autovalidateMode: autovalidateMode ?? AutovalidateMode.disabled,
+      maxLength: maxLength,
     );
   }
 }

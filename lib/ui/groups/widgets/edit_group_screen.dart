@@ -273,6 +273,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
           controller: nameController,
           validator: Validators.name,
           inputFormatters: Validators.titleTextInputFormatters,
+          maxLength: Validators.maxNameLength,
           decoration: InputDecoration(
             hintText: 'Enter group name',
             isDense: true,
@@ -311,6 +312,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
           controller: descriptionController,
           inputFormatters: Validators.descriptionTextInputFormatters,
           maxLines: 2,
+          maxLength: Validators.maxDescriptionLength,
           decoration: InputDecoration(
             hintText: 'Enter group description',
             isDense: true,

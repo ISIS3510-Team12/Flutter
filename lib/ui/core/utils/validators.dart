@@ -1,14 +1,18 @@
 import 'package:flutter/services.dart';
 
 class Validators {
-  static const int maxNameLength = 20;
+  static const int maxNameLength = 50;
   static const int maxDescriptionLength = 200;
+  static const int maxPersonNameLength = 20;
 
   static TextInputFormatter get emailTextInputFormatter =>
       FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]'));
 
   static TextInputFormatter get nameTextInputFormatter =>
       LengthLimitingTextInputFormatter(maxNameLength);
+
+  static TextInputFormatter get personNameTextInputFormatter =>
+      LengthLimitingTextInputFormatter(maxPersonNameLength);
 
 
   static TextInputFormatter get noEmojiTextInputFormatter =>
@@ -40,6 +44,7 @@ class Validators {
 
   static TextInputFormatter get passwordTextInputFormatter =>
       FilteringTextInputFormatter.deny(RegExp(r'\s'));
+
 
   static String? required(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -89,6 +94,17 @@ class Validators {
     }
     if (value!.trim().length > maxNameLength) {
       return 'Name must be at most $maxNameLength characters long';
+    }
+    return null;
+  }
+
+  static String? personName(String? value) {
+    final requiredError = required(value);
+    if (requiredError != null) {
+      return requiredError;
+    }
+    if (value!.trim().length > maxPersonNameLength) {
+      return 'Name must be at most $maxPersonNameLength characters long';
     }
     return null;
   }

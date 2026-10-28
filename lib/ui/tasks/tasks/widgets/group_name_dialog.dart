@@ -30,6 +30,7 @@ class _GroupNameDialogState extends State<GroupNameDialog> {
           controller: _controller,
           validator: Validators.name,
           inputFormatters: Validators.titleTextInputFormatters,
+          maxLength: Validators.maxNameLength,
           decoration: InputDecoration(
             hintText: 'Group name',
             hintStyle: taskHintStyle(Theme.of(context)),
