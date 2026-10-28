@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:shake/shake.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
@@ -11,7 +11,7 @@ import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_mod
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
-class GroupEditScreen extends ConsumerWidget {
+class GroupEditScreen extends ConsumerStatefulWidget {
   const GroupEditScreen({
     super.key,
     required this.groupId,
@@ -20,52 +20,58 @@ class GroupEditScreen extends ConsumerWidget {
   final int groupId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GroupEditScreen> createState() =>
+      _GroupEditScreenState();
+}
+
+class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
+  @override
+  Widget build(BuildContext context) {
     final groupState = ref.watch(
-      groupEditViewModelProvider(groupId),
+      groupEditViewModelProvider(widget.groupId),
     );
 
     return ScreenLoadTracker(
       screen: ScreenNames.editGroup,
       state: groupState,
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Group'),
-      ),
-      body: groupState.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
+        appBar: AppBar(
+          title: const Text('Edit Group'),
         ),
-        error: (error, stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Could not load the group.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () {
-                    ref.invalidate(
-                      groupEditViewModelProvider(groupId),
-                    );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
+        body: groupState.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          error: (error, stackTrace) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Could not load the group.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () {
+                      ref.invalidate(
+                        groupEditViewModelProvider(widget.groupId),
+                      );
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
           ),
+          data: (group) => _GroupEditForm(
+            group: group,
+            groupId: widget.groupId,
+          ),
         ),
-        data: (group) => _GroupEditForm(
-          group: group,
-          groupId: groupId,
-        ),
+        bottomNavigationBar: const CustomNavigationBar(),
       ),
-      bottomNavigationBar: const CustomNavigationBar(),
-    ),
     );
   }
 }
@@ -92,6 +98,8 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
   final _formKey = GlobalKey<FormState>();
   final Set<String> selectedUserIds = {};
   String searchQuery = '';
+  ShakeDetector? _shakeDetector;
+  bool _isConfirmingReset = false;
 
   @override
   void initState() {
@@ -110,14 +118,93 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
     selectedUserIds.addAll(
       widget.group.members.map((member) => member.id),
     );
+
+    _shakeDetector = ShakeDetector.autoStart(
+      onPhoneShake: (ShakeEvent event) {
+        if (!mounted) return;
+        _resetForm();
+      },
+      shakeThresholdGravity: 2.7,
+      shakeSlopTimeMS: 1000,
+      minimumShakeCount: 2,
+      useFilter: true,
+    );
   }
 
   @override
   void dispose() {
+    _shakeDetector?.stopListening();
     nameController.dispose();
     descriptionController.dispose();
     searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _resetForm() async {
+    if (!mounted) return;
+
+    if (ref.read(
+      groupEditViewModelProvider(widget.groupId),
+    ).isLoading) {
+      return;
+    }
+
+    if (_isConfirmingReset) return;
+
+    _isConfirmingReset = true;
+
+    try {
+      final shouldReset = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Discard changes?'),
+          content: const Text(
+            'Do you want to discard your changes and restore '
+            'the group information to its original values?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Discard changes'),
+            ),
+          ],
+        ),
+      );
+
+      if (!mounted || shouldReset != true) return;
+
+      nameController.text = widget.group.name;
+      descriptionController.text = widget.group.description;
+      searchController.clear();
+
+      selectedUserIds
+        ..clear()
+        ..addAll(
+          widget.group.members.map((member) => member.id),
+        );
+
+      _formKey.currentState?.reset();
+
+      setState(() {
+        searchQuery = '';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Changes discarded.'),
+        ),
+      );
+    } finally {
+      _isConfirmingReset = false;
+    }
   }
 
   Future<void> _updateGroup(
