@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
 
 class GroupNameDialog extends StatefulWidget {
@@ -10,6 +12,7 @@ class GroupNameDialog extends StatefulWidget {
 
 class _GroupNameDialogState extends State<GroupNameDialog> {
   final _controller = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -21,20 +24,29 @@ class _GroupNameDialogState extends State<GroupNameDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('New Group'),
-      content: TextField(
-        controller: _controller,
-        decoration: InputDecoration(
-          hintText: 'Group name',
-          hintStyle: taskHintStyle(Theme.of(context)),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _controller,
+          validator: Validators.name,
+          inputFormatters: Validators.titleTextInputFormatters,
+          decoration: InputDecoration(
+            hintText: 'Group name',
+            hintStyle: taskHintStyle(Theme.of(context)),
+          ),
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(_controller.text),
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              context.pop(_controller.text.trim());
+            }
+          },
           child: const Text('Create'),
         ),
       ],

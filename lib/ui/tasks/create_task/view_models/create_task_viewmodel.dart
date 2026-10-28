@@ -66,7 +66,7 @@ abstract class CreateTaskFormState with _$CreateTaskFormState {
   String? get lockedMemberId => members.isEmpty ? null : members.first.id;
 
   bool get canSubmit =>
-      group != null && title.isNotEmpty && deadline != null && time != null;
+      group != null && title.trim().isNotEmpty && deadline != null && time != null;
 }
 
 class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
@@ -192,7 +192,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
         .toList();
     final task = Task(
       id: '',
-      title: current.title,
+      title: current.title.trim(),
       description: '',
       type: current.type,
       status: TaskStatus.pending,

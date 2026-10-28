@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_edit_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
@@ -88,6 +89,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
   late final TextEditingController descriptionController;
   late final TextEditingController searchController;
 
+  final _formKey = GlobalKey<FormState>();
   final Set<String> selectedUserIds = {};
   String searchQuery = '';
 
@@ -121,6 +123,8 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
   Future<void> _updateGroup(
     List<User> users,
   ) async {
+    if (!_formKey.currentState!.validate()) return;
+
     final viewModel = ref.read(
       groupEditViewModelProvider(widget.groupId).notifier,
     );
@@ -225,7 +229,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
 
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
+          child: Form(
+            key: _formKey,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGroupNameField(context),
@@ -243,6 +249,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
                 users,
               ),
             ],
+          ),
           ),
         );
       },
@@ -262,8 +269,10 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
           ),
         ),
         const SizedBox(height: 6),
-        TextField(
+        TextFormField(
           controller: nameController,
+          validator: Validators.name,
+          inputFormatters: Validators.titleTextInputFormatters,
           decoration: InputDecoration(
             hintText: 'Enter group name',
             isDense: true,
@@ -300,6 +309,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
         const SizedBox(height: 6),
         TextField(
           controller: descriptionController,
+          inputFormatters: Validators.descriptionTextInputFormatters,
           maxLines: 2,
           decoration: InputDecoration(
             hintText: 'Enter group description',

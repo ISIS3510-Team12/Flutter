@@ -2,12 +2,41 @@ import 'package:flutter/services.dart';
 
 class Validators {
   static const int maxNameLength = 20;
+  static const int maxDescriptionLength = 200;
 
   static TextInputFormatter get emailTextInputFormatter =>
       FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]'));
 
   static TextInputFormatter get nameTextInputFormatter =>
       LengthLimitingTextInputFormatter(maxNameLength);
+
+
+  static TextInputFormatter get noEmojiTextInputFormatter =>
+      FilteringTextInputFormatter.deny(
+        RegExp(
+          r'[\u{1F000}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]',
+          unicode: true,
+        ),
+      );
+
+  static TextInputFormatter get noLeadingWhitespaceTextInputFormatter =>
+      FilteringTextInputFormatter.deny(RegExp(r'^\s'));
+
+  static List<TextInputFormatter> get descriptionTextInputFormatters => [
+    LengthLimitingTextInputFormatter(maxDescriptionLength),
+    noLeadingWhitespaceTextInputFormatter,
+  ];
+
+  static List<TextInputFormatter> get titleTextInputFormatters => [
+    nameTextInputFormatter,
+    noLeadingWhitespaceTextInputFormatter,
+    noEmojiTextInputFormatter,
+  ];
+
+  static List<TextInputFormatter> get taskTitleTextInputFormatters => [
+    noLeadingWhitespaceTextInputFormatter,
+    noEmojiTextInputFormatter,
+  ];
 
   static TextInputFormatter get passwordTextInputFormatter =>
       FilteringTextInputFormatter.deny(RegExp(r'\s'));

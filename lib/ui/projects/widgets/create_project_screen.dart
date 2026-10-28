@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
@@ -19,6 +20,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController deadlineController = TextEditingController();
 
+  final _formKey = GlobalKey<FormState>();
   DateTime? selectedDeadline;
 
   @override
@@ -30,10 +32,12 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   }
 
   Future<void> _createProject() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final name = nameController.text.trim();
     final description = descriptionController.text.trim();
 
-    if (name.isEmpty || description.isEmpty || selectedDeadline == null) {
+    if (selectedDeadline == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please complete all fields.')),
       );
@@ -83,7 +87,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -100,8 +106,10 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            TextField(
+            TextFormField(
               controller: nameController,
+              validator: Validators.name,
+              inputFormatters: Validators.titleTextInputFormatters,
               decoration: InputDecoration(
                 labelText: 'Project name',
                 hintText: 'Enter project name',
@@ -111,8 +119,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
+            TextFormField(
               controller: descriptionController,
+              inputFormatters: Validators.descriptionTextInputFormatters,
               maxLines: 2,
               decoration: InputDecoration(
                 labelText: 'Description',
@@ -190,6 +199,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
       bottomNavigationBar: const CustomNavigationBar(),

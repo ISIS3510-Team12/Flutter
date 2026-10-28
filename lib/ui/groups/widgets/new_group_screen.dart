@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/new_group_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
@@ -22,6 +24,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
   final TextEditingController classController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
 
+  final _formKey = GlobalKey<FormState>();
   final Set<String> selectedUserIds = {};
   String searchQuery = '';
 
@@ -35,6 +38,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
 
     
   Future<void> _createGroup() async {
+    if (!_formKey.currentState!.validate()) return;
     final success = await ref
         .read(newGroupViewModelProvider.notifier)
         .createGroup(
@@ -71,7 +75,9 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildTextField(
@@ -80,6 +86,8 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
               hintText: 'An amazing group',
               helperText: 'Give your group a name',
               controller: nameController,
+              validator: Validators.name,
+              inputFormatters: Validators.titleTextInputFormatters,
             ),
             const SizedBox(height: 20),
             _buildTextField(
@@ -88,6 +96,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
               hintText: 'ISIS-3510 group',
               helperText: 'Enter the group description',
               controller: classController,
+              inputFormatters: Validators.descriptionTextInputFormatters,
             ),
             const SizedBox(height: 28),
             Text(
@@ -109,6 +118,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
               groupState.isLoading,
             ),
           ],
+        ),
         ),
       ),
     ),
@@ -189,6 +199,8 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
     required String hintText,
     required String helperText,
     required TextEditingController controller,
+    FormFieldValidator<String>? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     final theme = Theme.of(context);
 
@@ -202,8 +214,10 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
+          validator: validator,
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hintText,
             helperText: helperText,
