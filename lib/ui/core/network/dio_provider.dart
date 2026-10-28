@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/ui/core/app/dev_config.dart';
 import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';
 import 'package:team12_flutter_juggle/ui/core/network/api_interceptors.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -9,7 +10,9 @@ final dioProvider = Provider<Dio>((ref) {
 
   final dio = Dio(
     BaseOptions(
-      baseUrl: dotenv.env['API_URL']!,
+      baseUrl: useDevConfig
+          ? DevConfig.apiUrl
+          : dotenv.env['API_URL']!,
       contentType: Headers.jsonContentType,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),

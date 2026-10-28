@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/auth/signup/widgets/signup_form.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/ui/auth/view_models/auth_viewmodel_provider.dart';
 
@@ -28,7 +29,7 @@ class SignupScreen extends ConsumerWidget {
         title: Text('Sign Up', style: theme.textTheme.titleMedium),
         leading: BackButton(
           onPressed: () {
-            context.go('/');
+            context.go(Routes.signin);
           },
         ),
       ),

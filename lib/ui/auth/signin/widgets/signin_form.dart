@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
-
 
 typedef SigninCallback = Future<void> Function({
   required String email,
@@ -11,7 +11,12 @@ typedef SigninCallback = Future<void> Function({
 });
 
 class SigninForm extends StatefulWidget {
-  const SigninForm({super.key, required this.isLoading, required this.onSubmit, required this.onGoogleSignIn});
+  const SigninForm({
+    super.key,
+    required this.isLoading,
+    required this.onSubmit,
+    required this.onGoogleSignIn,
+  });
 
   final bool isLoading;
   final SigninCallback onSubmit;
@@ -22,12 +27,10 @@ class SigninForm extends StatefulWidget {
 }
 
 class _SigninFormState extends State<SigninForm> {
-  
   final formKey = GlobalKey<FormState>();
   String? email;
   String? password;
   bool? obscureText = true;
-  
 
   Future<void> _submit() async {
     final form = formKey.currentState;
@@ -37,10 +40,7 @@ class _SigninFormState extends State<SigninForm> {
 
     form.save();
 
-    await widget.onSubmit(
-      email: email!,
-      password: password!,
-    );
+    await widget.onSubmit(email: email!, password: password!);
   }
 
   void togglePasswordVisibility() {
@@ -49,10 +49,8 @@ class _SigninFormState extends State<SigninForm> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
-    
     return Form(
       key: formKey,
       child: SafeArea(
@@ -77,12 +75,13 @@ class _SigninFormState extends State<SigninForm> {
                 },
                 obscureText: obscureText,
                 validator: Validators.password,
+                inputFormatters: [Validators.passwordTextInputFormatter],
                 onTogglePasswordVisibility: togglePasswordVisibility,
                 keyboardType: TextInputType.visiblePassword,
               ),
               Center(
                 child: FilledButton(
-                  onPressed: _submit,
+                  onPressed: widget.isLoading ? null : _submit,
                   style: FilledButton.styleFrom(fixedSize: const Size(100, 40)),
                   child: Text(
                     'Sign In',
@@ -97,7 +96,8 @@ class _SigninFormState extends State<SigninForm> {
               BottomAuthOptions(
                 label: 'Dont have an account?',
                 buttonText: 'Sign up',
-                onPressed: () => context.go('/signup'),
+                onPressed: () => context.go(Routes.signup),
+                isLoading: widget.isLoading,
                 onGoogleSignIn: widget.onGoogleSignIn,
               ),
             ],

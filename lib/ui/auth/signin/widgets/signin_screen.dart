@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/auth/signin/widgets/signin_form.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/ui/auth/view_models/auth_viewmodel_provider.dart';
 
@@ -26,7 +27,7 @@ class SigninScreen extends ConsumerWidget {
         elevation: 0,
         backgroundColor: theme.colorScheme.surface,
         title: Text('Sign In', style: theme.textTheme.titleMedium),
-        leading: BackButton(onPressed: () => context.go('/signup')),
+        leading: BackButton(onPressed: () => context.go(Routes.landing)),
       ),
       backgroundColor: theme.colorScheme.surface,
       body: SigninForm(

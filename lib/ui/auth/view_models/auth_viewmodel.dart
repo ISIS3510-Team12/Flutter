@@ -15,9 +15,11 @@ class AuthViewModel extends AsyncNotifier<void> {
 
   Future<void> signIn({required String email, required String password}) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       await repository.signIn(email: email, password: password);
     });
+    if (!ref.mounted) return;
+    state = result;
   }
 
   Future<void> signUp({
@@ -27,7 +29,7 @@ class AuthViewModel extends AsyncNotifier<void> {
     required String lastName,
   }) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       await repository.signUp(
         email: email,
         password: password,
@@ -35,13 +37,17 @@ class AuthViewModel extends AsyncNotifier<void> {
         lastName: lastName,
       );
     });
+    if (!ref.mounted) return;
+    state = result;
   }
 
   Future<void> signInWithGoogle() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       await repository.signInWithGoogle();
     });
+    if (!ref.mounted) return;
+    state = result;
   }
 
   Future<void> signOut() async {
