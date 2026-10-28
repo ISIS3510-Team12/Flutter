@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 import 'package:team12_flutter_juggle/ui/tasks/create_task/view_models/create_task_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/create_task/widgets/related_tasks_section.dart';
@@ -153,6 +154,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: _titleController,
+                  inputFormatters: Validators.taskTitleTextInputFormatters,
                   onChanged: notifier.updateTitle,
                   decoration: InputDecoration(
                     hintText: 'Enter the task title',

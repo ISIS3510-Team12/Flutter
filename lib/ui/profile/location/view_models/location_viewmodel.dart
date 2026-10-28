@@ -8,9 +8,9 @@ import 'package:team12_flutter_juggle/data/repositories/location/device_location
 import 'package:team12_flutter_juggle/data/repositories/location/location_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/user_location.dart';
 import 'package:team12_flutter_juggle/ui/core/background/arrival_geofence_callback.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-const notifyWithinOptions = [100, 250, 500, 750, 1000];
-const defaultNotifyWithin = 500;
+part 'location_viewmodel.freezed.dart';
 
 enum SaveOutcome {
   saved,
@@ -21,18 +21,20 @@ enum SaveOutcome {
   failed,
 }
 
-class LocationState {
-  const LocationState({
-    this.saved,
-    this.point,
-    this.notifyWithin = defaultNotifyWithin,
-    this.remindersActive = false,
-  });
+const defaultNotifyWithin = 500;
 
-  final UserLocation? saved;
-  final LatLng? point;
-  final int notifyWithin;
-  final bool remindersActive;
+const notifyWithinOptions = [100, 250, 500, 750, 1000];
+
+@freezed
+abstract class LocationState with _$LocationState {
+  const LocationState._();
+
+  const factory LocationState({
+    UserLocation? saved,
+    LatLng? point,
+    @Default(defaultNotifyWithin) int notifyWithin,
+    @Default(false) bool remindersActive,
+  }) = _LocationState;
 
   bool get hasChanges {
     final current = saved;
@@ -45,19 +47,6 @@ class LocationState {
   }
 
   bool get canSave => point != null && (hasChanges || !remindersActive);
-
-  LocationState copyWith({
-    LatLng? point,
-    int? notifyWithin,
-    bool? remindersActive,
-  }) {
-    return LocationState(
-      saved: saved,
-      point: point ?? this.point,
-      notifyWithin: notifyWithin ?? this.notifyWithin,
-      remindersActive: remindersActive ?? this.remindersActive,
-    );
-  }
 }
 
 class LocationViewModel extends AsyncNotifier<LocationState> {

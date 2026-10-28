@@ -53,6 +53,7 @@ dependencies:
   geolocator: ^14.1.1
   geocoding: ^5.0.0
   freezed_annotation: ^3.1.0
+  animations: ^3.0.0
 
 dev_dependencies:
   flutter_test:

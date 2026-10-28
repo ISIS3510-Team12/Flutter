@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
@@ -9,28 +8,19 @@ import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_mode
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'dart:typed_data';
 
-class ViewTaskState {
-  const ViewTaskState({
-    required this.task,
-    required this.relatedTasks,
-    required this.reminderEnabled,
-    this.photo,
-  });
+part 'view_task_viewmodel.freezed.dart';
 
-  final Task task;
-  final List<Task> relatedTasks;
-  final bool reminderEnabled;
-  final Uint8List? photo;
-
-  ViewTaskState copyWith({Task? task, bool? reminderEnabled}) {
-    return ViewTaskState(
-      task: task ?? this.task,
-      relatedTasks: relatedTasks,
-      reminderEnabled: reminderEnabled ?? this.reminderEnabled,
-      photo: photo,
-    );
-  }
+@freezed
+abstract class ViewTaskState with _$ViewTaskState {
+  const factory ViewTaskState({
+    required Task task,
+    required List<Task> relatedTasks,
+    required bool reminderEnabled,
+    Uint8List? photo,
+  }) = _ViewTaskState;
 }
 
 class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {

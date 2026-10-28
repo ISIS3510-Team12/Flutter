@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,37 +15,30 @@ import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provide
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel_provider.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'dart:typed_data';
 
-class EditTaskFormState {
-  const EditTaskFormState({
-    required this.task,
-    required this.group,
-    required this.projectOptions,
-    required this.selectedProject,
-    required this.members,
-    required this.type,
-    required this.selectedMemberIds,
-    required this.deadline,
-    required this.time,
-    required this.isPriority,
-    required this.needsHelp,
-    required this.currentPhoto,
-    this.newPhotoPath,
-  });
+part 'edit_task_viewmodel.freezed.dart';
 
-  final Task task;
-  final TaskGroup? group;
-  final List<Project> projectOptions;
-  final String? selectedProject;
-  final List<TaskMember> members;
-  final TaskType type;
-  final Set<String> selectedMemberIds;
-  final DateTime deadline;
-  final TimeOfDay time;
-  final bool isPriority;
-  final bool needsHelp;
-  final Uint8List? currentPhoto;
-  final String? newPhotoPath;
+@freezed
+abstract class EditTaskFormState with _$EditTaskFormState {
+  const EditTaskFormState._();
+
+  const factory EditTaskFormState({
+    required Task task,
+    required TaskGroup? group,
+    required List<Project> projectOptions,
+    required String? selectedProject,
+    required List<TaskMember> members,
+    required TaskType type,
+    required Set<String> selectedMemberIds,
+    required DateTime deadline,
+    required TimeOfDay time,
+    required bool isPriority,
+    required bool needsHelp,
+    required Uint8List? currentPhoto,
+    String? newPhotoPath,
+  }) = _EditTaskFormState;
 
   List<String> get projects =>
       projectOptions.map((project) => project.name).toList();
@@ -57,33 +49,6 @@ class EditTaskFormState {
       .where((project) => project.name == selectedProject)
       .map((project) => project.id)
       .firstOrNull;
-
-  EditTaskFormState copyWith({
-    String? selectedProject,
-    TaskType? type,
-    Set<String>? selectedMemberIds,
-    DateTime? deadline,
-    TimeOfDay? time,
-    bool? isPriority,
-    bool? needsHelp,
-    String? newPhotoPath,
-  }) {
-    return EditTaskFormState(
-      task: task,
-      group: group,
-      projectOptions: projectOptions,
-      selectedProject: selectedProject ?? this.selectedProject,
-      members: members,
-      type: type ?? this.type,
-      selectedMemberIds: selectedMemberIds ?? this.selectedMemberIds,
-      deadline: deadline ?? this.deadline,
-      time: time ?? this.time,
-      isPriority: isPriority ?? this.isPriority,
-      needsHelp: needsHelp ?? this.needsHelp,
-      currentPhoto: currentPhoto,
-      newPhotoPath: newPhotoPath ?? this.newPhotoPath,
-    );
-  }
 }
 
 class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {

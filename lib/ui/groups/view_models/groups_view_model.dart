@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
+
+part 'groups_view_model.freezed.dart';
 
 class GroupsViewModel extends AsyncNotifier<GroupsState> {
   @override
@@ -15,7 +18,6 @@ class GroupsViewModel extends AsyncNotifier<GroupsState> {
     );
   }
 
-
   void onQueryChange(String query) {
     final currentState = state;
 
@@ -28,14 +30,14 @@ class GroupsViewModel extends AsyncNotifier<GroupsState> {
 
 }
 
-class GroupsState {
-  const GroupsState({
-    required this.groups,
-    this.query = '',
-  });
+@freezed
+abstract class GroupsState with _$GroupsState {
+  const GroupsState._();
 
-  final List<TaskGroup> groups;
-  final String query;
+  const factory GroupsState({
+    required List<TaskGroup> groups,
+    @Default('') String query,
+  }) = _GroupsState;
 
   List<TaskGroup> get filteredGroups {
     final normalizedQuery = query.toLowerCase().trim();
@@ -45,20 +47,7 @@ class GroupsState {
     }
 
     return groups
-        .where(
-          (group) =>
-              group.name.toLowerCase().contains(normalizedQuery),
-        )
+        .where((group) => group.name.toLowerCase().contains(normalizedQuery))
         .toList();
-  }
-
-  GroupsState copyWith({
-    List<TaskGroup>? groups,
-    String? query,
-  }) {
-    return GroupsState(
-      groups: groups ?? this.groups,
-      query: query ?? this.query,
-    );
   }
 }

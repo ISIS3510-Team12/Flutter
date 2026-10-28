@@ -73,6 +73,7 @@ class ViewTaskScreen extends ConsumerWidget {
       child: Scaffold(
       appBar: AppBar(title: const Text('View task')),
       bottomNavigationBar: const CustomNavigationBar(),
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
       floatingActionButton: state.value == null
           ? null
           : TaskActionsFab(

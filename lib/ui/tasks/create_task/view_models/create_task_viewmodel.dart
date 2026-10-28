@@ -15,43 +15,32 @@ import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provide
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class CreateTaskFormState {
-  const CreateTaskFormState({
-    required this.groups,
-    required this.group,
-    required this.members,
-    required this.projectOptions,
-    required this.candidateTasks,
-    this.title = '',
-    this.type = TaskType.coding,
-    this.selectedMemberIds = const {},
-    this.selectedProject,
-    this.deadline,
-    this.time,
-    this.isPriority = false,
-    this.needsHelp = false,
-    this.relatedTaskIds = const {},
-    this.relatedQuery = '',
-    this.photoPath,
-  });
+part 'create_task_viewmodel.freezed.dart';
 
-  final List<TaskGroup> groups;
-  final TaskGroup? group;
-  final List<TaskMember> members;
-  final List<Project> projectOptions;
-  final List<Task> candidateTasks;
-  final String title;
-  final TaskType type;
-  final Set<String> selectedMemberIds;
-  final String? selectedProject;
-  final DateTime? deadline;
-  final TimeOfDay? time;
-  final bool isPriority;
-  final bool needsHelp;
-  final Set<String> relatedTaskIds;
-  final String relatedQuery;
-  final String? photoPath;
+@freezed
+abstract class CreateTaskFormState with _$CreateTaskFormState {
+  const CreateTaskFormState._();
+
+  const factory CreateTaskFormState({
+    required List<TaskGroup> groups,
+    required TaskGroup? group,
+    required List<TaskMember> members,
+    required List<Project> projectOptions,
+    required List<Task> candidateTasks,
+    @Default('') String title,
+    @Default(TaskType.coding) TaskType type,
+    @Default({}) Set<String> selectedMemberIds,
+    String? selectedProject,
+    DateTime? deadline,
+    TimeOfDay? time,
+    @Default(false) bool isPriority,
+    @Default(false) bool needsHelp,
+    @Default({}) Set<String> relatedTaskIds,
+    @Default('') String relatedQuery,
+    String? photoPath,
+  }) = _CreateTaskFormState;
 
   List<String> get projects =>
       projectOptions.map((project) => project.name).toList();
@@ -77,47 +66,7 @@ class CreateTaskFormState {
   String? get lockedMemberId => members.isEmpty ? null : members.first.id;
 
   bool get canSubmit =>
-      group != null && title.isNotEmpty && deadline != null && time != null;
-
-  CreateTaskFormState copyWith({
-    TaskGroup? group,
-    List<TaskMember>? members,
-    List<Project>? projectOptions,
-    List<Task>? candidateTasks,
-    bool clearProject = false,
-    String? title,
-    TaskType? type,
-    Set<String>? selectedMemberIds,
-    String? selectedProject,
-    DateTime? deadline,
-    TimeOfDay? time,
-    bool? isPriority,
-    bool? needsHelp,
-    Set<String>? relatedTaskIds,
-    String? relatedQuery,
-    String? photoPath,
-  }) {
-    return CreateTaskFormState(
-      groups: groups,
-      group: group ?? this.group,
-      members: members ?? this.members,
-      projectOptions: projectOptions ?? this.projectOptions,
-      candidateTasks: candidateTasks ?? this.candidateTasks,
-      title: title ?? this.title,
-      type: type ?? this.type,
-      selectedMemberIds: selectedMemberIds ?? this.selectedMemberIds,
-      selectedProject: clearProject
-          ? null
-          : selectedProject ?? this.selectedProject,
-      deadline: deadline ?? this.deadline,
-      time: time ?? this.time,
-      isPriority: isPriority ?? this.isPriority,
-      needsHelp: needsHelp ?? this.needsHelp,
-      relatedTaskIds: relatedTaskIds ?? this.relatedTaskIds,
-      relatedQuery: relatedQuery ?? this.relatedQuery,
-      photoPath: photoPath ?? this.photoPath,
-    );
-  }
+      group != null && title.trim().isNotEmpty && deadline != null && time != null;
 }
 
 class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
@@ -166,7 +115,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
         projectOptions: projects,
         candidateTasks: candidateTasks,
         relatedTaskIds: const {},
-        clearProject: true,
+        selectedProject: null,
         members: members,
         selectedMemberIds: current.selectedMemberIds
             .where(memberIds.contains)
@@ -243,7 +192,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
         .toList();
     final task = Task(
       id: '',
-      title: current.title,
+      title: current.title.trim(),
       description: '',
       type: current.type,
       status: TaskStatus.pending,

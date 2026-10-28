@@ -33,67 +33,81 @@ class TaskActionsFabState extends State<TaskActionsFab> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final noInk = theme.copyWith(
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
+    );
 
     if (!_expanded) {
-      return FloatingActionButton.extended(
-        backgroundColor: scheme.onPrimaryContainer,
-        foregroundColor: scheme.primaryContainer,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        onPressed: () => setState(() => _expanded = true),
-        icon: const Icon(Symbols.stars, fill: 1),
-        label: Text(
-          'Task Actions',
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: scheme.primaryContainer,
+      return Theme(
+        data: noInk,
+        child: FloatingActionButton.extended(
+          heroTag: null,
+          backgroundColor: scheme.onPrimaryContainer,
+          foregroundColor: scheme.primaryContainer,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          onPressed: () => setState(() => _expanded = true),
+          icon: const Icon(Symbols.stars, fill: 1),
+          label: Text(
+            'Task Actions',
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: scheme.primaryContainer,
+            ),
           ),
         ),
       );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        _ActionPill(
-          icon: Symbols.check,
-          label: 'Mark as complete',
-          onPressed: () => _run(widget.onMarkComplete),
-        ),
-        const SizedBox(height: 4),
-        _ActionPill(
-          icon: Symbols.edit,
-          label: 'Edit Task',
-          onPressed: () => _run(widget.onEditTask),
-        ),
-        const SizedBox(height: 4),
-        _ActionPill(
-          icon: Symbols.delete,
-          label: 'Delete Task',
-          onPressed: () => _run(widget.onDeleteTask),
-        ),
-        const SizedBox(height: 4),
-        _ActionPill(
-          icon: Symbols.chat,
-          label: 'Ask for help',
-          onPressed: () => _run(widget.onAskForHelp),
-        ),
-        const SizedBox(height: 4),
-        _ActionPill(
-          icon: Symbols.star,
-          label: 'Mark as started',
-          onPressed: () => _run(widget.onMarkStarted),
-        ),
-        const SizedBox(height: 8),
-        FloatingActionButton(
-          backgroundColor: scheme.primaryContainer,
-          foregroundColor: scheme.onPrimaryContainer,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+    return Theme(
+      data: noInk,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _ActionPill(
+            icon: Symbols.check,
+            label: 'Mark as complete',
+            onPressed: () => _run(widget.onMarkComplete),
           ),
-          onPressed: () => setState(() => _expanded = false),
-          child: const Icon(Symbols.close, size: 20),
-        ),
-      ],
+          const SizedBox(height: 4),
+          _ActionPill(
+            icon: Symbols.edit,
+            label: 'Edit Task',
+            onPressed: () => _run(widget.onEditTask),
+          ),
+          const SizedBox(height: 4),
+          _ActionPill(
+            icon: Symbols.delete,
+            label: 'Delete Task',
+            onPressed: () => _run(widget.onDeleteTask),
+          ),
+          const SizedBox(height: 4),
+          _ActionPill(
+            icon: Symbols.chat,
+            label: 'Ask for help',
+            onPressed: () => _run(widget.onAskForHelp),
+          ),
+          const SizedBox(height: 4),
+          _ActionPill(
+            icon: Symbols.star,
+            label: 'Mark as started',
+            onPressed: () => _run(widget.onMarkStarted),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: null,
+            backgroundColor: scheme.primaryContainer,
+            foregroundColor: scheme.onPrimaryContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            onPressed: () => setState(() => _expanded = false),
+            child: const Icon(Symbols.close, size: 20),
+          ),
+        ],
+      ),
     );
   }
 }
