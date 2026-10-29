@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/add-offline-storage-and-eventual-connectivity 
   workflow_dispatch:
 
 permissions:
