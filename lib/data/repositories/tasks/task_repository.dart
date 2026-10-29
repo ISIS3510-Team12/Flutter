@@ -7,11 +7,40 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/today_summary.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
+import 'package:path_provider/path_provider.dart';
 
 class TaskRepository {
   TaskRepository(this._dio);
 
   final Dio _dio;
+
+  Future<File> _taskPhotoCacheFile(String taskId) async {
+    final appDirectory = await getApplicationSupportDirectory();
+
+    final cacheDirectory = Directory(
+      '${appDirectory.path}${Platform.pathSeparator}task_photo_cache',
+    );
+
+    await cacheDirectory.create(recursive: true);
+
+    final safeTaskId = taskId.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+
+    return File('${cacheDirectory.path}${Platform.pathSeparator}$safeTaskId');
+  }
+
+  Future<void> _deleteCachedTaskPhoto(String taskId) async {
+    try {
+      final file = await _taskPhotoCacheFile(taskId);
+
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } on FileSystemException {
+      // Cache cleanup must not prevent the main operation.
+    } catch (_) {
+      // Cache cleanup is best-effort.
+    }
+  }
 
   Future<List<Task>> getGroupTasks(TaskGroup group) async {
     try {
@@ -178,10 +207,7 @@ class TaskRepository {
         // Decode, resize and compress the image in a background isolate.
         final processedBytes = await compute(
           _processTaskPhoto,
-          <String, String>{
-            'path': path,
-            'extension': extension,
-          },
+          <String, String>{'path': path, 'extension': extension},
         );
 
         tempDirectory = await Directory.systemTemp.createTemp(
@@ -219,6 +245,7 @@ class TaskRepository {
           ),
         }),
       );
+      await _deleteCachedTaskPhoto(taskId);
     } on PhotoUploadException {
       rethrow;
     } on DioException catch (e) {
@@ -232,30 +259,45 @@ class TaskRepository {
             'Only JPEG, PNG, WebP or HEIC photos are allowed.',
           );
         default:
-          throw const PhotoUploadException(
-            'The photo could not be uploaded.',
-          );
+          throw const PhotoUploadException('The photo could not be uploaded.');
       }
     } catch (_) {
       throw const PhotoUploadException(
         'The photo could not be processed or uploaded.',
       );
     } finally {
-        if (tempDirectory != null) {
-          try {
-            if (await tempDirectory.exists()) {
-              await tempDirectory.delete(recursive: true);
-            }
-          } on FileSystemException {
-            // Temporary files could not be removed.
+      if (tempDirectory != null) {
+        try {
+          if (await tempDirectory.exists()) {
+            await tempDirectory.delete(recursive: true);
           }
+        } on FileSystemException {
+          // Temporary files could not be removed.
         }
       }
+    }
   }
 
-
   Future<Uint8List?> getTaskPhoto(String taskId) async {
+    File? cacheFile;
+
+    //Try to load the photo from local storage first
     try {
+      cacheFile = await _taskPhotoCacheFile(taskId);
+
+      if (await cacheFile.exists()) {
+        try {
+          return await cacheFile.readAsBytes();
+        } on FileSystemException {
+          //If the cached file cannot be read, try the backend.
+        }
+      }
+    } catch (_) {
+      //If local caching is unavailable, continue with the backend.
+    }
+
+    try {
+      //Download the photo only when it is not available locally.
       final response = await _dio.get<List<int>>(
         '/tasks/$taskId/photo',
         options: Options(
@@ -263,8 +305,25 @@ class TaskRepository {
           validateStatus: (status) => status == 200 || status == 404,
         ),
       );
-      if (response.statusCode == 404) return null;
-      return Uint8List.fromList(response.data!);
+
+      if (response.statusCode == 404) {
+        await _deleteCachedTaskPhoto(taskId);
+        return null;
+      }
+
+      final bytes = Uint8List.fromList(response.data!);
+
+      //Save the downloaded photo for future requests.
+      try {
+        cacheFile ??= await _taskPhotoCacheFile(taskId);
+
+        await cacheFile.parent.create(recursive: true);
+        await cacheFile.writeAsBytes(bytes, flush: true);
+      } catch (_) {
+        // The photo can still be displayed if caching fails.
+      }
+
+      return bytes;
     } catch (e) {
       throw Exception('Failed to load photo: $e');
     }
@@ -273,54 +332,51 @@ class TaskRepository {
   Future<void> deleteTask(String id) async {
     try {
       await _dio.delete('/tasks/$id');
+      await _deleteCachedTaskPhoto(id);
     } catch (e) {
       throw Exception('Failed to delete task: $e');
     }
   }
 }
 
-  Uint8List _processTaskPhoto(Map<String, String> args) {
-    final path = args['path']!;
-    final extension = args['extension']!;
+Uint8List _processTaskPhoto(Map<String, String> args) {
+  final path = args['path']!;
+  final extension = args['extension']!;
 
-    final bytes = File(path).readAsBytesSync();
-    final decoded = img.decodeImage(bytes);
+  final bytes = File(path).readAsBytesSync();
+  final decoded = img.decodeImage(bytes);
 
-    if (decoded == null) {
-      throw const FormatException('The image could not be decoded.');
-    }
-
-    // Keep the aspect ratio and limit the longest side to 1600 pixels.
-    final img.Image resized;
-
-    if (decoded.width > 1600 || decoded.height > 1600) {
-      if (decoded.width >= decoded.height) {
-        resized = img.copyResize(decoded, width: 1600);
-      } else {
-        resized = img.copyResize(decoded, height: 1600);
-      }
-    } else {
-      resized = decoded;
-    }
-
-    // Encode the image in its original supported format.
-    switch (extension) {
-      case 'png':
-        return Uint8List.fromList(img.encodePng(resized));
-
-      case 'webp':
-        return Uint8List.fromList(
-          img.encodeWebP(
-            resized,
-            lossless: false,
-            quality: 85,
-          ),
-        );
-
-      default:
-        return Uint8List.fromList(img.encodeJpg(resized, quality: 85));
-    }
+  if (decoded == null) {
+    throw const FormatException('The image could not be decoded.');
   }
+
+  // Keep the aspect ratio and limit the longest side to 1600 pixels.
+  final img.Image resized;
+
+  if (decoded.width > 1600 || decoded.height > 1600) {
+    if (decoded.width >= decoded.height) {
+      resized = img.copyResize(decoded, width: 1600);
+    } else {
+      resized = img.copyResize(decoded, height: 1600);
+    }
+  } else {
+    resized = decoded;
+  }
+
+  // Encode the image in its original supported format.
+  switch (extension) {
+    case 'png':
+      return Uint8List.fromList(img.encodePng(resized));
+
+    case 'webp':
+      return Uint8List.fromList(
+        img.encodeWebP(resized, lossless: false, quality: 85),
+      );
+
+    default:
+      return Uint8List.fromList(img.encodeJpg(resized, quality: 85));
+  }
+}
 
 String _photoSubtype(String path) {
   final extension = path.split('.').last.toLowerCase();
