@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_notification.dart';
+import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_state.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/custom_bottom_sheet.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_cards.dart';
@@ -24,27 +26,35 @@ class HomeScreen extends ConsumerWidget {
       state: state,
       child: Scaffold(
         appBar: CustomAppBar(),
-        body: state.when(
-          data: (data) => Padding(
-            padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
-            child: SingleChildScrollView(
-              child: Column(
-                spacing: 20,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  UserSection(firstName: data.user.firstName),
-                  OverviewSection(
-                    dueTodayTasks: data.dueTodayTasks,
-                    recentActivity: data.recentActivity,
-                    numTasks: data.numUrgentTasks,
-                    numNotifications: data.numNotifications,
+        body: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: state.when(
+                data: (data) => Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      spacing: 20,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        UserSection(firstName: data.user.firstName),
+                        OverviewSection(
+                          dueTodayTasks: data.dueTodayTasks,
+                          recentActivity: data.recentActivity,
+                          numTasks: data.numUrgentTasks,
+                          numNotifications: data.numNotifications,
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) =>
+                    Center(child: Text('Error: $error')),
               ),
             ),
-          ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(child: Text('Error: $error')),
+          ],
         ),
         bottomNavigationBar: CustomNavigationBar(),
         resizeToAvoidBottomInset: false,
@@ -53,18 +63,15 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class UserSection extends StatelessWidget {
+class UserSection extends ConsumerWidget {
   final String firstName;
 
   const UserSection({super.key, required this.firstName});
 
   @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final month = DateFormat('MMMM').format(now);
-    final day = DateFormat('EEEE').format(now);
-    final year = DateFormat('y').format(now);
-    final date = DateFormat('d').format(now);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final today = DateFormat('EEEE, MMMM d, y')
+        .format(ref.watch(clockProvider).now());
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -79,7 +86,7 @@ class UserSection extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                '$day, $month $date, $year',
+                today,
                 style: TextStyle(fontSize: 14),
                 softWrap: true,
               ),

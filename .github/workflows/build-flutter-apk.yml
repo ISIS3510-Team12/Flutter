@@ -25,7 +25,7 @@ jobs:
           java-version: "21"
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e
         with:
           channel: stable
           cache: true
@@ -63,10 +63,10 @@ jobs:
         run: bash .github/workflows/scripts/create-google-services.sh
 
       - name: Install dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
-      - name: Generate Freezed files
-        run: dart run build_runner build
+      - name: Generate code .g.dart and .freezed.dart files (Drift and Freezed)
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build release APK
         run: flutter build apk --release

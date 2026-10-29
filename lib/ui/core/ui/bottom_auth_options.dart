@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/google_signin_button.dart';
 
-typedef GoogleSignInCallback = Future<void> Function();
+typedef GoogleSignInCallback = void Function();
 
 class BottomAuthOptions extends StatelessWidget {
   const BottomAuthOptions({
@@ -11,6 +11,7 @@ class BottomAuthOptions extends StatelessWidget {
     required this.onPressed,
     required this.onGoogleSignIn,
     required this.isLoading,
+    this.isOnline = true,
   });
 
   final String label;
@@ -18,6 +19,7 @@ class BottomAuthOptions extends StatelessWidget {
   final VoidCallback? onPressed;
   final GoogleSignInCallback? onGoogleSignIn;
   final bool isLoading;
+  final bool isOnline;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +43,10 @@ class BottomAuthOptions extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 1),
-          GoogleSigninButton(onPressed: onGoogleSignIn, isLoading: isLoading),
+          GoogleSigninButton(
+            onPressed: onGoogleSignIn,
+            isLoading: isLoading || !isOnline,
+          ),
           const SizedBox(height: 2),
           Center(child: Text(label, style: theme.textTheme.bodySmall)),
           Center(

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 
-typedef SigninCallback = Future<void> Function({
+typedef SigninCallback = void Function({
   required String email,
   required String password,
 });
 
-class SigninForm extends StatefulWidget {
+class SigninForm extends ConsumerStatefulWidget {
   const SigninForm({
     super.key,
     required this.isLoading,
@@ -23,16 +25,16 @@ class SigninForm extends StatefulWidget {
   final GoogleSignInCallback onGoogleSignIn;
 
   @override
-  State<SigninForm> createState() => _SigninFormState();
+  ConsumerState<SigninForm> createState() => _SigninFormState();
 }
 
-class _SigninFormState extends State<SigninForm> {
+class _SigninFormState extends ConsumerState<SigninForm> {
   final formKey = GlobalKey<FormState>();
   String? email;
   String? password;
   bool? obscureText = true;
 
-  Future<void> _submit() async {
+  void _submit() {
     final form = formKey.currentState;
     if (form == null || !form.validate()) {
       return;
@@ -40,7 +42,7 @@ class _SigninFormState extends State<SigninForm> {
 
     form.save();
 
-    await widget.onSubmit(email: email!, password: password!);
+    widget.onSubmit(email: email!, password: password!);
   }
 
   void togglePasswordVisibility() {
@@ -51,6 +53,7 @@ class _SigninFormState extends State<SigninForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isOnline = ref.watch(isOnlineProvider);
     return Form(
       key: formKey,
       child: SafeArea(
@@ -81,7 +84,7 @@ class _SigninFormState extends State<SigninForm> {
               ),
               Center(
                 child: FilledButton(
-                  onPressed: widget.isLoading ? null : _submit,
+                  onPressed: widget.isLoading || !isOnline ? null : _submit,
                   style: FilledButton.styleFrom(fixedSize: const Size(100, 40)),
                   child: Text(
                     'Sign In',
@@ -99,6 +102,7 @@ class _SigninFormState extends State<SigninForm> {
                 onPressed: () => context.go(Routes.signup),
                 isLoading: widget.isLoading,
                 onGoogleSignIn: widget.onGoogleSignIn,
+                isOnline: isOnline,
               ),
             ],
           ),
