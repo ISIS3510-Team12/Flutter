@@ -1,5 +1,8 @@
 name: Build
 on:
+  push:
+    branches:
+      - feat/add-offline-storage-and-eventual-connectivity
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
