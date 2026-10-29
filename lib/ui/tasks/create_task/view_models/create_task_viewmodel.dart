@@ -175,6 +175,26 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     state = AsyncData(update(current));
   }
 
+  void resetForm() {
+    final current = state.value;
+    if (current == null) return;
+
+    final lockedMemberId = current.lockedMemberId;
+
+    state = AsyncData(
+      CreateTaskFormState(
+        groups: current.groups,
+        group: current.group,
+        members: current.members,
+        projectOptions: current.projectOptions,
+        candidateTasks: current.candidateTasks,
+        selectedMemberIds: {
+          ?lockedMemberId,
+        },
+      ),
+    );
+  }
+
   Future<void> submit() async {
     final current = state.value;
     if (current == null || !current.canSubmit) return;
