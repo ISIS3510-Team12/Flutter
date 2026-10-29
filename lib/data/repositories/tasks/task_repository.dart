@@ -1,10 +1,12 @@
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
+import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/today_summary.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 
 class TaskRepository {
   TaskRepository(this._dio);
@@ -164,17 +166,61 @@ class TaskRepository {
   }
 
   Future<void> uploadTaskPhoto(String taskId, String path) async {
+    Directory? tempDirectory;
+
     try {
+      final extension = path.split('.').last.toLowerCase();
+      String uploadPath = path;
+
+      // HEIC/HEIF are not supported by the image package.
+      // Keep the original file for these formats.
+      if (extension != 'heic' && extension != 'heif') {
+        // Decode, resize and compress the image in a background isolate.
+        final processedBytes = await compute(
+          _processTaskPhoto,
+          <String, String>{
+            'path': path,
+            'extension': extension,
+          },
+        );
+
+        tempDirectory = await Directory.systemTemp.createTemp(
+          'juggle_task_photo_',
+        );
+
+        final outputExtension = extension == 'png' || extension == 'webp'
+            ? extension
+            : 'jpg';
+
+        final processedFile = File(
+          '${tempDirectory.path}/photo.$outputExtension',
+        );
+
+        await processedFile.writeAsBytes(processedBytes, flush: true);
+        uploadPath = processedFile.path;
+      }
+
+      // Validate the final file, not the original image.
+      if (await File(uploadPath).length() > 5 * 1024 * 1024) {
+        throw const PhotoUploadException(
+          'The photo is too large. The maximum size is 5 MB.',
+        );
+      }
+
+      final subtype = _photoSubtype(uploadPath);
+
       await _dio.put<void>(
         '/tasks/$taskId/photo',
         data: FormData.fromMap({
           'file': await MultipartFile.fromFile(
-            path,
-            filename: 'photo.${_photoSubtype(path)}',
-            contentType: DioMediaType('image', _photoSubtype(path)),
+            uploadPath,
+            filename: 'photo.$subtype',
+            contentType: DioMediaType('image', subtype),
           ),
         }),
       );
+    } on PhotoUploadException {
+      rethrow;
     } on DioException catch (e) {
       switch (e.response?.statusCode) {
         case 413:
@@ -186,10 +232,27 @@ class TaskRepository {
             'Only JPEG, PNG, WebP or HEIC photos are allowed.',
           );
         default:
-          throw const PhotoUploadException('The photo could not be uploaded.');
+          throw const PhotoUploadException(
+            'The photo could not be uploaded.',
+          );
       }
-    }
+    } catch (_) {
+      throw const PhotoUploadException(
+        'The photo could not be processed or uploaded.',
+      );
+    } finally {
+        if (tempDirectory != null) {
+          try {
+            if (await tempDirectory.exists()) {
+              await tempDirectory.delete(recursive: true);
+            }
+          } on FileSystemException {
+            // Temporary files could not be removed.
+          }
+        }
+      }
   }
+
 
   Future<Uint8List?> getTaskPhoto(String taskId) async {
     try {
@@ -215,6 +278,49 @@ class TaskRepository {
     }
   }
 }
+
+  Uint8List _processTaskPhoto(Map<String, String> args) {
+    final path = args['path']!;
+    final extension = args['extension']!;
+
+    final bytes = File(path).readAsBytesSync();
+    final decoded = img.decodeImage(bytes);
+
+    if (decoded == null) {
+      throw const FormatException('The image could not be decoded.');
+    }
+
+    // Keep the aspect ratio and limit the longest side to 1600 pixels.
+    final img.Image resized;
+
+    if (decoded.width > 1600 || decoded.height > 1600) {
+      if (decoded.width >= decoded.height) {
+        resized = img.copyResize(decoded, width: 1600);
+      } else {
+        resized = img.copyResize(decoded, height: 1600);
+      }
+    } else {
+      resized = decoded;
+    }
+
+    // Encode the image in its original supported format.
+    switch (extension) {
+      case 'png':
+        return Uint8List.fromList(img.encodePng(resized));
+
+      case 'webp':
+        return Uint8List.fromList(
+          img.encodeWebP(
+            resized,
+            lossless: false,
+            quality: 85,
+          ),
+        );
+
+      default:
+        return Uint8List.fromList(img.encodeJpg(resized, quality: 85));
+    }
+  }
 
 String _photoSubtype(String path) {
   final extension = path.split('.').last.toLowerCase();

@@ -44,8 +44,6 @@ class TaskPhotoPicker extends StatelessWidget {
     if (source == null) return;
     final picked = await ImagePicker().pickImage(
       source: source,
-      maxWidth: 1600,
-      imageQuality: 85,
     );
     if (picked == null || !context.mounted) return;
     final extension = picked.path.split('.').last.toLowerCase();
