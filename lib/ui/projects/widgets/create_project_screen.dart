@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
+import 'package:shake/shake.dart';
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
   const CreateProjectScreen({super.key, required this.groupId});
@@ -22,13 +23,91 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
 
   final _formKey = GlobalKey<FormState>();
   DateTime? selectedDeadline;
+  ShakeDetector? _shakeDetector;
+  bool _isConfirmingReset = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _shakeDetector = ShakeDetector.autoStart(
+      onPhoneShake: (ShakeEvent event) {
+        if (!mounted) return;
+        _resetForm();
+      },
+      shakeThresholdGravity: 2.7,
+      shakeSlopTimeMS: 1000,
+      minimumShakeCount: 2,
+      useFilter: true,
+    );
+  }
 
   @override
   void dispose() {
+    _shakeDetector?.stopListening();
     nameController.dispose();
     descriptionController.dispose();
     deadlineController.dispose();
     super.dispose();
+  }
+
+  Future<void> _resetForm() async {
+    if (!mounted) return;
+
+    if (ref.read(projectCreateViewModelProvider).isLoading) {
+      return;
+    }
+
+    if (_isConfirmingReset) return;
+
+    _isConfirmingReset = true;
+
+    try {
+      final shouldClear = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Clear form?'),
+          content: const Text(
+            'Do you want to clear all the information entered '
+            'in this project form? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Clear form'),
+            ),
+          ],
+        ),
+      );
+
+      if (!mounted || shouldClear != true) return;
+
+      nameController.clear();
+      descriptionController.clear();
+      deadlineController.clear();
+
+      setState(() {
+        selectedDeadline = null;
+      });
+
+      _formKey.currentState?.reset();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Form cleared.'),
+        ),
+      );
+    } finally {
+      _isConfirmingReset = false;
+    }
   }
 
   Future<void> _createProject() async {
