@@ -6,6 +6,7 @@ import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project_create.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/domain/models/project/deadline_prediction.dart';
 
 part 'project_view_model.freezed.dart';
 
@@ -13,7 +14,7 @@ class ProjectDetailViewModel extends AsyncNotifier<ProjectDetailState> {
   ProjectDetailViewModel(this.projectId);
 
   final int projectId;
-
+  
   @override
   Future<ProjectDetailState> build() async {
     final projectRepository = ref.watch(projectRepositoryProvider);
@@ -21,9 +22,16 @@ class ProjectDetailViewModel extends AsyncNotifier<ProjectDetailState> {
 
     final project = await projectRepository.getProject(projectId);
     final tasks = await taskRepository.getProjectTasks(projectId);
+    final prediction =
+        await projectRepository.getDeadlinePrediction(projectId);
 
-    return ProjectDetailState(project: project, tasks: tasks);
+    return ProjectDetailState(
+      project: project,
+      tasks: tasks,
+      prediction: prediction,
+    );
   }
+
 }
 
 class ProjectCreateViewModel extends AsyncNotifier<Project?> {
@@ -74,5 +82,6 @@ abstract class ProjectDetailState with _$ProjectDetailState {
   const factory ProjectDetailState({
     required Project project,
     required List<Task> tasks,
+    required DeadlinePrediction prediction,
   }) = _ProjectDetailState;
 }
