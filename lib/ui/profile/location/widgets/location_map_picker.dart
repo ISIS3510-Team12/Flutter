@@ -7,9 +7,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/themes/map_style.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/place_name_provider.dart';
+import 'package:team12_flutter_juggle/ui/profile/location/widgets/offline_map_notice.dart';
 
 const defaultMapCenter = LatLng(4.6014, -74.0661);
 const _panelHeight = 190.0;
@@ -121,6 +123,7 @@ class _LocationMapPickerState extends ConsumerState<LocationMapPicker> {
   @override
   Widget build(BuildContext context) {
     final selected = _selected;
+    final offline = !ref.watch(isOnlineProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Choose a place')),
       body: Stack(
@@ -147,6 +150,13 @@ class _LocationMapPickerState extends ConsumerState<LocationMapPicker> {
                 ),
             },
           ),
+          if (offline)
+            const Positioned(
+              left: 16,
+              right: 16,
+              top: 16,
+              child: IgnorePointer(child: OfflineMapNotice()),
+            ),
           Positioned(
             left: 16,
             right: 16,
@@ -185,7 +195,8 @@ class _SelectionPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final selected = point;
-    final name = selected == null
+    final offline = !ref.watch(isOnlineProvider);
+    final name = selected == null || offline
         ? null
         : ref.watch(placeNameProvider(selected)).value;
     return Material(
@@ -205,18 +216,22 @@ class _SelectionPanel extends ConsumerWidget {
               )
             else ...[
               Text(
-                name ?? 'Selected place',
+                offline
+                    ? formatCoordinates(selected)
+                    : name ?? 'Selected place',
                 style: theme.textTheme.titleSmall,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
-              Text(
-                formatCoordinates(selected),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              if (!offline) ...[
+                const SizedBox(height: 2),
+                Text(
+                  formatCoordinates(selected),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
+              ],
             ],
             const SizedBox(height: 12),
             Row(

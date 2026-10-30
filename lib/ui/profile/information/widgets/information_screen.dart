@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/view_models/information_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/view_models/information_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/information/widgets/read_only_field.dart';
@@ -13,17 +16,51 @@ class InformationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(informationViewModelProvider);
+    final offline = !ref.watch(isOnlineProvider);
     return ScreenLoadTracker(
       screen: ScreenNames.profileInformation,
       state: state,
       child: Scaffold(
-      appBar: AppBar(title: const Text('Profile Information')),
-      body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
-        data: (info) => _InformationForm(info: info),
+        appBar: AppBar(title: const Text('Profile Information')),
+        body: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: state.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => LoadErrorView(
+                  error: error,
+                  offlineMessage:
+                      "You're offline. Reconnect to load your profile.",
+                  genericMessage: "We couldn't load your profile right now.",
+                  onRetry: () => ref.invalidate(informationViewModelProvider),
+                ),
+                data: (info) => offline && info.isEmpty
+                    ? const _ProfileUnavailable()
+                    : _InformationForm(info: info),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
+    );
+  }
+}
+
+class _ProfileUnavailable extends StatelessWidget {
+  const _ProfileUnavailable();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Text(
+          "Your profile isn't available offline yet. Connect once to load it.",
+          style: Theme.of(context).textTheme.bodyLarge,
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }

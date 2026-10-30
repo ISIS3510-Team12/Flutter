@@ -13,16 +13,18 @@ class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
-    final pending = ref.read(pendingOpsProvider).value?.length ?? 0;
+    final ops = ref.read(pendingOpsProvider).value ?? const [];
+    final pending = ops.length;
     if (pending > 0) {
+      final noun = ops.every((op) => op.isTask) ? 'task' : 'change';
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: const Text('Sign out?'),
           content: Text(
             pending == 1
-                ? '1 task is still waiting to upload and will be discarded if you sign out.'
-                : '$pending tasks are still waiting to upload and will be discarded if you sign out.',
+                ? '1 $noun is still waiting to upload and will be discarded if you sign out.'
+                : '$pending ${noun}s are still waiting to upload and will be discarded if you sign out.',
           ),
           actions: [
             TextButton(

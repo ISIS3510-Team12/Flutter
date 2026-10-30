@@ -5,9 +5,11 @@ import 'dart:math';
 import 'package:path_provider/path_provider.dart';
 import 'package:team12_flutter_juggle/data/local/pending_op.dart';
 import 'package:team12_flutter_juggle/data/local/task_codec.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/location_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/data/sync/outbox_store.dart';
 import 'package:team12_flutter_juggle/data/sync/sync_status.dart';
+import 'package:team12_flutter_juggle/domain/models/profile/user_location.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
@@ -38,14 +40,16 @@ class OutboxSyncService {
   OutboxSyncService({
     required OutboxStore store,
     required TaskRepository Function() repository,
+    required LocationRepository Function() locationRepository,
     required String? Function() userId,
     required bool Function() isOnline,
-    required void Function() onSynced,
+    required void Function(Set<PendingOpType> types) onSynced,
     DateTime Function()? now,
     Random? random,
     PhotoStager? stagePhoto,
   }) : _store = store,
        _repository = repository,
+       _locationRepository = locationRepository,
        _userId = userId,
        _isOnline = isOnline,
        _onSynced = onSynced,
@@ -55,9 +59,10 @@ class OutboxSyncService {
 
   final OutboxStore _store;
   final TaskRepository Function() _repository;
+  final LocationRepository Function() _locationRepository;
   final String? Function() _userId;
   final bool Function() _isOnline;
-  final void Function() _onSynced;
+  final void Function(Set<PendingOpType> types) _onSynced;
   final DateTime Function() _now;
   final Random _random;
   final PhotoStager _stagePhoto;
@@ -82,7 +87,7 @@ class OutboxSyncService {
   }) async {
     final uid = _userId();
     if (uid == null) throw StateError('No signed in user');
-    final id = '${_now().microsecondsSinceEpoch}-${_random.nextInt(1 << 32)}';
+    final id = _newId();
     final stagedPhoto = photoPath == null
         ? null
         : await _stagePhoto(photoPath, id);
@@ -101,6 +106,39 @@ class OutboxSyncService {
     return op;
   }
 
+  Future<PendingOp> enqueueSaveLocation(UserLocation location) async {
+    final uid = _userId();
+    if (uid == null) throw StateError('No signed in user');
+    await _removeSaveLocation(uid);
+    final op = PendingOp(
+      id: _newId(),
+      userId: uid,
+      type: PendingOpType.saveLocation,
+      payload: location.toJson(),
+      createdAt: _now(),
+    );
+    await _store.put(op);
+    _publish();
+    if (_isOnline()) unawaited(flush());
+    return op;
+  }
+
+  Future<void> discardSaveLocation() async {
+    final uid = _userId();
+    if (uid == null) return;
+    await _removeSaveLocation(uid);
+    _publish();
+  }
+
+  Future<void> _removeSaveLocation(String uid) async {
+    for (final op in _store.forUser(uid)) {
+      if (op.type == PendingOpType.saveLocation) await _store.remove(op.id);
+    }
+  }
+
+  String _newId() =>
+      '${_now().microsecondsSinceEpoch}-${_random.nextInt(1 << 32)}';
+
   Future<void> retry(String id) async {
     final op = _find(id);
     if (op == null) return;
@@ -108,7 +146,7 @@ class OutboxSyncService {
       op.copyWith(
         status: PendingOpStatus.pending,
         nextAttemptAt: null,
-        verifyFirst: op.attempts > 0,
+        verifyFirst: op.isTask && op.attempts > 0,
       ),
     );
     _publish();
@@ -129,7 +167,7 @@ class OutboxSyncService {
     }
     _running = true;
     _timer?.cancel();
-    var synced = false;
+    final synced = <PendingOpType>{};
     try {
       _status = _status.copyWith(isSyncing: true, message: null);
       _emit();
@@ -139,21 +177,37 @@ class OutboxSyncService {
         final next = op.nextAttemptAt;
         if (next != null && next.isAfter(_now())) continue;
         if (!_isOnline()) break;
-        if (await _process(op)) synced = true;
+        if (await _process(op)) synced.add(op.type);
       }
     } finally {
       _running = false;
-      if (synced) {
+      if (synced.isNotEmpty) {
         _status = _status.copyWith(lastSyncedAt: _now());
       }
       _status = _status.copyWith(isSyncing: false);
       _publish();
       _schedule();
-      if (synced) _onSynced();
+      if (synced.isNotEmpty) _onSynced(synced);
     }
   }
 
-  Future<bool> _process(PendingOp original) async {
+  Future<bool> _process(PendingOp op) => switch (op.type) {
+    PendingOpType.createTask => _processCreateTask(op),
+    PendingOpType.saveLocation => _processSaveLocation(op),
+  };
+
+  Future<bool> _processSaveLocation(PendingOp op) async {
+    try {
+      await _locationRepository().saveLocation(op.location);
+      await _store.remove(op.id);
+      return true;
+    } catch (error) {
+      await _fail(op, error);
+      return false;
+    }
+  }
+
+  Future<bool> _processCreateTask(PendingOp original) async {
     var op = original;
     try {
       if (op.serverTaskId == null) {
@@ -189,7 +243,7 @@ class OutboxSyncService {
         op.copyWith(
           attempts: attempts,
           nextAttemptAt: _now().add(outboxBackoff(attempts, _random)),
-          verifyFirst: op.serverTaskId == null,
+          verifyFirst: op.isTask && op.serverTaskId == null,
           lastError: error.toString(),
         ),
       );
@@ -203,7 +257,12 @@ class OutboxSyncService {
       ),
     );
     _status = _status.copyWith(
-      message: "Couldn't upload '${op.task.title}'. Retry or discard it.",
+      message: switch (op.type) {
+        PendingOpType.createTask =>
+          "Couldn't upload '${op.task.title}'. Retry or discard it.",
+        PendingOpType.saveLocation =>
+          "Couldn't sync your saved place. Retry or discard it.",
+      },
     );
   }
 
