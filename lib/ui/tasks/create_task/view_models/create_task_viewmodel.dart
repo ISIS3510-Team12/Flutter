@@ -17,6 +17,7 @@ import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provide
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
@@ -304,6 +305,13 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       if (photoPath != null) {
         await repository.uploadTaskPhoto(created.id, photoPath);
       }
+    } on Exception catch (error) {
+      if (isOfflineFailure(error)) {
+        throw const PhotoUploadException(
+          'The photo could not be uploaded. Check your connection.',
+        );
+      }
+      rethrow;
     } finally {
       if (ref.mounted) {
         ref.invalidate(tasksViewModelProvider);
