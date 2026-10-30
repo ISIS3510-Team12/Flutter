@@ -49,6 +49,84 @@ class SettingsScreen extends ConsumerWidget {
                     subtitle: 'Get notified near a saved place',
                     onTap: () => context.push(Routes.profileLocation),
                   ),
+                  // Daily reminders
+                  Column(
+                    children: [
+                      SettingsMenuTile(
+                        title: 'Daily reminders',
+                        subtitle: 'Get notified at a specific time',
+                        showChevron: false,
+                        trailing: Switch(
+                          value: settings.dailyRemindersEnabled,
+                          onChanged: (value) => ref
+                              .read(settingsViewModelProvider.notifier)
+                              .updateDailyReminders(value),
+                        ),
+                      ),
+                      if (settings.dailyRemindersEnabled) ...[
+                        Divider(
+                          height: 1,
+                          indent: 16,
+                          endIndent: 16,
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                        InkWell(
+                          onTap: () async {
+                            final currentTime = settings.dailyReminderTime;
+                            final parts = currentTime?.split(':');
+
+                            final selectedTime = await showTimePicker(
+                              context: context,
+                              initialTime: parts != null
+                                  ? TimeOfDay(
+                                      hour: int.parse(parts[0]),
+                                      minute: int.parse(parts[1]),
+                                    )
+                                  : const TimeOfDay(hour: 16, minute: 0),
+                            );
+
+                            if (selectedTime == null) return;
+
+                            final formattedTime =
+                                '${selectedTime.hour.toString().padLeft(2, '0')}:'
+                                '${selectedTime.minute.toString().padLeft(2, '0')}';
+
+                            await ref
+                                .read(settingsViewModelProvider.notifier)
+                                .updateDailyReminderTime(formattedTime);
+                          },
+                          child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  settings.dailyReminderTime == null
+                                      ? 'Choose reminder time'
+                                      : 'Every day at ${settings.dailyReminderTime}',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.edit_outlined,
+                                  color: theme.colorScheme.primary,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
