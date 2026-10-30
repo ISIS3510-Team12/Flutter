@@ -60,8 +60,11 @@ dependencies:
   rxdart: ^0.28.0
   connectivity_plus: ^7.3.1
   shake: ^3.0.0
+  hive_ce: ^2.22.0
+  hive_ce_flutter: ^2.5.0
   image: ^4.12.0
   path_provider: ^2.1.6
+  shared_preferences: ^2.5.6
 
 dev_dependencies:
   flutter_test:

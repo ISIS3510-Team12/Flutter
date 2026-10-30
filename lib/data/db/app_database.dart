@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:team12_flutter_juggle/data/db/tables/cached_group_loads.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_groups.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_notifications.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_projects.dart';
@@ -10,13 +11,19 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [CachedTasks, CachedNotifications, CachedGroups, CachedProjects],
+  tables: [
+    CachedTasks,
+    CachedNotifications,
+    CachedGroups,
+    CachedProjects,
+    CachedGroupLoads,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   Future<void> clearCache() {
     return transaction(() async {

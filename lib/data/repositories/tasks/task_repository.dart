@@ -6,6 +6,8 @@ import 'package:image/image.dart' as img;
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/today_summary.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/auth_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -58,7 +60,7 @@ class TaskRepository {
           ),
       ];
     } catch (e) {
-      throw Exception('Failed to load group tasks: $e');
+      throw repositoryError('load group tasks', e);
     }
   }
 
@@ -86,7 +88,7 @@ class TaskRepository {
         );
       }).toList();
     } catch (e) {
-      throw Exception('Failed to load tasks: $e');
+      throw repositoryError('load tasks', e);
     }
   }
 
@@ -112,7 +114,7 @@ class TaskRepository {
       );
       return TodaySummary.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to load today summary: $e');
+      throw repositoryError('load today summary', e);
     }
   }
 
@@ -128,7 +130,7 @@ class TaskRepository {
       final groups = await _loadGroupNames();
       return Task.fromJson(json, groupName: groups[json['group_id']] ?? '');
     } catch (e) {
-      throw Exception('Failed to load task: $e');
+      throw repositoryError('load task', e);
     }
   }
 
@@ -153,7 +155,7 @@ class TaskRepository {
         relatedTaskIds: task.relatedTaskIds,
       );
     } catch (e) {
-      throw Exception('Failed to create task: $e');
+      throw repositoryError('create task', e);
     }
   }
 
@@ -172,7 +174,7 @@ class TaskRepository {
         projectName: updated.projectName,
       );
     } catch (e) {
-      throw Exception('Failed to update task: $e');
+      throw repositoryError('update task', e);
     }
   }
 
@@ -191,7 +193,7 @@ class TaskRepository {
         projectName: current.projectName,
       );
     } catch (e) {
-      throw Exception('Failed to update task status: $e');
+      throw repositoryError('update task status', e);
     }
   }
 
@@ -260,6 +262,7 @@ class TaskRepository {
             'Only JPEG, PNG, WebP or HEIC photos are allowed.',
           );
         default:
+          if (isNetworkFailure(e)) throw repositoryError('upload photo', e);
           throw const PhotoUploadException('The photo could not be uploaded.');
       }
     } catch (_) {
@@ -329,16 +332,14 @@ class TaskRepository {
 
         await cacheFile.writeAsBytes(bytes, flush: true);
         // Enforce the LRU cache limit.
-        await _enforceTaskPhotoCacheLimit(
-          protectedTaskId: taskId,
-        );
+        await _enforceTaskPhotoCacheLimit(protectedTaskId: taskId);
       } catch (_) {
         // The photo can still be displayed if caching fails.
       }
 
       return bytes;
     } catch (e) {
-      throw Exception('Failed to load photo: $e');
+      throw repositoryError('load photo', e);
     }
   }
 
@@ -347,13 +348,11 @@ class TaskRepository {
       await _dio.delete('/tasks/$id');
       await _deleteCachedTaskPhoto(id);
     } catch (e) {
-      throw Exception('Failed to delete task: $e');
+      throw repositoryError('delete task', e);
     }
   }
 
-  Future<void> _enforceTaskPhotoCacheLimit({
-    String? protectedTaskId,
-  }) async {
+  Future<void> _enforceTaskPhotoCacheLimit({String? protectedTaskId}) async {
     try {
       final appDirectory = await getApplicationSupportDirectory();
 
@@ -376,9 +375,7 @@ class TaskRepository {
       );
 
       // Sort from least recently used to most recently used
-      filesWithAccessTime.sort(
-        (a, b) => a.value.compareTo(b.value),
-      );
+      filesWithAccessTime.sort((a, b) => a.value.compareTo(b.value));
 
       final protectedFile = protectedTaskId == null
           ? null
@@ -403,7 +400,6 @@ class TaskRepository {
       // Cache cleanup must not prevent images from being displayed.
     }
   }
-
 }
 
 Uint8List _processTaskPhoto(Map<String, String> args) {

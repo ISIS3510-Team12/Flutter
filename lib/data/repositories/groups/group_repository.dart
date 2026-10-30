@@ -1,3 +1,4 @@
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/group/group_create.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
@@ -11,25 +12,19 @@ class GroupRepository {
     try {
       final response = await _dio.get<List<dynamic>>('/groups');
       return response.data!
-          .map(
-            (json) => TaskGroup.fromJson(
-              json as Map<String, dynamic>,
-            ),
-          )
+          .map((json) => TaskGroup.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      throw Exception('Failed to load groups: $e');
+      throw repositoryError('load groups', e);
     }
   }
 
   Future<TaskGroup> getGroup(int groupId) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        '/groups/$groupId',
-      );
+      final response = await _dio.get<Map<String, dynamic>>('/groups/$groupId');
       return TaskGroup.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to load group: $e');
+      throw repositoryError('load group', e);
     }
   }
 
@@ -52,10 +47,9 @@ class GroupRepository {
 
       return TaskGroup.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to create group: $e');
+      throw repositoryError('create group', e);
     }
   }
-
 
   Future<TaskGroup> updateGroup(
     int groupId, {
@@ -65,15 +59,12 @@ class GroupRepository {
     try {
       final response = await _dio.patch<Map<String, dynamic>>(
         '/groups/$groupId',
-        data: {
-          'name': ?name,
-          'description': ?description,
-        },
+        data: {'name': ?name, 'description': ?description},
       );
 
       return TaskGroup.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to update group: $e');
+      throw repositoryError('update group', e);
     }
   }
 
@@ -81,7 +72,7 @@ class GroupRepository {
     try {
       await _dio.delete<void>('/groups/$groupId');
     } catch (e) {
-      throw Exception('Failed to delete group: $e');
+      throw repositoryError('delete group', e);
     }
   }
 
@@ -94,7 +85,7 @@ class GroupRepository {
 
       return TaskGroup.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to add member: $e');
+      throw repositoryError('add member', e);
     }
   }
 
@@ -102,7 +93,7 @@ class GroupRepository {
     try {
       await _dio.delete<void>('/groups/$groupId/members/$userId');
     } catch (e) {
-      throw Exception('Failed to remove member: $e');
+      throw repositoryError('remove member', e);
     }
   }
 
@@ -110,7 +101,7 @@ class GroupRepository {
     try {
       await _dio.delete<void>('/groups/$groupId/members/me');
     } catch (e) {
-      throw Exception('Failed to leave group: $e');
+      throw repositoryError('leave group', e);
     }
   }
 }

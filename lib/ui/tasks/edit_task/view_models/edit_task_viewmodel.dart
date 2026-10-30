@@ -2,7 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/db/daos/projects/projects_cache_dao_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel.dart';
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
@@ -16,6 +22,7 @@ import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel_provider.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'dart:typed_data';
 
 part 'edit_task_viewmodel.freezed.dart';
@@ -61,7 +68,14 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     final repository = ref.watch(taskRepositoryProvider);
     final currentUser = ref.watch(currentUserProvider.future);
     final task = await repository.getTask(taskId);
-    final photo = task.hasPhoto ? await repository.getTaskPhoto(taskId) : null;
+    Uint8List? photo;
+    if (task.hasPhoto) {
+      try {
+        photo = await repository.getTaskPhoto(taskId);
+      } catch (_) {
+        photo = null;
+      }
+    }
     final groups = await ref.watch(groupRepositoryProvider).getGroups();
     TaskGroup? group;
     for (final candidate in groups) {
@@ -72,6 +86,15 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
         ? <Project>[]
         : await ref.watch(projectRepositoryProvider).getGroupProjects(group.id);
     final me = (await currentUser)!;
+    final tasksCache = ref.read(tasksCacheDaoProvider);
+    await saveQuietly(() => tasksCache.saveDetail(me.userId, task));
+    if (group != null) {
+      final groupId = group.id;
+      final projectsCache = ref.read(projectsCacheDaoProvider);
+      await saveQuietly(
+        () => projectsCache.replaceForGroup(me.userId, groupId, projects),
+      );
+    }
     final members = membersWithYou(group, me);
     return EditTaskFormState(
       task: task,
@@ -126,9 +149,12 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     state = AsyncData(update(current));
   }
 
-  Future<void> submit() async {
+  Future<TaskActionResult> submit() async {
     final current = state.value;
-    if (current == null) return;
+    if (current == null) return TaskActionResult.failed;
+    if (!ref.read(isOnlineProvider)) {
+      return TaskActionResult.offline;
+    }
     final selectedMembers = current.members
         .where((member) => current.selectedMemberIds.contains(member.id))
         .toList();
@@ -150,7 +176,13 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
       needsHelp: current.needsHelp,
     );
     final repository = ref.read(taskRepositoryProvider);
-    await repository.updateTask(updated);
+    try {
+      await repository.updateTask(updated);
+    } catch (error) {
+      return isOfflineFailure(error)
+          ? TaskActionResult.offline
+          : TaskActionResult.failed;
+    }
     try {
       final photoPath = current.newPhotoPath;
       if (photoPath != null) {
@@ -165,5 +197,6 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
         ref.invalidate(viewTaskViewModelProvider(taskId));
       }
     }
+    return TaskActionResult.done;
   }
 }

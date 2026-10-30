@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/auth/view_models/auth_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/view_models/settings_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
@@ -10,6 +11,35 @@ import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
+
+  Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+    final pending = ref.read(pendingOpsProvider).value?.length ?? 0;
+    if (pending > 0) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Sign out?'),
+          content: Text(
+            pending == 1
+                ? '1 task is still waiting to upload and will be discarded if you sign out.'
+                : '$pending tasks are still waiting to upload and will be discarded if you sign out.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Stay signed in'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Sign out'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+    await ref.read(authViewModelProvider.notifier).signOut();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -139,7 +169,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 onPressed: authState.isLoading
                     ? null
-                    : () => ref.read(authViewModelProvider.notifier).signOut(),
+                    : () => _signOut(context, ref),
                 child: authState.isLoading
                     ? const SizedBox(
                         height: 16,
