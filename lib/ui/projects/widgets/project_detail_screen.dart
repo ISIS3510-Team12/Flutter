@@ -118,15 +118,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
               .where((task) => task.status == TaskStatus.done)
               .length;
 
-          final remainingTasks = tasks.length - completedTasks;
-
-          final daysRemaining = project.deadline
-              .difference(DateTime.now())
-              .inDays;
-
-          final currentPace = daysRemaining > 0
-              ? remainingTasks / daysRemaining
-              : remainingTasks.toDouble();
+          final prediction = projectStateData.prediction;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -156,14 +148,12 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
 
                 _InfoSection(
                   title: 'Current pace',
-                  subtitle: '${currentPace.round()} tasks per day',
+                  subtitle: '${prediction.paceTasksPerDay.toStringAsFixed(2)} tasks per day',
                 ),
                 const SizedBox(height: 16),
 
                 PaceWarningCard(
-                  completedTasks: completedTasks,
-                  totalTasks: tasks.length,
-                  deadline: project.deadline,
+                  prediction: prediction,
                 ),
 
                 const SizedBox(height: 24),

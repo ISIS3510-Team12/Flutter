@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project_create.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project_update.dart';
+import 'package:team12_flutter_juggle/domain/models/project/deadline_prediction.dart';
 
 class ProjectRepository {
   ProjectRepository(this._dio);
@@ -64,4 +65,18 @@ class ProjectRepository {
       throw repositoryError('delete project', e);
     }
   }
+  
+  Future<DeadlinePrediction> getDeadlinePrediction(int projectId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/projects/$projectId/deadline-prediction',
+      );
+
+      return DeadlinePrediction.fromJson(response.data!);
+    } catch (e) {
+      throw repositoryError('load deadline prediction', e);
+    }
+  }
+
+
 }

@@ -50,61 +50,139 @@ class SettingsScreen extends ConsumerWidget {
       screen: ScreenNames.settings,
       state: settingsState,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
-        body: settingsState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(child: Text('Error: $error')),
-          data: (settings) => ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Material(
-                color: theme.colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  children: [
-                    SettingsMenuTile(
-                      title: 'Sound & vibration',
-                      subtitle: 'Control app sounds and haptics',
-                      showChevron: false,
-                      trailing: Switch(
-                        value: settings.soundAndVibrationEnabled,
-                        onChanged: (value) => ref
-                            .read(settingsViewModelProvider.notifier)
-                            .updateSoundAndVibration(value),
-                      ),
+      appBar: AppBar(title: const Text('Settings')),
+      body: settingsState.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        data: (settings) => ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Material(
+              color: theme.colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  SettingsMenuTile(
+                    title: 'Sound & vibration',
+                    subtitle: 'Control app sounds and haptics',
+                    showChevron: false,
+                    trailing: Switch(
+                      value: settings.soundAndVibrationEnabled,
+                      onChanged: (value) => ref
+                          .read(settingsViewModelProvider.notifier)
+                          .updateSoundAndVibration(value),
                     ),
-                    SettingsMenuTile(
-                      title: 'Location reminders',
-                      subtitle: 'Get notified near a saved place',
-                      onTap: () => context.push(Routes.profileLocation),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              Center(
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.error,
-                    foregroundColor: theme.colorScheme.onError,
                   ),
-                  onPressed: authState.isLoading
-                      ? null
-                      : () => _signOut(context, ref),
-                  child: authState.isLoading
-                      ? const SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Sign out'),
-                ),
+                  SettingsMenuTile(
+                    title: 'Location reminders',
+                    subtitle: 'Get notified near a saved place',
+                    onTap: () => context.push(Routes.profileLocation),
+                  ),
+                  // Daily reminders
+                  Column(
+                    children: [
+                      SettingsMenuTile(
+                        title: 'Daily reminders',
+                        subtitle: 'Get notified at a specific time',
+                        showChevron: false,
+                        trailing: Switch(
+                          value: settings.dailyRemindersEnabled,
+                          onChanged: (value) => ref
+                              .read(settingsViewModelProvider.notifier)
+                              .updateDailyReminders(value),
+                        ),
+                      ),
+                      if (settings.dailyRemindersEnabled) ...[
+                        Divider(
+                          height: 1,
+                          indent: 16,
+                          endIndent: 16,
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                        InkWell(
+                          onTap: () async {
+                            final currentTime = settings.dailyReminderTime;
+                            final parts = currentTime?.split(':');
+
+                            final selectedTime = await showTimePicker(
+                              context: context,
+                              initialTime: parts != null
+                                  ? TimeOfDay(
+                                      hour: int.parse(parts[0]),
+                                      minute: int.parse(parts[1]),
+                                    )
+                                  : const TimeOfDay(hour: 16, minute: 0),
+                            );
+
+                            if (selectedTime == null) return;
+
+                            final formattedTime =
+                                '${selectedTime.hour.toString().padLeft(2, '0')}:'
+                                '${selectedTime.minute.toString().padLeft(2, '0')}';
+
+                            await ref
+                                .read(settingsViewModelProvider.notifier)
+                                .updateDailyReminderTime(formattedTime);
+                          },
+                          child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  settings.dailyReminderTime == null
+                                      ? 'Choose reminder time'
+                                      : 'Every day at ${settings.dailyReminderTime}',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.edit_outlined,
+                                  color: theme.colorScheme.primary,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 32),
+            Center(
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error,
+                  foregroundColor: theme.colorScheme.onError,
+                ),
+                onPressed: authState.isLoading
+                    ? null
+                    : () => _signOut(context, ref),
+                child: authState.isLoading
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Sign out'),
+              ),
+            ),
+          ],
         ),
       ),
+    ),
     );
   }
 }
