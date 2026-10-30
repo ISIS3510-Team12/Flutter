@@ -14,11 +14,17 @@ Juggle is a smart task coordination platform for university students, especially
 flutter pub get
 ```
 
-2. Generate the Freezed files by running the following command in the terminal:
+2. Generate the Freezed and Drift files by running the following command in the terminal:
 
 ```bash
 dart run build_runner build
 ```
+
+   Whenever you change a Drift table (`lib/data/db/tables/*.dart`), bump `AppDatabase.schemaVersion` and export a snapshot of the new schema for future migration checks:
+
+   ```bash
+   dart run drift_dev schema dump lib/data/db/app_database.dart drift_schemas/
+   ```
 
 3. Create a `.env` file in the root directory of the project and add the following environment variables with the Firebase project credentials:
 

@@ -1,3 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/format_user.dart';
+
 class AppUser {
   const AppUser({
     required this.userId,
@@ -15,12 +18,13 @@ class AppUser {
 
   String get initial => firstName.isEmpty ? '' : firstName[0].toUpperCase();
 
-  factory AppUser.fromJson(Map<String, dynamic> json) {
+  factory AppUser.fromFirebase(User user) {
+    final name = splitDisplayName(user.displayName);
     return AppUser(
-      userId: json['user_id'] as String,
-      firstName: json['first_name'] as String,
-      lastName: json['last_name'] as String,
-      email: json['email'] as String,
+      userId: user.uid,
+      email: user.email ?? '',
+      firstName: name.firstName,
+      lastName: name.lastName,
     );
   }
 }
