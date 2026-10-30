@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import './dev_config.dart';
 import './firebase_options.dart';
 
-const bool useDevConfig = false;
+const bool useDevConfig = true;
 
 Future<void> _connectDevConfig() async {
   await FirebaseAuth.instance.useAuthEmulator(

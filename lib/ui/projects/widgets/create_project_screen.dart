@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
-import 'package:shake/shake.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
   const CreateProjectScreen({super.key, required this.groupId});
@@ -16,35 +17,25 @@ class CreateProjectScreen extends ConsumerStatefulWidget {
       _CreateProjectScreenState();
 }
 
-class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
+class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
+    with ShakeResetMixin<CreateProjectScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController deadlineController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   DateTime? selectedDeadline;
-  ShakeDetector? _shakeDetector;
-  bool _isConfirmingReset = false;
 
   @override
   void initState() {
     super.initState();
 
-    _shakeDetector = ShakeDetector.autoStart(
-      onPhoneShake: (ShakeEvent event) {
-        if (!mounted) return;
-        _resetForm();
-      },
-      shakeThresholdGravity: 2.7,
-      shakeSlopTimeMS: 1000,
-      minimumShakeCount: 2,
-      useFilter: true,
-    );
+    startShakeDetector(_resetForm);
   }
 
   @override
   void dispose() {
-    _shakeDetector?.stopListening();
+    stopShakeDetector();
     nameController.dispose();
     descriptionController.dispose();
     deadlineController.dispose();
@@ -58,35 +49,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
       return;
     }
 
-    if (_isConfirmingReset) return;
 
-    _isConfirmingReset = true;
-
-    try {
-      final shouldClear = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Clear form?'),
-          content: const Text(
-            'Do you want to clear all the information entered '
-            'in this project form? This action cannot be undone.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-              child: const Text('Clear form'),
-            ),
-          ],
-        ),
-      );
+    await runGuardedReset(() async {
+      final shouldClear = await showShakeClearDialog(context: context);
 
       if (!mounted || shouldClear != true) return;
 
@@ -105,9 +70,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
           content: Text('Form cleared.'),
         ),
       );
-    } finally {
-      _isConfirmingReset = false;
-    }
+    });
   }
 
   Future<void> _createProject() async {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
@@ -30,7 +32,8 @@ class SignupForm extends ConsumerStatefulWidget {
   ConsumerState<SignupForm> createState() => _SignupFormState();
 }
 
-class _SignupFormState extends ConsumerState<SignupForm> {
+class _SignupFormState extends ConsumerState<SignupForm>
+    with ShakeResetMixin<SignupForm> {
   final formKey = GlobalKey<FormState>();
   final confirmKey = GlobalKey<FormFieldState<String>>();
   String? firstName;
@@ -39,6 +42,41 @@ class _SignupFormState extends ConsumerState<SignupForm> {
   String? password;
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    startShakeDetector(_resetForm);
+  }
+
+  @override
+  void dispose() {
+    stopShakeDetector();
+    super.dispose();
+  }
+
+  Future<void> _resetForm() async {
+    if (!mounted) return;
+
+    if (widget.isLoading) return;
+
+    await runGuardedReset(() async {
+      final shouldClear = await showShakeClearDialog(context: context);
+
+      if (!mounted || shouldClear != true) return;
+
+      formKey.currentState?.reset();
+      password = null;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Form cleared.'),
+        ),
+      );
+    });
+  }
 
   void _submit() {
     final form = formKey.currentState;

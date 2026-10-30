@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shake/shake.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_model_provider.dart';
@@ -19,7 +20,8 @@ class NewGroupScreen extends ConsumerStatefulWidget {
   ConsumerState<NewGroupScreen> createState() => _NewGroupScreenState();
 }
 
-class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
+class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
+    with ShakeResetMixin<NewGroupScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController classController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
@@ -28,41 +30,13 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
   final Set<String> selectedUserIds = {};
   String searchQuery = '';
 
-  ShakeDetector? _shakeDetector;
-  bool _isConfirmingReset = false;
   Future<void> _resetForm() async {
     if (!mounted) return;
 
     if (ref.read(newGroupViewModelProvider).isLoading) return;
-    if (_isConfirmingReset) return;
 
-    _isConfirmingReset = true;
-
-    try {
-      final shouldClear = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Clear form?'),
-          content: const Text(
-            'Do you want to clear all the information entered '
-            'in this form? This action cannot be undone.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-              child: const Text('Clear form'),
-            ),
-          ],
-        ),
-      );
+    await runGuardedReset(() async {
+      final shouldClear = await showShakeClearDialog(context: context);
 
       if (!mounted || shouldClear != true) return;
 
@@ -82,30 +56,19 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
           content: Text('Form cleared.'),
         ),
       );
-    } finally {
-      _isConfirmingReset = false;
-    }
+    });
   }
 
   @override
   void initState() {
     super.initState();
 
-    _shakeDetector = ShakeDetector.autoStart(
-      onPhoneShake: (ShakeEvent event) {
-        if (!mounted) return;
-        _resetForm();
-      },
-      shakeThresholdGravity: 2.7,
-      shakeSlopTimeMS: 1000,
-      minimumShakeCount: 2,
-      useFilter: true,
-    );
+    startShakeDetector(_resetForm);
   }
 
   @override
   void dispose() {
-    _shakeDetector?.stopListening();
+    stopShakeDetector();
     nameController.dispose();
     classController.dispose();
     searchController.dispose();
