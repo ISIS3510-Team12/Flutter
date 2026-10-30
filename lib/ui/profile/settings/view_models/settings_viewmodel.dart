@@ -1,3 +1,4 @@
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,16 +14,58 @@ class SettingsViewModel extends AsyncNotifier<AppSettings> {
   Future<void> updateSoundAndVibration(bool enabled) async {
     final current = state.value;
     if (current == null) return;
-    await _persist(current.copyWith(soundAndVibrationEnabled: enabled));
+
+    await _persist(
+      current.copyWith(soundAndVibrationEnabled: enabled),
+      () => ref
+          .read(settingsRepositoryProvider)
+          .updateSoundAndVibration(enabled),
+    );
   }
 
-  Future<void> _persist(AppSettings updated) async {
-    final previous = state.value;
-    state = AsyncData(updated);
-    final result = await AsyncValue.guard(
-      () => ref.read(settingsRepositoryProvider).updateSettings(updated),
+  Future<void> updateDailyReminders(bool enabled) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final updated = current.copyWith(
+      dailyRemindersEnabled: enabled,
+      clearDailyReminderTime: !enabled,
     );
+
+    await _persist(
+      updated,
+      () => ref
+          .read(settingsRepositoryProvider)
+          .updateDailyReminders(enabled),
+    );
+  }
+
+  Future<void> updateDailyReminderTime(String time) async {
+    final current = state.value;
+    if (current == null) return;
+
+    await _persist(
+      current.copyWith(dailyReminderTime: time),
+      () => ref
+          .read(settingsRepositoryProvider)
+          .updateDailyReminderTime(time),
+    );
+  }
+
+  Future<void> _persist(
+    AppSettings updated,
+    Future<void> Function() save,
+  ) async {
+    final previous = state.value;
+
+    state = AsyncData(updated);
+
+    final result = await AsyncValue.guard(save);
+
     if (!ref.mounted) return;
-    if (result.hasError && previous != null) state = AsyncData(previous);
+
+    if (result.hasError && previous != null) {
+      state = AsyncData(previous);
+    }
   }
 }
