@@ -6,6 +6,7 @@ import 'package:team12_flutter_juggle/data/local/pending_op.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/sync/outbox_store.dart';
 import 'package:team12_flutter_juggle/data/sync/outbox_sync_service.dart';
+import 'package:team12_flutter_juggle/data/sync/sync_status.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';

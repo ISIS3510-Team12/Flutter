@@ -7,43 +7,11 @@ import 'package:team12_flutter_juggle/data/local/pending_op.dart';
 import 'package:team12_flutter_juggle/data/local/task_codec.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/data/sync/outbox_store.dart';
+import 'package:team12_flutter_juggle/data/sync/sync_status.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
-
-class SyncStatus {
-  const SyncStatus({
-    this.pendingCount = 0,
-    this.failedCount = 0,
-    this.isSyncing = false,
-    this.lastSyncedAt,
-    this.message,
-  });
-
-  final int pendingCount;
-  final int failedCount;
-  final bool isSyncing;
-  final DateTime? lastSyncedAt;
-  final String? message;
-
-  SyncStatus copyWith({
-    int? pendingCount,
-    int? failedCount,
-    bool? isSyncing,
-    DateTime? lastSyncedAt,
-    String? message,
-    bool clearMessage = false,
-  }) {
-    return SyncStatus(
-      pendingCount: pendingCount ?? this.pendingCount,
-      failedCount: failedCount ?? this.failedCount,
-      isSyncing: isSyncing ?? this.isSyncing,
-      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
-      message: clearMessage ? null : message ?? this.message,
-    );
-  }
-}
 
 typedef PhotoStager = Future<String> Function(String source, String opId);
 
@@ -139,7 +107,7 @@ class OutboxSyncService {
     await _store.put(
       op.copyWith(
         status: PendingOpStatus.pending,
-        clearNextAttempt: true,
+        nextAttemptAt: null,
         verifyFirst: op.attempts > 0,
       ),
     );
@@ -163,7 +131,7 @@ class OutboxSyncService {
     _timer?.cancel();
     var synced = false;
     try {
-      _status = _status.copyWith(isSyncing: true, clearMessage: true);
+      _status = _status.copyWith(isSyncing: true, message: null);
       _emit();
       for (final op in _store.forUser(uid)) {
         if (_disposed) break;
