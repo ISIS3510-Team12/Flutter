@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/projects/projects_cache_dao_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel.dart';
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
@@ -84,10 +86,14 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
         ? <Project>[]
         : await ref.watch(projectRepositoryProvider).getGroupProjects(group.id);
     final me = (await currentUser)!;
-    final cache = ref.read(tasksOfflineCacheProvider);
-    await cache.saveTask(me.userId, task);
+    final tasksCache = ref.read(tasksCacheDaoProvider);
+    await saveQuietly(() => tasksCache.saveDetail(me.userId, task));
     if (group != null) {
-      await cache.saveProjects(me.userId, group.id, projects);
+      final groupId = group.id;
+      final projectsCache = ref.read(projectsCacheDaoProvider);
+      await saveQuietly(
+        () => projectsCache.replaceForGroup(me.userId, groupId, projects),
+      );
     }
     final members = membersWithYou(group, me);
     return EditTaskFormState(

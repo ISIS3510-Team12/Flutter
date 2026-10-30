@@ -2,8 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache.dart';
-import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/groups/groups_cache_dao.dart';
+import 'package:team12_flutter_juggle/data/db/daos/groups/groups_cache_dao_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/projects/projects_cache_dao.dart';
+import 'package:team12_flutter_juggle/data/db/daos/projects/projects_cache_dao_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao.dart';
+import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
@@ -15,6 +19,7 @@ import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
 import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
@@ -92,7 +97,11 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
 
   bool _isOnline() => ref.read(isOnlineProvider);
 
-  TasksOfflineCache get _cache => ref.read(tasksOfflineCacheProvider);
+  GroupsCacheDao get _groupsCache => ref.read(groupsCacheDaoProvider);
+
+  ProjectsCacheDao get _projectsCache => ref.read(projectsCacheDaoProvider);
+
+  TasksCacheDao get _tasksCache => ref.read(tasksCacheDaoProvider);
 
   Future<_GroupData> _groupData(String userId, TaskGroup group) async {
     final online = _isOnline();
@@ -101,14 +110,16 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
         isOnline: online,
         fetch: () =>
             ref.read(projectRepositoryProvider).getGroupProjects(group.id),
-        save: (projects) => _cache.saveProjects(userId, group.id, projects),
-        fallback: () => _cache.projects(userId, group.id),
+        save: (projects) =>
+            _projectsCache.replaceForGroup(userId, group.id, projects),
+        fallback: () => _projectsCache.findForGroup(userId, group.id),
       ),
       networkFirst<List<Task>>(
         isOnline: online,
         fetch: () => ref.read(taskRepositoryProvider).getGroupTasks(group),
-        save: (tasks) => _cache.saveGroupTasks(userId, group.id, tasks),
-        fallback: () async => await _cache.groupTasks(userId, group) ?? [],
+        save: (tasks) => _tasksCache.replaceForGroup(userId, group.id, tasks),
+        fallback: () async =>
+            await _tasksCache.findPendingForGroup(userId, group.id) ?? [],
       ),
     ).wait;
     return (
@@ -127,8 +138,8 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     final groups = await networkFirst(
       isOnline: _isOnline(),
       fetch: groupRepository.getGroups,
-      save: (groups) => _cache.saveGroups(userId, groups),
-      fallback: () => _cache.groups(userId),
+      save: (groups) => _groupsCache.replaceForUser(userId, groups),
+      fallback: () => _groupsCache.findAll(userId),
     );
     final group = selectedGroup.resolve(groups.value);
     final members = membersWithYou(group, me);

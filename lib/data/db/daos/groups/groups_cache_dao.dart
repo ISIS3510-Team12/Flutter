@@ -29,9 +29,8 @@ class GroupsCacheDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<void> save(String userId, TaskGroup group) {
-    return into(cachedGroups).insertOnConflictUpdate(
-      _toCompanion(userId, group),
-    );
+    return into(cachedGroups)
+        .insertOnConflictUpdate(_toCompanion(userId, group));
   }
 
   Stream<List<TaskGroup>> watchAll(String userId) {
@@ -42,6 +41,11 @@ class GroupsCacheDao extends DatabaseAccessor<AppDatabase>
         (g) => OrderingTerm.asc(g.name),
       ]);
     return query.watch().map((rows) => rows.map(_toGroup).toList());
+  }
+
+  Future<List<TaskGroup>?> findAll(String userId) async {
+    final groups = await watchAll(userId).first;
+    return groups.isEmpty ? null : groups;
   }
 
   Stream<TaskGroup?> watchGroup(String userId, int groupId) {

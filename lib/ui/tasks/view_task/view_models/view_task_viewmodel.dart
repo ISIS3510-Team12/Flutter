@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao_provider.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
@@ -90,13 +91,14 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
   Future<void> _saveTask(Task task) async {
     final userId = await _userId();
     if (userId == null || !ref.mounted) return;
-    await ref.read(tasksOfflineCacheProvider).saveTask(userId, task);
+    final cache = ref.read(tasksCacheDaoProvider);
+    await saveQuietly(() => cache.saveDetail(userId, task));
   }
 
   Future<Task?> _cachedTask() async {
     final userId = await _userId();
     if (userId == null || !ref.mounted) return null;
-    return ref.read(tasksOfflineCacheProvider).task(userId, taskId);
+    return ref.read(tasksCacheDaoProvider).findTask(userId, taskId);
   }
 
   TaskActionResult toggleReminder(bool value) {
@@ -147,7 +149,8 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
       state = AsyncData(current.copyWith(task: updated));
       final uid = _uid;
       if (uid != null) {
-        unawaited(ref.read(tasksOfflineCacheProvider).saveTask(uid, updated));
+        final cache = ref.read(tasksCacheDaoProvider);
+        unawaited(saveQuietly(() => cache.saveDetail(uid, updated)));
       }
       _invalidateRelated();
       return TaskActionResult.done;

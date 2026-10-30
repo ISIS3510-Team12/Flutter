@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache.dart';
-import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/groups/groups_cache_dao.dart';
+import 'package:team12_flutter_juggle/data/db/daos/groups/groups_cache_dao_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao.dart';
+import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao_provider.dart';
 import 'package:team12_flutter_juggle/data/local/pending_op.dart';
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
@@ -10,6 +12,7 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/task_list_entry.dart';
@@ -84,7 +87,9 @@ String groupNotLoadedMessage(String groupName) =>
 class TasksViewModel extends AsyncNotifier<TasksState> {
   String? _userId;
 
-  TasksOfflineCache get _cache => ref.read(tasksOfflineCacheProvider);
+  GroupsCacheDao get _groupsCache => ref.read(groupsCacheDaoProvider);
+
+  TasksCacheDao get _tasksCache => ref.read(tasksCacheDaoProvider);
 
   @override
   Future<TasksState> build() async {
@@ -98,10 +103,10 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
     final groups = await networkFirst(
       isOnline: online,
       fetch: groupRepository.getGroups,
-      save: (groups) => _cache.saveGroups(userId, groups),
-      fallback: () => _cache.groups(userId),
+      save: (groups) => _groupsCache.replaceForUser(userId, groups),
+      fallback: () => _groupsCache.findAll(userId),
     );
-    final loaded = await _cache.loadedGroupIds(userId);
+    final loaded = await _tasksCache.loadedGroupIds(userId);
     final group = selectedGroup.resolve(groups.value);
     if (group == null) {
       return TasksState(
@@ -130,7 +135,7 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
           .firstOrNull;
       final cached = fallback == null
           ? null
-          : await _cache.groupTasks(userId, fallback);
+          : await _tasksCache.findPendingForGroup(userId, fallback.id);
       if (fallback != null && cached != null) {
         return TasksState(
           group: fallback,
@@ -161,8 +166,8 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
     return networkFirst(
       isOnline: online,
       fetch: () => ref.read(taskRepositoryProvider).getGroupTasks(group),
-      save: (tasks) => _cache.saveGroupTasks(userId, group.id, tasks),
-      fallback: () => _cache.groupTasks(userId, group),
+      save: (tasks) => _tasksCache.replaceForGroup(userId, group.id, tasks),
+      fallback: () => _tasksCache.findPendingForGroup(userId, group.id),
     );
   }
 

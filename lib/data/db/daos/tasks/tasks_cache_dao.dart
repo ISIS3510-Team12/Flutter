@@ -31,7 +31,8 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
         (t) => t.userId.equals(userId) & t.groupId.equals(groupId),
       );
       batch.insertAllOnConflictUpdate(cachedTasks, [
-        for (final task in tasks) _toCompanion(userId, task),
+        for (final task in tasks)
+          if (task.groupId == groupId) _toCompanion(userId, task),
       ]);
       batch.insert(
         cachedGroupLoads,
@@ -47,6 +48,15 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> upsert(String userId, Task task) {
     return into(cachedTasks).insertOnConflictUpdate(_toCompanion(userId, task));
+  }
+
+  Future<void> saveDetail(String userId, Task task) {
+    return upsert(
+      userId,
+      task.copyWith(
+        isMine: task.ownerId == userId || task.assigneeIds.contains(userId),
+      ),
+    );
   }
 
   Future<Set<int>> loadedGroupIds(String userId) async {
@@ -79,6 +89,16 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
       ..where((t) => t.userId.equals(userId) & t.groupId.equals(groupId))
       ..orderBy([(t) => OrderingTerm.asc(t.deadlineUtcMs)]);
     return query.watch().map((rows) => rows.map(_toTask).toList());
+  }
+
+  Future<List<Task>?> findPendingForGroup(String userId, int groupId) async {
+    final loaded = await loadedGroupIds(userId);
+    if (!loaded.contains(groupId)) return null;
+    final tasks = await watchForGroup(userId, groupId).first;
+    return [
+      for (final task in tasks)
+        if (task.status != TaskStatus.done) task,
+    ];
   }
 
   Future<Task?> findTask(String userId, String id) async {

@@ -28,9 +28,8 @@ class ProjectsCacheDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<void> save(String userId, Project project) {
-    return into(cachedProjects).insertOnConflictUpdate(
-      _toCompanion(userId, project),
-    );
+    return into(cachedProjects)
+        .insertOnConflictUpdate(_toCompanion(userId, project));
   }
 
   Stream<List<Project>> watchForGroup(String userId, int groupId) {
@@ -39,6 +38,9 @@ class ProjectsCacheDao extends DatabaseAccessor<AppDatabase>
       ..orderBy([(p) => OrderingTerm.asc(p.deadlineUtcMs)]);
     return query.watch().map((rows) => rows.map(_toProject).toList());
   }
+
+  Future<List<Project>> findForGroup(String userId, int groupId) =>
+      watchForGroup(userId, groupId).first;
 
   Stream<Project?> watchProject(String userId, int projectId) {
     final query = select(cachedProjects)
