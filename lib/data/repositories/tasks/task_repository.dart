@@ -13,6 +13,7 @@ class TaskRepository {
   TaskRepository(this._dio);
 
   final Dio _dio;
+  static const int _maxCachedTaskPhotos = 50;
 
   Future<File> _taskPhotoCacheFile(String taskId) async {
     final appDirectory = await getApplicationSupportDirectory();
@@ -36,9 +37,9 @@ class TaskRepository {
         await file.delete();
       }
     } on FileSystemException {
-      // Cache cleanup must not prevent the main operation.
+      // Cache cleanup must not prevent the main operation
     } catch (_) {
-      // Cache cleanup is best-effort.
+      // Cache cleanup is best-effort
     }
   }
 
@@ -201,10 +202,10 @@ class TaskRepository {
       final extension = path.split('.').last.toLowerCase();
       String uploadPath = path;
 
-      // HEIC/HEIF are not supported by the image package.
-      // Keep the original file for these formats.
+      // HEIC/HEIF are not supported by the image package
+      // Keep the original file for these formats
       if (extension != 'heic' && extension != 'heif') {
-        // Decode, resize and compress the image in a background isolate.
+        // Decode, resize and compress the image in a background isolate
         final processedBytes = await compute(
           _processTaskPhoto,
           <String, String>{'path': path, 'extension': extension},
@@ -226,7 +227,7 @@ class TaskRepository {
         uploadPath = processedFile.path;
       }
 
-      // Validate the final file, not the original image.
+      // Validate the final file, not the original image
       if (await File(uploadPath).length() > 5 * 1024 * 1024) {
         throw const PhotoUploadException(
           'The photo is too large. The maximum size is 5 MB.',
@@ -272,7 +273,7 @@ class TaskRepository {
             await tempDirectory.delete(recursive: true);
           }
         } on FileSystemException {
-          // Temporary files could not be removed.
+          // Temporary files could not be removed
         }
       }
     }
@@ -287,9 +288,18 @@ class TaskRepository {
 
       if (await cacheFile.exists()) {
         try {
-          return await cacheFile.readAsBytes();
+          final bytes = await cacheFile.readAsBytes();
+
+          // Update the last access time for LRU tracking
+          try {
+            await cacheFile.setLastModified(DateTime.now());
+          } on FileSystemException {
+            // The cached image can still be used.
+          }
+
+          return bytes;
         } on FileSystemException {
-          //If the cached file cannot be read, try the backend.
+          // If the cached file cannot be read, try the backend
         }
       }
     } catch (_) {
@@ -317,8 +327,11 @@ class TaskRepository {
       try {
         cacheFile ??= await _taskPhotoCacheFile(taskId);
 
-        await cacheFile.parent.create(recursive: true);
         await cacheFile.writeAsBytes(bytes, flush: true);
+        // Enforce the LRU cache limit.
+        await _enforceTaskPhotoCacheLimit(
+          protectedTaskId: taskId,
+        );
       } catch (_) {
         // The photo can still be displayed if caching fails.
       }
@@ -337,6 +350,60 @@ class TaskRepository {
       throw Exception('Failed to delete task: $e');
     }
   }
+
+  Future<void> _enforceTaskPhotoCacheLimit({
+    String? protectedTaskId,
+  }) async {
+    try {
+      final appDirectory = await getApplicationSupportDirectory();
+
+      final cacheDirectory = Directory(
+        '${appDirectory.path}${Platform.pathSeparator}task_photo_cache',
+      );
+
+      if (!await cacheDirectory.exists()) return;
+
+      final files = await cacheDirectory
+          .list()
+          .where((entity) => entity is File)
+          .cast<File>()
+          .toList();
+
+      final filesWithAccessTime = await Future.wait(
+        files.map((file) async {
+          return MapEntry(file, await file.lastModified());
+        }),
+      );
+
+      // Sort from least recently used to most recently used
+      filesWithAccessTime.sort(
+        (a, b) => a.value.compareTo(b.value),
+      );
+
+      final protectedFile = protectedTaskId == null
+          ? null
+          : await _taskPhotoCacheFile(protectedTaskId);
+
+      final evictionCandidates = filesWithAccessTime
+          .where((entry) => entry.key.path != protectedFile?.path)
+          .toList();
+
+      var cachedFileCount = files.length;
+
+      // Remove the least recently used images until the limit is reached
+      for (final entry in evictionCandidates) {
+        if (cachedFileCount <= _maxCachedTaskPhotos) break;
+
+        if (await entry.key.exists()) {
+          await entry.key.delete();
+          cachedFileCount--;
+        }
+      }
+    } catch (_) {
+      // Cache cleanup must not prevent images from being displayed.
+    }
+  }
+
 }
 
 Uint8List _processTaskPhoto(Map<String, String> args) {
