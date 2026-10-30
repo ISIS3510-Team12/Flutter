@@ -5,6 +5,9 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/group_name_dialog.dart';
 
@@ -19,11 +22,15 @@ class GroupDrawer extends ConsumerWidget {
     if (name == null || name.trim().isEmpty) return;
     try {
       await ref.read(tasksViewModelProvider.notifier).createGroup(name.trim());
-    } catch (_) {
+    } catch (error) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('The group could not be created. Try another name.'),
+          SnackBar(
+            content: Text(
+              isOfflineFailure(error)
+                  ? "You're offline. Reconnect to create a group."
+                  : 'The group could not be created. Try another name.',
+            ),
           ),
         );
       }
@@ -69,9 +76,24 @@ class GroupDrawer extends ConsumerWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(group.name, style: theme.textTheme.bodyLarge),
-      onTap: () {
-        ref.read(tasksViewModelProvider.notifier).switchGroup(group);
+      onTap: () async {
+        final messenger = ScaffoldMessenger.of(context);
         Scaffold.of(context).closeDrawer();
+        final result = await ref
+            .read(tasksViewModelProvider.notifier)
+            .switchGroup(group);
+        final message = switch (result) {
+          SwitchGroupResult.unavailable =>
+            "You're offline. Reconnect to view the tasks of ${group.name}.",
+          SwitchGroupResult.failed =>
+            "We couldn't load ${group.name}. Try again.",
+          SwitchGroupResult.switched => null,
+        };
+        if (message != null) {
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text(message)));
+        }
       },
     );
   }
@@ -84,7 +106,12 @@ class GroupDrawer extends ConsumerWidget {
       child: SafeArea(
         child: state.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(child: Text('Error: $error')),
+          error: (error, stackTrace) => LoadErrorView(
+            error: error,
+            offlineMessage: "You're offline. Reconnect to load your groups.",
+            genericMessage: "We couldn't load your groups.",
+            onRetry: () => ref.invalidate(tasksViewModelProvider),
+          ),
           data: (data) {
             return ListView(
               padding: const EdgeInsets.all(16),

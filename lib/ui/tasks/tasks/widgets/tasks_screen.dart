@@ -5,7 +5,13 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
+import 'package:team12_flutter_juggle/data/local/pending_op.dart';
+import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/offline_data_notice.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/pending_sync_card.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/task_list_entry.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/group_drawer.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
@@ -41,89 +47,115 @@ class TasksScreen extends ConsumerWidget {
       screen: ScreenNames.tasks,
       state: state,
       child: Scaffold(
-      appBar: const CustomAppBar(),
-      drawer: const GroupDrawer(),
-      bottomNavigationBar: const CustomNavigationBar(),
-      floatingActionButton: (state.value?.groups.isNotEmpty ?? false)
-          ? FloatingActionButton.extended(
-              backgroundColor: theme.colorScheme.primaryFixed,
-              foregroundColor: theme.colorScheme.onPrimaryFixed,
-              onPressed: () => _openCreateTask(context),
-              icon: const Icon(Symbols.add),
-              label: const Text('Create task'),
-            )
-          : null,
-      body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
-        data: (data) {
-          if (data.groups.isEmpty) return const _NoGroupsMessage();
-          final myTasks = data.myTasks;
-          final groupTasks = data.groupTasks;
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Row(
-                children: [
-                  Text('Current group', style: theme.textTheme.titleSmall),
-                  const Spacer(),
-                  TextButton.icon(
-                    onPressed: data.group == null
-                        ? null
-                        : () => _openEditGroup(context, ref, data.group!.id),
-                    icon: const Icon(Symbols.edit, size: 18),
-                    label: const Text('Edit Group'),
-                  ),
+        appBar: const CustomAppBar(),
+        drawer: const GroupDrawer(),
+        bottomNavigationBar: const CustomNavigationBar(),
+        floatingActionButton: (state.value?.groups.isNotEmpty ?? false)
+            ? FloatingActionButton.extended(
+                backgroundColor: theme.colorScheme.primaryFixed,
+                foregroundColor: theme.colorScheme.onPrimaryFixed,
+                onPressed: () => _openCreateTask(context),
+                icon: const Icon(Symbols.add),
+                label: const Text('Create task'),
+              )
+            : null,
+        body: state.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => LoadErrorView(
+            error: error,
+            offlineMessage: "You're offline. Reconnect to load your tasks.",
+            genericMessage: "We couldn't load your tasks right now.",
+            onRetry: () => ref.invalidate(tasksViewModelProvider),
+          ),
+          data: (data) {
+            if (data.groups.isEmpty) return const _NoGroupsMessage();
+            final pending =
+                ref.watch(pendingOpsProvider).value ?? const <PendingOp>[];
+            final myEntries = data.myEntries(pending);
+            final groupEntries = data.groupEntries(pending);
+            final isSyncing =
+                ref.watch(syncStatusProvider).value?.isSyncing ?? false;
+            Widget entryCard(TaskListEntry entry) => switch (entry) {
+              SyncedTaskEntry(:final task) => TaskCard(
+                task: task,
+                onTap: () => _openTask(context, task.id),
+              ),
+              PendingTaskEntry(:final op) => PendingSyncCard(
+                op: op,
+                isSyncing: isSyncing,
+                onRetry: () => ref.read(outboxSyncServiceProvider).retry(op.id),
+                onDiscard: () =>
+                    ref.read(outboxSyncServiceProvider).discard(op.id),
+              ),
+            };
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (data.fromCache) ...[
+                  const OfflineDataNotice(),
+                  const SizedBox(height: 16),
                 ],
-              ),
-              Text(data.groupName, style: theme.textTheme.bodyLarge),
-              const SizedBox(height: 16),
-              TextField(
-                onChanged: (value) => ref
-                    .read(tasksViewModelProvider.notifier)
-                    .updateQuery(value),
-                decoration: InputDecoration(
-                  hintText: 'Search for a task...',
-                  hintStyle: taskHintStyle(theme),
-                  suffixIcon: const Icon(Symbols.search),
-                  filled: true,
-                  fillColor: theme.colorScheme.surfaceContainerHigh,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(32),
-                    borderSide: BorderSide.none,
+                Row(
+                  children: [
+                    Text('Current group', style: theme.textTheme.titleSmall),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: data.group == null
+                          ? null
+                          : () => _openEditGroup(context, ref, data.group!.id),
+                      icon: const Icon(Symbols.edit, size: 18),
+                      label: const Text('Edit Group'),
+                    ),
+                  ],
+                ),
+                Text(data.groupName, style: theme.textTheme.bodyLarge),
+                const SizedBox(height: 16),
+                TextField(
+                  onChanged: (value) => ref
+                      .read(tasksViewModelProvider.notifier)
+                      .updateQuery(value),
+                  decoration: InputDecoration(
+                    hintText: 'Search for a task...',
+                    hintStyle: taskHintStyle(theme),
+                    suffixIcon: const Icon(Symbols.search),
+                    filled: true,
+                    fillColor: theme.colorScheme.surfaceContainerHigh,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(32),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Your pending tasks',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: AppFontWeight.bold,
+                const SizedBox(height: 24),
+                Text(
+                  'Your pending tasks',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: AppFontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              for (final task in myTasks) ...[
-                TaskCard(task: task, onTap: () => _openTask(context, task.id)),
                 const SizedBox(height: 12),
-              ],
-              const SizedBox(height: 12),
-              Text(
-                'Pending group tasks',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: AppFontWeight.bold,
+                for (final entry in myEntries) ...[
+                  entryCard(entry),
+                  const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 12),
+                Text(
+                  'Pending group tasks',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: AppFontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              for (final task in groupTasks) ...[
-                TaskCard(task: task, onTap: () => _openTask(context, task.id)),
                 const SizedBox(height: 12),
+                for (final entry in groupEntries) ...[
+                  entryCard(entry),
+                  const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 96),
               ],
-              const SizedBox(height: 96),
-            ],
-          );
-        },
+            );
+          },
+        ),
       ),
-    ),
     );
   }
 }

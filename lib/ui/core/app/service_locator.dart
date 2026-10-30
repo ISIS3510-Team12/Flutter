@@ -5,6 +5,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:team12_flutter_juggle/data/local/hive_store.dart';
+
 import './dev_config.dart';
 import './firebase_options.dart';
 
@@ -28,6 +30,8 @@ Future<void> setupDependencies() async {
     );
     if (useDevConfig) await _connectDevConfig();
   }
+
+  await initHive();
 
   await GoogleSignIn.instance.initialize();
 }

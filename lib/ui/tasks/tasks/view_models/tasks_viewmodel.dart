@@ -1,11 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache.dart';
+import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache_provider.dart';
+import 'package:team12_flutter_juggle/data/local/pending_op.dart';
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/task_list_entry.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'tasks_viewmodel.freezed.dart';
@@ -19,25 +26,44 @@ abstract class TasksState with _$TasksState {
     required List<TaskGroup> groups,
     required List<Task> tasks,
     required String query,
+    @Default(false) bool fromCache,
   }) = _TasksState;
 
   String get groupName => group?.name ?? 'No group';
 
-  List<Task> get myTasks =>
-      _sorted(tasks.where((task) => task.isMine && _matchesQuery(task)));
+  List<TaskListEntry> myEntries(List<PendingOp> pending) =>
+      _entries(pending, mine: true);
 
-  List<Task> get groupTasks =>
-      _sorted(tasks.where((task) => !task.isMine && _matchesQuery(task)));
+  List<TaskListEntry> groupEntries(List<PendingOp> pending) =>
+      _entries(pending, mine: false);
 
-  List<Task> _sorted(Iterable<Task> source) {
-    return source.toList()..sort((a, b) {
-      final byDeadline = a.deadline.compareTo(b.deadline);
-      if (byDeadline != 0) return byDeadline;
-      if (a.isPriority != b.isPriority) return a.isPriority ? -1 : 1;
-      final idA = int.tryParse(a.id) ?? 0;
-      final idB = int.tryParse(b.id) ?? 0;
-      return idA.compareTo(idB);
-    });
+  List<TaskListEntry> _entries(List<PendingOp> pending, {required bool mine}) {
+    final groupId = group?.id;
+    final queued = [
+      if (groupId != null)
+        for (final op in pending)
+          if (op.task.groupId == groupId) PendingTaskEntry(op),
+    ];
+    final uploadedIds = {for (final entry in queued) ?entry.op.serverTaskId};
+    final entries = <TaskListEntry>[
+      for (final task in tasks)
+        if (task.isMine == mine &&
+            _matchesQuery(task) &&
+            !uploadedIds.contains(task.id))
+          SyncedTaskEntry(task),
+      for (final entry in queued)
+        if (entry.task.isMine == mine && _matchesQuery(entry.task)) entry,
+    ];
+    return entries..sort((a, b) => _compare(a.task, b.task));
+  }
+
+  int _compare(Task a, Task b) {
+    final byDeadline = a.deadline.compareTo(b.deadline);
+    if (byDeadline != 0) return byDeadline;
+    if (a.isPriority != b.isPriority) return a.isPriority ? -1 : 1;
+    final idA = int.tryParse(a.id) ?? 0;
+    final idB = int.tryParse(b.id) ?? 0;
+    return idA.compareTo(idB);
   }
 
   bool _matchesQuery(Task task) {
@@ -46,17 +72,59 @@ abstract class TasksState with _$TasksState {
   }
 }
 
+enum SwitchGroupResult { switched, unavailable, failed }
+
 class TasksViewModel extends AsyncNotifier<TasksState> {
+  String? _userId;
+
+  TasksOfflineCache get _cache => ref.read(tasksOfflineCacheProvider);
+
   @override
   Future<TasksState> build() async {
-    final repository = ref.watch(taskRepositoryProvider);
     final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
-    final groups = await ref.watch(groupRepositoryProvider).getGroups();
-    final group = selectedGroup.resolve(groups);
-    final tasks = group == null
-        ? <Task>[]
-        : await repository.getGroupTasks(group);
-    return TasksState(group: group, groups: groups, tasks: tasks, query: '');
+    final groupRepository = ref.watch(groupRepositoryProvider);
+    ref.watch(taskRepositoryProvider);
+    final user = await ref.watch(currentUserProvider.future);
+    if (user == null) throw StateError('User is not logged in');
+    final userId = _userId = user.userId;
+    final online = ref.read(isOnlineProvider);
+    final groups = await networkFirst(
+      isOnline: online,
+      fetch: groupRepository.getGroups,
+      save: (groups) => _cache.saveGroups(userId, groups),
+      fallback: () => _cache.groups(userId),
+    );
+    final group = selectedGroup.resolve(groups.value);
+    if (group == null) {
+      return TasksState(
+        group: null,
+        groups: groups.value,
+        tasks: const [],
+        query: '',
+        fromCache: groups.fromCache,
+      );
+    }
+    final tasks = await _loadTasks(userId, group, online: online);
+    return TasksState(
+      group: group,
+      groups: groups.value,
+      tasks: tasks.value,
+      query: '',
+      fromCache: groups.fromCache || tasks.fromCache,
+    );
+  }
+
+  Future<CacheRead<List<Task>>> _loadTasks(
+    String userId,
+    TaskGroup group, {
+    required bool online,
+  }) {
+    return networkFirst(
+      isOnline: online,
+      fetch: () => ref.read(taskRepositoryProvider).getGroupTasks(group),
+      save: (tasks) => _cache.saveGroupTasks(userId, group.id, tasks),
+      fallback: () => _cache.groupTasks(userId, group),
+    );
   }
 
   void updateQuery(String value) {
@@ -65,18 +133,32 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
     state = AsyncData(current.copyWith(query: value));
   }
 
-  Future<void> switchGroup(TaskGroup group) async {
+  Future<SwitchGroupResult> switchGroup(TaskGroup group) async {
     final current = state.value;
-    if (current == null) return;
-    final repository = ref.read(taskRepositoryProvider);
+    final userId = _userId;
+    if (current == null || userId == null) return SwitchGroupResult.failed;
     final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
-    final result = await AsyncValue.guard(() async {
-      final tasks = await repository.getGroupTasks(group);
-      return current.copyWith(group: group, tasks: tasks);
-    });
-    if (!ref.mounted) return;
-    if (result.hasValue) selectedGroup.select(group.id);
-    state = result;
+    try {
+      final tasks = await _loadTasks(
+        userId,
+        group,
+        online: ref.read(isOnlineProvider),
+      );
+      if (!ref.mounted) return SwitchGroupResult.failed;
+      selectedGroup.select(group.id);
+      state = AsyncData(
+        current.copyWith(
+          group: group,
+          tasks: tasks.value,
+          fromCache: tasks.fromCache,
+        ),
+      );
+      return SwitchGroupResult.switched;
+    } catch (error) {
+      return isOfflineFailure(error)
+          ? SwitchGroupResult.unavailable
+          : SwitchGroupResult.failed;
+    }
   }
 
   Future<void> createGroup(String name) async {

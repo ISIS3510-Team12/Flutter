@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
+import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 import 'package:team12_flutter_juggle/ui/tasks/edit_task/view_models/edit_task_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_widgets.dart';
@@ -57,14 +59,29 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
   Future<void> _submit() async {
     final messenger = ScaffoldMessenger.of(context);
     String? photoError;
+    var result = TaskActionResult.done;
     try {
-      await ref
+      result = await ref
           .read(editTaskViewModelProvider(widget.taskId).notifier)
           .submit();
     } on PhotoUploadException catch (e) {
       photoError = e.message;
     }
     if (!mounted) return;
+    if (result != TaskActionResult.done) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              result == TaskActionResult.offline
+                  ? "No connection. Your changes were not saved; they are still in the form. Try again when you're back online."
+                  : "We couldn't save your changes. They are still in the form.",
+            ),
+          ),
+        );
+      return;
+    }
     context.pop();
     if (photoError != null) {
       messenger.showSnackBar(
@@ -91,161 +108,168 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
     final provider = editTaskViewModelProvider(widget.taskId);
     final state = ref.watch(provider);
     return ScreenLoadTracker(
-    screen: ScreenNames.editTask,
-    state: state,
-    child: Scaffold(
-      appBar: AppBar(title: const Text('Edit Task')),
-      bottomNavigationBar: const CustomNavigationBar(),
-      body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
-        data: (form) {
-          if (!_controllersFilled) {
-            _deadlineController.text = deadlineDate(form.deadline);
-            _timeController.text = timeOfDayLabel(form.time);
-            _controllersFilled = true;
-          }
-          final notifier = ref.read(provider.notifier);
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const TaskFieldLabel('SELECTED GROUP', required: true),
-                const SizedBox(height: 8),
-                TextFormField(
-                  initialValue: form.group?.name ?? form.task.groupName,
-                  enabled: false,
-                  style: taskMenuTextStyle(theme)?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
-                  ),
-                  decoration: taskInactiveDecoration(theme),
-                ),
-                const SizedBox(height: 19),
-                const TaskFieldLabel('ASSOCIATED PROJECT'),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: form.selectedProject,
-                  hint: Text('Select a project', style: taskHintStyle(theme)),
-                  style: taskMenuTextStyle(theme),
-                  icon: const Icon(Symbols.arrow_right, size: 20),
-                  decoration: taskMenuDecoration(theme),
-                  onChanged: (value) {
-                    if (value != null) notifier.updateSelectedProject(value);
-                  },
-                  items: form.projects
-                      .map(
-                        (project) => DropdownMenuItem(
-                          value: project,
-                          child: Text(project),
-                        ),
-                      )
-                      .toList(),
-                ),
-                const SizedBox(height: 19),
-                const TaskFieldLabel('TASK TYPE', required: true),
-                const SizedBox(height: 8),
-                TaskTypeDropdown(
-                  value: form.type,
-                  onChanged: notifier.updateType,
-                ),
-                const SizedBox(height: 19),
-                const TaskFieldLabel('CURRENT ASSIGNED MEMBERS', bold: true),
-                const SizedBox(height: 8),
-                TaskMembersSelector(
-                  members: form.members,
-                  selectedIds: form.selectedMemberIds,
-                  onToggle: notifier.toggleMember,
-                  lockedId: form.lockedMemberId,
-                ),
-                const SizedBox(height: 19),
-                const TaskFieldLabel(
-                  'CURRENT DEADLINE & TIMING',
-                  required: true,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  readOnly: true,
-                  onTap: () => _pickDeadline(form.deadline),
-                  controller: _deadlineController,
-                  decoration: taskTimingDecoration(
-                    theme,
-                    label: 'Date',
-                    hint: 'MM/DD/YYYY',
-                    icon: Symbols.calendar_today,
-                    helper: 'MM/DD/YYYY',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  readOnly: true,
-                  onTap: () => _pickTime(form.time),
-                  controller: _timeController,
-                  decoration: taskTimingDecoration(
-                    theme,
-                    label: 'Time',
-                    hint: 'HH:MM',
-                    icon: Symbols.schedule,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                TaskFlagSwitches(
-                  isPriority: form.isPriority,
-                  needsHelp: form.needsHelp,
-                  onPriorityChanged: notifier.updateIsPriority,
-                  onNeedsHelpChanged: notifier.updateNeedsHelp,
-                ),
-                const SizedBox(height: 16),
-                const TaskFieldLabel('EVIDENCES'),
-                const SizedBox(height: 8),
-                TaskPhotoPicker(
-                  newPhotoPath: form.newPhotoPath,
-                  currentPhoto: form.currentPhoto,
-                  onPicked: notifier.updatePhotoPath,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: scheme.primaryContainer,
-                          foregroundColor: scheme.onPrimary,
-                          minimumSize: const Size.fromHeight(40),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        onPressed: _submit,
-                        icon: const Icon(Symbols.check),
-                        label: const Text('Edit task'),
+      screen: ScreenNames.editTask,
+      state: state,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Edit Task')),
+        bottomNavigationBar: const CustomNavigationBar(),
+        body: state.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => LoadErrorView(
+            error: error,
+            offlineMessage: "You're offline. Reconnect to edit this task.",
+            genericMessage: "We couldn't load this task for editing.",
+            onRetry: () => ref.invalidate(provider),
+          ),
+          data: (form) {
+            if (!_controllersFilled) {
+              _deadlineController.text = deadlineDate(form.deadline);
+              _timeController.text = timeOfDayLabel(form.time);
+              _controllersFilled = true;
+            }
+            final notifier = ref.read(provider.notifier);
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const TaskFieldLabel('SELECTED GROUP', required: true),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    initialValue: form.group?.name ?? form.task.groupName,
+                    enabled: false,
+                    style: taskMenuTextStyle(theme)?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.38,
                       ),
                     ),
-                    const SizedBox(width: 2),
-                    Expanded(
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: scheme.onPrimaryContainer,
-                          foregroundColor: scheme.primaryContainer,
-                          minimumSize: const Size.fromHeight(40),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                    decoration: taskInactiveDecoration(theme),
+                  ),
+                  const SizedBox(height: 19),
+                  const TaskFieldLabel('ASSOCIATED PROJECT'),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: form.selectedProject,
+                    hint: Text('Select a project', style: taskHintStyle(theme)),
+                    style: taskMenuTextStyle(theme),
+                    icon: const Icon(Symbols.arrow_right, size: 20),
+                    decoration: taskMenuDecoration(theme),
+                    onChanged: (value) {
+                      if (value != null) notifier.updateSelectedProject(value);
+                    },
+                    items: form.projects
+                        .map(
+                          (project) => DropdownMenuItem(
+                            value: project,
+                            child: Text(project),
                           ),
-                        ),
-                        onPressed: () => context.pop(),
-                        icon: const Icon(Symbols.close),
-                        label: const Text('Cancel'),
-                      ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 19),
+                  const TaskFieldLabel('TASK TYPE', required: true),
+                  const SizedBox(height: 8),
+                  TaskTypeDropdown(
+                    value: form.type,
+                    onChanged: notifier.updateType,
+                  ),
+                  const SizedBox(height: 19),
+                  const TaskFieldLabel('CURRENT ASSIGNED MEMBERS', bold: true),
+                  const SizedBox(height: 8),
+                  TaskMembersSelector(
+                    members: form.members,
+                    selectedIds: form.selectedMemberIds,
+                    onToggle: notifier.toggleMember,
+                    lockedId: form.lockedMemberId,
+                  ),
+                  const SizedBox(height: 19),
+                  const TaskFieldLabel(
+                    'CURRENT DEADLINE & TIMING',
+                    required: true,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    readOnly: true,
+                    onTap: () => _pickDeadline(form.deadline),
+                    controller: _deadlineController,
+                    decoration: taskTimingDecoration(
+                      theme,
+                      label: 'Date',
+                      hint: 'MM/DD/YYYY',
+                      icon: Symbols.calendar_today,
+                      helper: 'MM/DD/YYYY',
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          );
-        },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    readOnly: true,
+                    onTap: () => _pickTime(form.time),
+                    controller: _timeController,
+                    decoration: taskTimingDecoration(
+                      theme,
+                      label: 'Time',
+                      hint: 'HH:MM',
+                      icon: Symbols.schedule,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  TaskFlagSwitches(
+                    isPriority: form.isPriority,
+                    needsHelp: form.needsHelp,
+                    onPriorityChanged: notifier.updateIsPriority,
+                    onNeedsHelpChanged: notifier.updateNeedsHelp,
+                  ),
+                  const SizedBox(height: 16),
+                  const TaskFieldLabel('EVIDENCES'),
+                  const SizedBox(height: 8),
+                  TaskPhotoPicker(
+                    newPhotoPath: form.newPhotoPath,
+                    currentPhoto: form.currentPhoto,
+                    onPicked: notifier.updatePhotoPath,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: scheme.primaryContainer,
+                            foregroundColor: scheme.onPrimary,
+                            minimumSize: const Size.fromHeight(40),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          onPressed: _submit,
+                          icon: const Icon(Symbols.check),
+                          label: const Text('Edit task'),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Expanded(
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: scheme.onPrimaryContainer,
+                            foregroundColor: scheme.primaryContainer,
+                            minimumSize: const Size.fromHeight(40),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          onPressed: () => context.pop(),
+                          icon: const Icon(Symbols.close),
+                          label: const Text('Cancel'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
+        ),
       ),
-    ),
     );
   }
 }

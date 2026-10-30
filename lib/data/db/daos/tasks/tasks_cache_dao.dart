@@ -11,10 +11,7 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
     with _$TasksCacheDaoMixin {
   TasksCacheDao({required AppDatabase db}) : super(db);
 
-  Future<void> replaceForUser(
-    String userId,
-    List<Task> tasks,
-  ) {
+  Future<void> replaceForUser(String userId, List<Task> tasks) {
     return batch((batch) {
       batch.deleteWhere(cachedTasks, (t) => t.userId.equals(userId));
       batch.insertAll(cachedTasks, [
@@ -23,11 +20,7 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  Future<void> replaceForGroup(
-    String userId,
-    int groupId,
-    List<Task> tasks,
-  ) {
+  Future<void> replaceForGroup(String userId, int groupId, List<Task> tasks) {
     return batch((batch) {
       batch.deleteWhere(
         cachedTasks,
@@ -48,6 +41,7 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
       ..where(
         (t) =>
             t.userId.equals(userId) &
+            t.isMine.equals(true) &
             t.status.equalsValue(TaskStatus.done).not() &
             t.deadlineUtcMs.isBiggerOrEqualValue(startMs) &
             t.deadlineUtcMs.isSmallerThanValue(endMs),
@@ -63,18 +57,26 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
     return query.watch().map((rows) => rows.map(_toTask).toList());
   }
 
+  Future<Task?> findTask(String userId, String id) async {
+    final query = select(cachedTasks)
+      ..where((t) => t.userId.equals(userId) & t.id.equals(id));
+    final row = await query.getSingleOrNull();
+    return row == null ? null : _toTask(row);
+  }
+
   Stream<int> watchUrgentCount(String userId) {
     final count = countAll();
     final query = selectOnly(cachedTasks)
       ..addColumns([count])
       ..where(
         cachedTasks.userId.equals(userId) &
+            cachedTasks.isMine.equals(true) &
             cachedTasks.status.equalsValue(TaskStatus.done).not() &
             cachedTasks.isPriority.equals(true),
       );
     return query.watchSingle().map((row) => row.read(count) ?? 0);
   }
-  
+
   Future<bool> refresh(
     String userId,
     Future<List<Task>> Function() fetch,

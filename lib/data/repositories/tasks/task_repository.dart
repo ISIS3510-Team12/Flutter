@@ -1,3 +1,5 @@
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
+
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -26,7 +28,7 @@ class TaskRepository {
           ),
       ];
     } catch (e) {
-      throw Exception('Failed to load group tasks: $e');
+      throw repositoryError('load group tasks', e);
     }
   }
 
@@ -54,7 +56,7 @@ class TaskRepository {
         );
       }).toList();
     } catch (e) {
-      throw Exception('Failed to load tasks: $e');
+      throw repositoryError('load tasks', e);
     }
   }
 
@@ -80,7 +82,7 @@ class TaskRepository {
       );
       return TodaySummary.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to load today summary: $e');
+      throw repositoryError('load today summary', e);
     }
   }
 
@@ -96,7 +98,7 @@ class TaskRepository {
       final groups = await _loadGroupNames();
       return Task.fromJson(json, groupName: groups[json['group_id']] ?? '');
     } catch (e) {
-      throw Exception('Failed to load task: $e');
+      throw repositoryError('load task', e);
     }
   }
 
@@ -121,7 +123,7 @@ class TaskRepository {
         relatedTaskIds: task.relatedTaskIds,
       );
     } catch (e) {
-      throw Exception('Failed to create task: $e');
+      throw repositoryError('create task', e);
     }
   }
 
@@ -140,7 +142,7 @@ class TaskRepository {
         projectName: updated.projectName,
       );
     } catch (e) {
-      throw Exception('Failed to update task: $e');
+      throw repositoryError('update task', e);
     }
   }
 
@@ -159,7 +161,7 @@ class TaskRepository {
         projectName: current.projectName,
       );
     } catch (e) {
-      throw Exception('Failed to update task status: $e');
+      throw repositoryError('update task status', e);
     }
   }
 
@@ -203,7 +205,7 @@ class TaskRepository {
       if (response.statusCode == 404) return null;
       return Uint8List.fromList(response.data!);
     } catch (e) {
-      throw Exception('Failed to load photo: $e');
+      throw repositoryError('load photo', e);
     }
   }
 
@@ -211,7 +213,7 @@ class TaskRepository {
     try {
       await _dio.delete('/tasks/$id');
     } catch (e) {
-      throw Exception('Failed to delete task: $e');
+      throw repositoryError('delete task', e);
     }
   }
 }

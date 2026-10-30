@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache.dart';
+import 'package:team12_flutter_juggle/data/cache/tasks_offline_cache_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
@@ -12,6 +14,9 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/selected_task_group_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
@@ -40,6 +45,7 @@ abstract class CreateTaskFormState with _$CreateTaskFormState {
     @Default({}) Set<String> relatedTaskIds,
     @Default('') String relatedQuery,
     String? photoPath,
+    @Default(false) bool fromCache,
   }) = _CreateTaskFormState;
 
   List<String> get projects =>
@@ -66,64 +72,109 @@ abstract class CreateTaskFormState with _$CreateTaskFormState {
   String? get lockedMemberId => members.isEmpty ? null : members.first.id;
 
   bool get canSubmit =>
-      group != null && title.trim().isNotEmpty && deadline != null && time != null;
+      group != null &&
+      title.trim().isNotEmpty &&
+      deadline != null &&
+      time != null;
 }
 
+enum CreateTaskResult { created, queued, failed }
+
+typedef _GroupData = ({
+  List<Project> projects,
+  List<Task> candidates,
+  bool fromCache,
+});
+
 class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
-  @override
-  Future<CreateTaskFormState> build() async {
-    final repository = ref.watch(taskRepositoryProvider);
-    final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
-    final currentUser = ref.watch(currentUserProvider.future);
-    final groups = await ref.watch(groupRepositoryProvider).getGroups();
-    final group = selectedGroup.resolve(groups);
-    final me = (await currentUser)!;
-    final members = membersWithYou(group, me);
-    final projects = group == null
-        ? <Project>[]
-        : await ref.watch(projectRepositoryProvider).getGroupProjects(group.id);
-    final candidateTasks = group == null
-        ? <Task>[]
-        : await repository.getGroupTasks(group);
-    return CreateTaskFormState(
-      groups: groups,
-      group: group,
-      members: members,
-      projectOptions: projects,
-      candidateTasks: candidateTasks,
-      selectedMemberIds: {me.userId},
+  String? _userId;
+
+  bool _isOnline() => ref.read(isOnlineProvider);
+
+  TasksOfflineCache get _cache => ref.read(tasksOfflineCacheProvider);
+
+  Future<_GroupData> _groupData(String userId, TaskGroup group) async {
+    final online = _isOnline();
+    final (projects, candidates) = await (
+      networkFirst(
+        isOnline: online,
+        fetch: () =>
+            ref.read(projectRepositoryProvider).getGroupProjects(group.id),
+        save: (projects) => _cache.saveProjects(userId, group.id, projects),
+        fallback: () => _cache.projects(userId, group.id),
+      ),
+      networkFirst<List<Task>>(
+        isOnline: online,
+        fetch: () => ref.read(taskRepositoryProvider).getGroupTasks(group),
+        save: (tasks) => _cache.saveGroupTasks(userId, group.id, tasks),
+        fallback: () async => await _cache.groupTasks(userId, group) ?? [],
+      ),
+    ).wait;
+    return (
+      projects: projects.value,
+      candidates: candidates.value,
+      fromCache: projects.fromCache || candidates.fromCache,
     );
   }
 
-  Future<void> updateGroup(TaskGroup group) async {
+  @override
+  Future<CreateTaskFormState> build() async {
+    final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
+    final groupRepository = ref.watch(groupRepositoryProvider);
+    final me = (await ref.watch(currentUserProvider.future))!;
+    final userId = _userId = me.userId;
+    final groups = await networkFirst(
+      isOnline: _isOnline(),
+      fetch: groupRepository.getGroups,
+      save: (groups) => _cache.saveGroups(userId, groups),
+      fallback: () => _cache.groups(userId),
+    );
+    final group = selectedGroup.resolve(groups.value);
+    final members = membersWithYou(group, me);
+    final data = group == null ? null : await _groupData(userId, group);
+    return CreateTaskFormState(
+      groups: groups.value,
+      group: group,
+      members: members,
+      projectOptions: data?.projects ?? const [],
+      candidateTasks: data?.candidates ?? const [],
+      selectedMemberIds: {me.userId},
+      fromCache: groups.fromCache || (data?.fromCache ?? false),
+    );
+  }
+
+  Future<bool> updateGroup(TaskGroup group) async {
     final current = state.value;
-    if (current == null || current.group?.id == group.id) return;
-    final repository = ref.read(taskRepositoryProvider);
-    final result = await AsyncValue.guard(() async {
-      final projects = await ref
-          .read(projectRepositoryProvider)
-          .getGroupProjects(group.id);
-      final candidateTasks = await repository.getGroupTasks(group);
+    final userId = _userId;
+    if (current == null || current.group?.id == group.id) return true;
+    if (userId == null) return false;
+    try {
+      final data = await _groupData(userId, group);
+      if (!ref.mounted) return true;
       final you = current.members.first;
       final members = [
         you,
         ...group.members.where((member) => member.id != you.id),
       ];
       final memberIds = members.map((member) => member.id).toSet();
-      return current.copyWith(
-        group: group,
-        projectOptions: projects,
-        candidateTasks: candidateTasks,
-        relatedTaskIds: const {},
-        selectedProject: null,
-        members: members,
-        selectedMemberIds: current.selectedMemberIds
-            .where(memberIds.contains)
-            .toSet(),
+      state = AsyncData(
+        current.copyWith(
+          group: group,
+          projectOptions: data.projects,
+          candidateTasks: data.candidates,
+          relatedTaskIds: const {},
+          selectedProject: null,
+          members: members,
+          selectedMemberIds: current.selectedMemberIds
+              .where(memberIds.contains)
+              .toSet(),
+          fromCache: data.fromCache,
+        ),
       );
-    });
-    if (!ref.mounted) return;
-    state = result;
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   void updateTitle(String value) => _update((s) => s.copyWith(title: value));
@@ -188,16 +239,15 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
         members: current.members,
         projectOptions: current.projectOptions,
         candidateTasks: current.candidateTasks,
-        selectedMemberIds: {
-          ?lockedMemberId,
-        },
+        selectedMemberIds: {?lockedMemberId},
+        fromCache: current.fromCache,
       ),
     );
   }
 
-  Future<void> submit() async {
+  Future<CreateTaskResult> submit() async {
     final current = state.value;
-    if (current == null || !current.canSubmit) return;
+    if (current == null || !current.canSubmit) return CreateTaskResult.failed;
     final date = current.deadline!;
     final time = current.time!;
     final deadline = DateTime(
@@ -230,7 +280,23 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
     );
     final repository = ref.read(taskRepositoryProvider);
     final selectedGroup = ref.read(selectedTaskGroupIdProvider.notifier);
-    final created = await repository.createTask(task);
+    final sync = ref.read(outboxSyncServiceProvider);
+    if (!_isOnline()) {
+      await sync.enqueueCreate(task, photoPath: current.photoPath);
+      return CreateTaskResult.queued;
+    }
+    final Task created;
+    try {
+      created = await repository.createTask(task);
+    } catch (error) {
+      if (!isOfflineFailure(error)) return CreateTaskResult.failed;
+      await sync.enqueueCreate(
+        task,
+        photoPath: current.photoPath,
+        verifyFirst: true,
+      );
+      return CreateTaskResult.queued;
+    }
     final group = current.group;
     if (group != null) selectedGroup.select(group.id);
     try {
@@ -246,5 +312,6 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
         ref.invalidate(homeViewModelProvider);
       }
     }
+    return CreateTaskResult.created;
   }
 }

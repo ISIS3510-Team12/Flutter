@@ -1,3 +1,4 @@
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project_create.dart';
@@ -16,7 +17,7 @@ class ProjectRepository {
       );
       return Project.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to create project: $e');
+      throw repositoryError('create project', e);
     }
   }
 
@@ -27,7 +28,7 @@ class ProjectRepository {
       );
       return Project.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to load project: $e');
+      throw repositoryError('load project', e);
     }
   }
 
@@ -40,7 +41,7 @@ class ProjectRepository {
           .map((json) => Project.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      throw Exception('Failed to load projects: $e');
+      throw repositoryError('load projects', e);
     }
   }
 
@@ -52,7 +53,7 @@ class ProjectRepository {
       );
       return Project.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to update project: $e');
+      throw repositoryError('update project', e);
     }
   }
 
@@ -60,8 +61,7 @@ class ProjectRepository {
     try {
       await _dio.delete<void>('/projects/$projectId');
     } catch (e) {
-      throw Exception('Failed to delete project: $e');
+      throw repositoryError('delete project', e);
     }
   }
-
 }
