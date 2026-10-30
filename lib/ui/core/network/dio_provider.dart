@@ -10,9 +10,7 @@ final dioProvider = Provider<Dio>((ref) {
 
   final dio = Dio(
     BaseOptions(
-      baseUrl: useDevConfig
-          ? DevConfig.apiUrl
-          : dotenv.env['API_URL']!,
+      baseUrl: useDevConfig ? DevConfig.apiUrl : dotenv.env['API_URL']!,
       contentType: Headers.jsonContentType,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
@@ -20,5 +18,8 @@ final dioProvider = Provider<Dio>((ref) {
   );
 
   dio.interceptors.add(UserTokenInterceptor(firebaseAuth: firebaseAuth));
+  dio.interceptors.add(
+    AppUserInterceptor(dio: dio, firebaseAuth: firebaseAuth),
+  );
   return dio;
 });

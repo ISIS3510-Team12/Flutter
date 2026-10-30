@@ -58,3 +58,4 @@ google-services.json
 
 # Generated code
 *.freezed.dart
+*.g.dart
