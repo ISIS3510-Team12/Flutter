@@ -9,9 +9,10 @@ import 'package:team12_flutter_juggle/data/local/pending_op.dart';
 import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
-import 'package:team12_flutter_juggle/ui/core/ui/offline_data_notice.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/pending_sync_card.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/task_list_entry.dart';
+import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/group_drawer.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
@@ -59,102 +60,173 @@ class TasksScreen extends ConsumerWidget {
                 label: const Text('Create task'),
               )
             : null,
-        body: state.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => LoadErrorView(
-            error: error,
-            offlineMessage: "You're offline. Reconnect to load your tasks.",
-            genericMessage: "We couldn't load your tasks right now.",
-            onRetry: () => ref.invalidate(tasksViewModelProvider),
-          ),
-          data: (data) {
-            if (data.groups.isEmpty) return const _NoGroupsMessage();
-            final pending =
-                ref.watch(pendingOpsProvider).value ?? const <PendingOp>[];
-            final myEntries = data.myEntries(pending);
-            final groupEntries = data.groupEntries(pending);
-            final isSyncing =
-                ref.watch(syncStatusProvider).value?.isSyncing ?? false;
-            Widget entryCard(TaskListEntry entry) => switch (entry) {
-              SyncedTaskEntry(:final task) => TaskCard(
-                task: task,
-                onTap: () => _openTask(context, task.id),
-              ),
-              PendingTaskEntry(:final op) => PendingSyncCard(
-                op: op,
-                isSyncing: isSyncing,
-                onRetry: () => ref.read(outboxSyncServiceProvider).retry(op.id),
-                onDiscard: () =>
-                    ref.read(outboxSyncServiceProvider).discard(op.id),
-              ),
-            };
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (data.fromCache) ...[
-                  const OfflineDataNotice(),
-                  const SizedBox(height: 16),
-                ],
-                Row(
-                  children: [
-                    Text('Current group', style: theme.textTheme.titleSmall),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: data.group == null
-                          ? null
-                          : () => _openEditGroup(context, ref, data.group!.id),
-                      icon: const Icon(Symbols.edit, size: 18),
-                      label: const Text('Edit Group'),
+        body: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: state.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => LoadErrorView(
+                  error: error,
+                  offlineMessage:
+                      "You're offline. Reconnect to load your tasks.",
+                  genericMessage: "We couldn't load your tasks right now.",
+                  onRetry: () => ref.invalidate(tasksViewModelProvider),
+                ),
+                data: (data) {
+                  if (data.groups.isEmpty) return const _NoGroupsMessage();
+                  final pending =
+                      ref.watch(pendingOpsProvider).value ??
+                      const <PendingOp>[];
+                  final myEntries = data.myEntries(pending);
+                  final groupEntries = data.groupEntries(pending);
+                  final isSyncing =
+                      ref.watch(syncStatusProvider).value?.isSyncing ?? false;
+                  Widget entryCard(TaskListEntry entry) => switch (entry) {
+                    SyncedTaskEntry(:final task) => TaskCard(
+                      task: task,
+                      onTap: () => _openTask(context, task.id),
                     ),
-                  ],
-                ),
-                Text(data.groupName, style: theme.textTheme.bodyLarge),
-                const SizedBox(height: 16),
-                TextField(
-                  onChanged: (value) => ref
-                      .read(tasksViewModelProvider.notifier)
-                      .updateQuery(value),
-                  decoration: InputDecoration(
-                    hintText: 'Search for a task...',
-                    hintStyle: taskHintStyle(theme),
-                    suffixIcon: const Icon(Symbols.search),
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHigh,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                      borderSide: BorderSide.none,
+                    PendingTaskEntry(:final op) => PendingSyncCard(
+                      op: op,
+                      isSyncing: isSyncing,
+                      onRetry: () =>
+                          ref.read(outboxSyncServiceProvider).retry(op.id),
+                      onDiscard: () =>
+                          ref.read(outboxSyncServiceProvider).discard(op.id),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Your pending tasks',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: AppFontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                for (final entry in myEntries) ...[
-                  entryCard(entry),
-                  const SizedBox(height: 12),
-                ],
-                const SizedBox(height: 12),
-                Text(
-                  'Pending group tasks',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: AppFontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                for (final entry in groupEntries) ...[
-                  entryCard(entry),
-                  const SizedBox(height: 12),
-                ],
-                const SizedBox(height: 96),
-              ],
-            );
-          },
+                  };
+                  return ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Current group',
+                            style: theme.textTheme.titleSmall,
+                          ),
+                          const Spacer(),
+                          TextButton.icon(
+                            onPressed: data.group == null
+                                ? null
+                                : () => _openEditGroup(
+                                    context,
+                                    ref,
+                                    data.group!.id,
+                                  ),
+                            icon: const Icon(Symbols.edit, size: 18),
+                            label: const Text('Edit Group'),
+                          ),
+                        ],
+                      ),
+                      Text(data.groupName, style: theme.textTheme.bodyLarge),
+                      const SizedBox(height: 16),
+                      TextField(
+                        onChanged: (value) => ref
+                            .read(tasksViewModelProvider.notifier)
+                            .updateQuery(value),
+                        decoration: InputDecoration(
+                          hintText: 'Search for a task...',
+                          hintStyle: taskHintStyle(theme),
+                          suffixIcon: const Icon(Symbols.search),
+                          filled: true,
+                          fillColor: theme.colorScheme.surfaceContainerHigh,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(32),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      if (!data.groupLoaded) ...[
+                        _GroupNotLoadedMessage(
+                          groupName: data.groupName,
+                          onRetry: () => ref.invalidate(tasksViewModelProvider),
+                        ),
+                        const SizedBox(height: 96),
+                      ] else ...[
+                        Text(
+                          'Your pending tasks',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: AppFontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        for (final entry in myEntries) ...[
+                          entryCard(entry),
+                          const SizedBox(height: 12),
+                        ],
+                        const SizedBox(height: 12),
+                        Text(
+                          'Pending group tasks',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: AppFontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        for (final entry in groupEntries) ...[
+                          entryCard(entry),
+                          const SizedBox(height: 12),
+                        ],
+                        const SizedBox(height: 96),
+                      ],
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _GroupNotLoadedMessage extends StatelessWidget {
+  const _GroupNotLoadedMessage({
+    required this.groupName,
+    required this.onRetry,
+  });
+
+  final String groupName;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Symbols.cloud_off,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  groupNotLoadedMessage(groupName),
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: onRetry,
+              child: const Text('Try again'),
+            ),
+          ),
+        ],
       ),
     );
   }

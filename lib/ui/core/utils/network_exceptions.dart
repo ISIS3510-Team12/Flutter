@@ -38,3 +38,6 @@ Exception repositoryError(String action, Object error) {
   }
   return Exception('Failed to $action: $error');
 }
+
+String offlineActionMessage(String action) =>
+    'No connection. Reconnect to $action.';

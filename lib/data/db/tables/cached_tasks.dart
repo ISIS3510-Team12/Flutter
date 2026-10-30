@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:team12_flutter_juggle/data/local/task_codec.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 
 @DataClassName('CachedTaskRow')
@@ -16,6 +17,14 @@ class CachedTasks extends Table {
     toJson: (list) => list,
   );
 
+  static final relatedTasksConverter = TypeConverter.json2<List<Task>>(
+    fromJson: (json) => [
+      for (final related in json as List)
+        taskFromJson(Map<String, dynamic>.from(related as Map)),
+    ],
+    toJson: (tasks) => [for (final task in tasks) taskToJson(task)],
+  );
+
   TextColumn get userId => text()();
   TextColumn get id => text()();
   TextColumn get title => text()();
@@ -29,6 +38,15 @@ class CachedTasks extends Table {
   BoolColumn get isMine => boolean()();
   BoolColumn get isPriority => boolean()();
   BoolColumn get needsHelp => boolean()();
+  TextColumn get ownerId => text().nullable()();
+  TextColumn get assigneeIds => text().map(CachedTasks.assigneesConverter)();
+  IntColumn get projectId => integer().nullable()();
+  TextColumn get projectName => text().nullable()();
+  TextColumn get relatedTaskIds =>
+      text().map(CachedTasks.assigneesConverter)();
+  TextColumn get relatedTasks =>
+      text().map(CachedTasks.relatedTasksConverter)();
+  BoolColumn get hasPhoto => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {userId, id};

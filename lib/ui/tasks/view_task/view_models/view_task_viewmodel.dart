@@ -49,11 +49,13 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
       if (cached == null) rethrow;
       return ViewTaskState(
         task: cached,
-        relatedTasks: const [],
+        relatedTasks: cached.relatedTasks,
         reminderEnabled: true,
+        photoUnavailable: cached.hasPhoto,
         fromCache: true,
       );
     }
+    await _saveTask(task);
     Uint8List? photo;
     var photoUnavailable = false;
     if (task.hasPhoto) {
@@ -72,16 +74,37 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
     );
   }
 
-  Future<Task?> _cachedTask() async {
-    final user = await ref.watch(currentUserProvider.future);
-    if (user == null) return null;
-    return ref.read(tasksOfflineCacheProvider).task(user.userId, taskId);
+  String? _uid;
+
+  Future<String?> _userId() async {
+    final known = _uid;
+    if (known != null) return known;
+    try {
+      final user = await ref.watch(currentUserProvider.future);
+      return _uid = user?.userId;
+    } catch (_) {
+      return null;
+    }
   }
 
-  void toggleReminder(bool value) {
+  Future<void> _saveTask(Task task) async {
+    final userId = await _userId();
+    if (userId == null || !ref.mounted) return;
+    await ref.read(tasksOfflineCacheProvider).saveTask(userId, task);
+  }
+
+  Future<Task?> _cachedTask() async {
+    final userId = await _userId();
+    if (userId == null || !ref.mounted) return null;
+    return ref.read(tasksOfflineCacheProvider).task(userId, taskId);
+  }
+
+  TaskActionResult toggleReminder(bool value) {
     final current = state.value;
-    if (current == null) return;
+    if (current == null) return TaskActionResult.failed;
+    if (_blocked) return TaskActionResult.offline;
     state = AsyncData(current.copyWith(reminderEnabled: value));
+    return TaskActionResult.done;
   }
 
   Future<TaskActionResult> markComplete() => _changeStatus(TaskStatus.done);
@@ -122,6 +145,10 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
       final updated = await operation(repository, current.task);
       if (!ref.mounted) return TaskActionResult.done;
       state = AsyncData(current.copyWith(task: updated));
+      final uid = _uid;
+      if (uid != null) {
+        unawaited(ref.read(tasksOfflineCacheProvider).saveTask(uid, updated));
+      }
       _invalidateRelated();
       return TaskActionResult.done;
     } catch (error) {

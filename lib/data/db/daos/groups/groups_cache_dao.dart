@@ -1,12 +1,13 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:team12_flutter_juggle/data/db/app_database.dart';
+import 'package:team12_flutter_juggle/data/db/tables/cached_group_loads.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_groups.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 
 part 'groups_cache_dao.g.dart';
 
-@DriftAccessor(tables: [CachedGroups])
+@DriftAccessor(tables: [CachedGroups, CachedGroupLoads])
 class GroupsCacheDao extends DatabaseAccessor<AppDatabase>
     with _$GroupsCacheDaoMixin {
   GroupsCacheDao({required AppDatabase db}) : super(db);
@@ -15,8 +16,15 @@ class GroupsCacheDao extends DatabaseAccessor<AppDatabase>
     return batch((batch) {
       batch.deleteWhere(cachedGroups, (g) => g.userId.equals(userId));
       batch.insertAll(cachedGroups, [
-        for (final group in groups) _toCompanion(userId, group),
+        for (final (index, group) in groups.indexed)
+          _toCompanion(userId, group, position: index),
       ]);
+      batch.deleteWhere(
+        cachedGroupLoads,
+        (l) =>
+            l.userId.equals(userId) &
+            l.groupId.isNotIn([for (final group in groups) group.id]),
+      );
     });
   }
 
@@ -29,7 +37,10 @@ class GroupsCacheDao extends DatabaseAccessor<AppDatabase>
   Stream<List<TaskGroup>> watchAll(String userId) {
     final query = select(cachedGroups)
       ..where((g) => g.userId.equals(userId))
-      ..orderBy([(g) => OrderingTerm.asc(g.name)]);
+      ..orderBy([
+        (g) => OrderingTerm.asc(g.position),
+        (g) => OrderingTerm.asc(g.name),
+      ]);
     return query.watch().map((rows) => rows.map(_toGroup).toList());
   }
 
@@ -41,7 +52,11 @@ class GroupsCacheDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
-  CachedGroupsCompanion _toCompanion(String userId, TaskGroup group) {
+  CachedGroupsCompanion _toCompanion(
+    String userId,
+    TaskGroup group, {
+    int? position,
+  }) {
     return CachedGroupsCompanion.insert(
       userId: userId,
       id: group.id,
@@ -49,6 +64,7 @@ class GroupsCacheDao extends DatabaseAccessor<AppDatabase>
       description: group.description,
       pendingCount: group.pendingCount,
       members: group.members,
+      position: position == null ? const Value.absent() : Value(position),
     );
   }
 

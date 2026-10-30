@@ -27,9 +27,13 @@ abstract class TasksState with _$TasksState {
     required List<Task> tasks,
     required String query,
     @Default(false) bool fromCache,
+    @Default({}) Set<int> loadedGroupIds,
+    @Default(true) bool groupLoaded,
   }) = _TasksState;
 
   String get groupName => group?.name ?? 'No group';
+
+  bool isLoaded(TaskGroup group) => loadedGroupIds.contains(group.id);
 
   List<TaskListEntry> myEntries(List<PendingOp> pending) =>
       _entries(pending, mine: true);
@@ -74,6 +78,9 @@ abstract class TasksState with _$TasksState {
 
 enum SwitchGroupResult { switched, unavailable, failed }
 
+String groupNotLoadedMessage(String groupName) =>
+    "$groupName hasn't been loaded yet; connect to load it.";
+
 class TasksViewModel extends AsyncNotifier<TasksState> {
   String? _userId;
 
@@ -94,6 +101,7 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
       save: (groups) => _cache.saveGroups(userId, groups),
       fallback: () => _cache.groups(userId),
     );
+    final loaded = await _cache.loadedGroupIds(userId);
     final group = selectedGroup.resolve(groups.value);
     if (group == null) {
       return TasksState(
@@ -102,16 +110,47 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
         tasks: const [],
         query: '',
         fromCache: groups.fromCache,
+        loadedGroupIds: loaded,
       );
     }
-    final tasks = await _loadTasks(userId, group, online: online);
-    return TasksState(
-      group: group,
-      groups: groups.value,
-      tasks: tasks.value,
-      query: '',
-      fromCache: groups.fromCache || tasks.fromCache,
-    );
+    try {
+      final tasks = await _loadTasks(userId, group, online: online);
+      return TasksState(
+        group: group,
+        groups: groups.value,
+        tasks: tasks.value,
+        query: '',
+        fromCache: groups.fromCache || tasks.fromCache,
+        loadedGroupIds: {...loaded, group.id},
+      );
+    } catch (error) {
+      if (!isOfflineFailure(error)) rethrow;
+      final fallback = groups.value
+          .where((candidate) => loaded.contains(candidate.id))
+          .firstOrNull;
+      final cached = fallback == null
+          ? null
+          : await _cache.groupTasks(userId, fallback);
+      if (fallback != null && cached != null) {
+        return TasksState(
+          group: fallback,
+          groups: groups.value,
+          tasks: cached,
+          query: '',
+          fromCache: true,
+          loadedGroupIds: loaded,
+        );
+      }
+      return TasksState(
+        group: group,
+        groups: groups.value,
+        tasks: const [],
+        query: '',
+        fromCache: true,
+        loadedGroupIds: loaded,
+        groupLoaded: false,
+      );
+    }
   }
 
   Future<CacheRead<List<Task>>> _loadTasks(
@@ -151,6 +190,8 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
           group: group,
           tasks: tasks.value,
           fromCache: tasks.fromCache,
+          loadedGroupIds: {...current.loadedGroupIds, group.id},
+          groupLoaded: true,
         ),
       );
       return SwitchGroupResult.switched;

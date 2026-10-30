@@ -24,6 +24,7 @@ class CachedGroups extends Table {
   TextColumn get description => text()();
   IntColumn get pendingCount => integer()();
   TextColumn get members => text().map(CachedGroups.membersConverter)();
+  IntColumn get position => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {userId, id};

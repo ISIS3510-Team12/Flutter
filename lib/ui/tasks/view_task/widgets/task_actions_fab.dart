@@ -9,6 +9,8 @@ class TaskActionsFab extends StatefulWidget {
     required this.onDeleteTask,
     required this.onAskForHelp,
     required this.onMarkStarted,
+    required this.enabled,
+    required this.onUnavailable,
   });
 
   final VoidCallback onMarkComplete;
@@ -16,6 +18,8 @@ class TaskActionsFab extends StatefulWidget {
   final VoidCallback onDeleteTask;
   final VoidCallback onAskForHelp;
   final VoidCallback onMarkStarted;
+  final bool enabled;
+  final ValueChanged<String> onUnavailable;
 
   @override
   State<TaskActionsFab> createState() => TaskActionsFabState();
@@ -24,7 +28,11 @@ class TaskActionsFab extends StatefulWidget {
 class TaskActionsFabState extends State<TaskActionsFab> {
   bool _expanded = false;
 
-  void _run(VoidCallback action) {
+  void _run(VoidCallback action, String offlineAction) {
+    if (!widget.enabled) {
+      widget.onUnavailable(offlineAction);
+      return;
+    }
     setState(() => _expanded = false);
     action();
   }
@@ -69,31 +77,37 @@ class TaskActionsFabState extends State<TaskActionsFab> {
           _ActionPill(
             icon: Symbols.check,
             label: 'Mark as complete',
-            onPressed: () => _run(widget.onMarkComplete),
+            enabled: widget.enabled,
+            onPressed: () => _run(widget.onMarkComplete, 'complete this task'),
           ),
           const SizedBox(height: 4),
           _ActionPill(
             icon: Symbols.edit,
             label: 'Edit Task',
-            onPressed: () => _run(widget.onEditTask),
+            enabled: widget.enabled,
+            onPressed: () => _run(widget.onEditTask, 'edit this task'),
           ),
           const SizedBox(height: 4),
           _ActionPill(
             icon: Symbols.delete,
             label: 'Delete Task',
-            onPressed: () => _run(widget.onDeleteTask),
+            enabled: widget.enabled,
+            onPressed: () => _run(widget.onDeleteTask, 'delete this task'),
           ),
           const SizedBox(height: 4),
           _ActionPill(
             icon: Symbols.chat,
             label: 'Ask for help',
-            onPressed: () => _run(widget.onAskForHelp),
+            enabled: widget.enabled,
+            onPressed: () =>
+                _run(widget.onAskForHelp, 'ask for help on this task'),
           ),
           const SizedBox(height: 4),
           _ActionPill(
             icon: Symbols.star,
             label: 'Mark as started',
-            onPressed: () => _run(widget.onMarkStarted),
+            enabled: widget.enabled,
+            onPressed: () => _run(widget.onMarkStarted, 'start this task'),
           ),
           const SizedBox(height: 8),
           FloatingActionButton(
@@ -116,37 +130,49 @@ class _ActionPill extends StatelessWidget {
   const _ActionPill({
     required this.icon,
     required this.label,
+    required this.enabled,
     required this.onPressed,
   });
 
   final IconData icon;
   final String label;
+  final bool enabled;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final radius = BorderRadius.circular(28);
-    return Material(
-      color: scheme.onPrimaryContainer,
-      borderRadius: radius,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        child: Container(
-          height: 56,
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 24, color: scheme.primaryContainer),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelLarge
-                    ?.copyWith(color: scheme.primaryContainer),
-              ),
-            ],
+    final background = enabled
+        ? scheme.onPrimaryContainer
+        : scheme.surfaceContainerHighest;
+    final foreground = enabled
+        ? scheme.primaryContainer
+        : scheme.onSurface.withValues(alpha: 0.38);
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      child: Material(
+        color: background,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 24, color: foreground),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelLarge
+                      ?.copyWith(color: foreground),
+                ),
+              ],
+            ),
           ),
         ),
       ),

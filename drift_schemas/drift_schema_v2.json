@@ -1,0 +1,749 @@
+{
+  "_meta": {
+    "description": "This file contains a serialized version of schema entities for drift.",
+    "version": "1.3.0"
+  },
+  "options": {
+    "store_date_time_values_as_text": false
+  },
+  "entities": [
+    {
+      "id": 0,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_tasks",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "title",
+            "getter_name": "title",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "description",
+            "getter_name": "description",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "group_name",
+            "getter_name": "groupName",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "group_id",
+            "getter_name": "groupId",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "assignees",
+            "getter_name": "assignees",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "CachedTasks.assigneesConverter",
+              "dart_type_name": "List<String>"
+            }
+          },
+          {
+            "name": "type",
+            "getter_name": "type",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "const EnumNameConverter<TaskType>(TaskType.values)",
+              "dart_type_name": "TaskType"
+            }
+          },
+          {
+            "name": "status",
+            "getter_name": "status",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "const EnumNameConverter<TaskStatus>(TaskStatus.values)",
+              "dart_type_name": "TaskStatus"
+            }
+          },
+          {
+            "name": "deadline_utc_ms",
+            "getter_name": "deadlineUtcMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "is_mine",
+            "getter_name": "isMine",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"is_mine\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"is_mine\" IN (0, 1))"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "is_priority",
+            "getter_name": "isPriority",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"is_priority\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"is_priority\" IN (0, 1))"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "needs_help",
+            "getter_name": "needsHelp",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"needs_help\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"needs_help\" IN (0, 1))"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "owner_id",
+            "getter_name": "ownerId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "assignee_ids",
+            "getter_name": "assigneeIds",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "CachedTasks.assigneesConverter",
+              "dart_type_name": "List<String>"
+            }
+          },
+          {
+            "name": "project_id",
+            "getter_name": "projectId",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "project_name",
+            "getter_name": "projectName",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "related_task_ids",
+            "getter_name": "relatedTaskIds",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "CachedTasks.assigneesConverter",
+              "dart_type_name": "List<String>"
+            }
+          },
+          {
+            "name": "related_tasks",
+            "getter_name": "relatedTasks",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "CachedTasks.relatedTasksConverter",
+              "dart_type_name": "List<Task>"
+            }
+          },
+          {
+            "name": "has_photo",
+            "getter_name": "hasPhoto",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"has_photo\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"has_photo\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id",
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_notifications",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "group_name",
+            "getter_name": "groupName",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "title",
+            "getter_name": "title",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "occurred_at_utc_ms",
+            "getter_name": "occurredAtUtcMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "type",
+            "getter_name": "type",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "const EnumNameConverter<NotificationType>(NotificationType.values)",
+              "dart_type_name": "NotificationType"
+            }
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id",
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_groups",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "name",
+            "getter_name": "name",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "description",
+            "getter_name": "description",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "pending_count",
+            "getter_name": "pendingCount",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "members",
+            "getter_name": "members",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "CachedGroups.membersConverter",
+              "dart_type_name": "List<TaskMember>"
+            }
+          },
+          {
+            "name": "position",
+            "getter_name": "position",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id",
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_projects",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "group_id",
+            "getter_name": "groupId",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "name",
+            "getter_name": "name",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "description",
+            "getter_name": "description",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "deadline_utc_ms",
+            "getter_name": "deadlineUtcMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id",
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_group_loads",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "group_id",
+            "getter_name": "groupId",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "loaded_at_utc_ms",
+            "getter_name": "loadedAtUtcMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id",
+          "group_id"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "references": [
+        0
+      ],
+      "type": "index",
+      "data": {
+        "on": 0,
+        "name": "cached_tasks_user_deadline",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "user_id",
+            "order_by": null
+          },
+          {
+            "column": "deadline_utc_ms",
+            "order_by": null
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "references": [
+        0
+      ],
+      "type": "index",
+      "data": {
+        "on": 0,
+        "name": "cached_tasks_user_group",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "user_id",
+            "order_by": null
+          },
+          {
+            "column": "group_id",
+            "order_by": null
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "references": [
+        1
+      ],
+      "type": "index",
+      "data": {
+        "on": 1,
+        "name": "cached_notifications_user_time",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "user_id",
+            "order_by": null
+          },
+          {
+            "column": "occurred_at_utc_ms",
+            "order_by": null
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "references": [
+        3
+      ],
+      "type": "index",
+      "data": {
+        "on": 3,
+        "name": "cached_projects_user_group",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "user_id",
+            "order_by": null
+          },
+          {
+            "column": "group_id",
+            "order_by": null
+          }
+        ]
+      }
+    }
+  ],
+  "fixed_sql": [
+    {
+      "name": "cached_tasks",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_tasks\" (\"user_id\" TEXT NOT NULL, \"id\" TEXT NOT NULL, \"title\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"group_name\" TEXT NOT NULL, \"group_id\" INTEGER NULL, \"assignees\" TEXT NOT NULL, \"type\" TEXT NOT NULL, \"status\" TEXT NOT NULL, \"deadline_utc_ms\" INTEGER NOT NULL, \"is_mine\" INTEGER NOT NULL CHECK (\"is_mine\" IN (0, 1)), \"is_priority\" INTEGER NOT NULL CHECK (\"is_priority\" IN (0, 1)), \"needs_help\" INTEGER NOT NULL CHECK (\"needs_help\" IN (0, 1)), \"owner_id\" TEXT NULL, \"assignee_ids\" TEXT NOT NULL, \"project_id\" INTEGER NULL, \"project_name\" TEXT NULL, \"related_task_ids\" TEXT NOT NULL, \"related_tasks\" TEXT NOT NULL, \"has_photo\" INTEGER NOT NULL DEFAULT 0 CHECK (\"has_photo\" IN (0, 1)), PRIMARY KEY (\"user_id\", \"id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_notifications",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_notifications\" (\"user_id\" TEXT NOT NULL, \"id\" TEXT NOT NULL, \"group_name\" TEXT NOT NULL, \"title\" TEXT NOT NULL, \"occurred_at_utc_ms\" INTEGER NOT NULL, \"type\" TEXT NOT NULL, PRIMARY KEY (\"user_id\", \"id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_groups",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_groups\" (\"user_id\" TEXT NOT NULL, \"id\" INTEGER NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"pending_count\" INTEGER NOT NULL, \"members\" TEXT NOT NULL, \"position\" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (\"user_id\", \"id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_projects",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_projects\" (\"user_id\" TEXT NOT NULL, \"id\" INTEGER NOT NULL, \"group_id\" INTEGER NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"deadline_utc_ms\" INTEGER NOT NULL, PRIMARY KEY (\"user_id\", \"id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_group_loads",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_group_loads\" (\"user_id\" TEXT NOT NULL, \"group_id\" INTEGER NOT NULL, \"loaded_at_utc_ms\" INTEGER NOT NULL, PRIMARY KEY (\"user_id\", \"group_id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_tasks_user_deadline",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX cached_tasks_user_deadline ON cached_tasks (user_id, deadline_utc_ms)"
+        }
+      ]
+    },
+    {
+      "name": "cached_tasks_user_group",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX cached_tasks_user_group ON cached_tasks (user_id, group_id)"
+        }
+      ]
+    },
+    {
+      "name": "cached_notifications_user_time",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX cached_notifications_user_time ON cached_notifications (user_id, occurred_at_utc_ms)"
+        }
+      ]
+    },
+    {
+      "name": "cached_projects_user_group",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX cached_projects_user_group ON cached_projects (user_id, group_id)"
+        }
+      ]
+    }
+  ]
+}

@@ -10,12 +10,16 @@ class ScheduledCard extends StatelessWidget {
     required this.reminderEnabled,
     required this.onReminderChanged,
     required this.onEditDeadline,
+    required this.enabled,
+    required this.onUnavailable,
   });
 
   final Task task;
   final bool reminderEnabled;
   final ValueChanged<bool> onReminderChanged;
   final VoidCallback onEditDeadline;
+  final bool enabled;
+  final ValueChanged<String> onUnavailable;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +55,16 @@ class ScheduledCard extends StatelessWidget {
                   ],
                 ),
               ),
-              TextButton(onPressed: onEditDeadline, child: const Text('EDIT')),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: enabled
+                    ? null
+                    : () => onUnavailable("change this task's deadline"),
+                child: TextButton(
+                  onPressed: enabled ? onEditDeadline : null,
+                  child: const Text('EDIT'),
+                ),
+              ),
             ],
           ),
           const Divider(height: 24),
@@ -66,7 +79,16 @@ class ScheduledCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Switch(value: reminderEnabled, onChanged: onReminderChanged),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: enabled
+                    ? null
+                    : () => onUnavailable("change this task's reminder"),
+                child: Switch(
+                  value: reminderEnabled,
+                  onChanged: enabled ? onReminderChanged : null,
+                ),
+              ),
             ],
           ),
         ],

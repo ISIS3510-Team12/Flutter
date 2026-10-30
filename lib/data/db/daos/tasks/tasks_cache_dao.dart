@@ -1,20 +1,24 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:team12_flutter_juggle/data/db/app_database.dart';
+import 'package:team12_flutter_juggle/data/db/tables/cached_group_loads.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_tasks.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 
 part 'tasks_cache_dao.g.dart';
 
-@DriftAccessor(tables: [CachedTasks])
+@DriftAccessor(tables: [CachedTasks, CachedGroupLoads])
 class TasksCacheDao extends DatabaseAccessor<AppDatabase>
     with _$TasksCacheDaoMixin {
   TasksCacheDao({required AppDatabase db}) : super(db);
 
   Future<void> replaceForUser(String userId, List<Task> tasks) {
     return batch((batch) {
-      batch.deleteWhere(cachedTasks, (t) => t.userId.equals(userId));
-      batch.insertAll(cachedTasks, [
+      batch.deleteWhere(
+        cachedTasks,
+        (t) => t.userId.equals(userId) & t.isMine.equals(true),
+      );
+      batch.insertAllOnConflictUpdate(cachedTasks, [
         for (final task in tasks) _toCompanion(userId, task),
       ]);
     });
@@ -29,7 +33,27 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
       batch.insertAllOnConflictUpdate(cachedTasks, [
         for (final task in tasks) _toCompanion(userId, task),
       ]);
+      batch.insert(
+        cachedGroupLoads,
+        CachedGroupLoadsCompanion.insert(
+          userId: userId,
+          groupId: groupId,
+          loadedAtUtcMs: DateTime.now().toUtc().millisecondsSinceEpoch,
+        ),
+        mode: InsertMode.insertOrReplace,
+      );
     });
+  }
+
+  Future<void> upsert(String userId, Task task) {
+    return into(cachedTasks).insertOnConflictUpdate(_toCompanion(userId, task));
+  }
+
+  Future<Set<int>> loadedGroupIds(String userId) async {
+    final query = select(cachedGroupLoads)
+      ..where((l) => l.userId.equals(userId));
+    final rows = await query.get();
+    return {for (final row in rows) row.groupId};
   }
 
   Stream<List<Task>> watchPendingDueBetween(
@@ -106,6 +130,13 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
       isMine: task.isMine,
       isPriority: task.isPriority,
       needsHelp: task.needsHelp,
+      ownerId: Value(task.ownerId),
+      assigneeIds: task.assigneeIds,
+      projectId: Value(task.projectId),
+      projectName: Value(task.projectName),
+      relatedTaskIds: task.relatedTaskIds,
+      relatedTasks: task.relatedTasks,
+      hasPhoto: Value(task.hasPhoto),
     );
   }
 
@@ -126,6 +157,13 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
       isMine: row.isMine,
       isPriority: row.isPriority,
       needsHelp: row.needsHelp,
+      ownerId: row.ownerId,
+      assigneeIds: row.assigneeIds,
+      projectId: row.projectId,
+      projectName: row.projectName,
+      relatedTaskIds: row.relatedTaskIds,
+      relatedTasks: row.relatedTasks,
+      hasPhoto: row.hasPhoto,
     );
   }
 }

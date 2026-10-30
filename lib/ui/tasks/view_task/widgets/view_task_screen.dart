@@ -5,7 +5,10 @@ import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
-import 'package:team12_flutter_juggle/ui/core/ui/offline_data_notice.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel_provider.dart';
@@ -31,10 +34,10 @@ class ViewTaskScreen extends ConsumerWidget {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _report(BuildContext context, TaskActionResult result) {
+  void _report(BuildContext context, TaskActionResult result, String action) {
     if (!context.mounted) return;
     final message = switch (result) {
-      TaskActionResult.offline => "No connection. The task was not updated; try again when you're back online.",
+      TaskActionResult.offline => offlineActionMessage(action),
       TaskActionResult.failed =>
         "We couldn't update the task. It was left as it was.",
       TaskActionResult.done => null,
@@ -71,7 +74,9 @@ class ViewTaskScreen extends ConsumerWidget {
             time.minute,
           ),
         );
-    if (context.mounted) _report(context, result);
+    if (context.mounted) {
+      _report(context, result, "change this task's deadline");
+    }
   }
 
   void _openPhoto(BuildContext context) {
@@ -87,10 +92,7 @@ class ViewTaskScreen extends ConsumerWidget {
       case TaskActionResult.done:
         context.pop();
       case TaskActionResult.offline:
-        _showMessage(
-          context,
-          "No connection. The task was not deleted; try again when you're back online.",
-        );
+        _showMessage(context, offlineActionMessage('delete this task'));
       case TaskActionResult.failed:
         _showMessage(context, "We couldn't delete the task. Try again.");
     }
@@ -101,9 +103,17 @@ class ViewTaskScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final state = ref.watch(viewTaskViewModelProvider(taskId));
     final me = ref.watch(currentUserProvider).value;
-    Future<void> run(Future<TaskActionResult> Function() action) async {
-      final result = await action();
-      if (context.mounted) _report(context, result);
+    final online = ref.watch(isOnlineProvider);
+    ViewTaskViewModel notifier() =>
+        ref.read(viewTaskViewModelProvider(taskId).notifier);
+    void unavailable(String action) =>
+        _showMessage(context, offlineActionMessage(action));
+    Future<void> run(
+      Future<TaskActionResult> Function() operation,
+      String action,
+    ) async {
+      final result = await operation();
+      if (context.mounted) _report(context, result, action);
     }
 
     return ScreenLoadTracker(
@@ -116,148 +126,174 @@ class ViewTaskScreen extends ConsumerWidget {
         floatingActionButton: state.value == null
             ? null
             : TaskActionsFab(
-                onMarkComplete: () => run(
-                  () => ref
-                      .read(viewTaskViewModelProvider(taskId).notifier)
-                      .markComplete(),
-                ),
+                enabled: online,
+                onUnavailable: unavailable,
+                onMarkComplete: () =>
+                    run(() => notifier().markComplete(), 'complete this task'),
                 onEditTask: () => _openEditTask(context),
                 onDeleteTask: () => _deleteTask(context, ref),
                 onAskForHelp: () => run(
-                  () => ref
-                      .read(viewTaskViewModelProvider(taskId).notifier)
-                      .toggleNeedsHelp(),
+                  () => notifier().toggleNeedsHelp(),
+                  'ask for help on this task',
                 ),
-                onMarkStarted: () => run(
-                  () => ref
-                      .read(viewTaskViewModelProvider(taskId).notifier)
-                      .markStarted(),
-                ),
+                onMarkStarted: () =>
+                    run(() => notifier().markStarted(), 'start this task'),
               ),
-        body: state.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => LoadErrorView(
-            error: error,
-            offlineMessage: "You're offline. Reconnect to open this task.",
-            genericMessage: "We couldn't load this task.",
-            onRetry: () => ref.invalidate(viewTaskViewModelProvider(taskId)),
-          ),
-          data: (data) {
-            final task = data.task;
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (data.fromCache) ...[
-                  const OfflineDataNotice(),
-                  const SizedBox(height: 16),
-                ],
-                Text(task.title, style: theme.textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(
-                  task.description,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+        body: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: state.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => LoadErrorView(
+                  error: error,
+                  offlineMessage:
+                      "You're offline. Reconnect to open this task.",
+                  genericMessage: "We couldn't load this task.",
+                  onRetry: () =>
+                      ref.invalidate(viewTaskViewModelProvider(taskId)),
                 ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    TaskChip(label: taskStatusLabel(task.status)),
-                    if (task.isPriority)
-                      TaskChip(
-                        label: 'High priority',
-                        color: theme.colorScheme.error,
+                data: (data) {
+                  final task = data.task;
+                  return ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Text(task.title, style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        task.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                ScheduledCard(
-                  task: task,
-                  reminderEnabled: data.reminderEnabled,
-                  onReminderChanged: (value) => ref
-                      .read(viewTaskViewModelProvider(taskId).notifier)
-                      .toggleReminder(value),
-                  onEditDeadline: () =>
-                      _editDeadline(context, ref, task.deadline),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Text(
-                      'ASSIGNED MEMBERS',
-                      style: theme.textTheme.labelMedium,
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => _openEditTask(context),
-                      child: const Text('EDIT'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                AssignedMembersList(task: task, me: me),
-                if (data.photo == null && data.photoUnavailable) ...[
-                  const SizedBox(height: 24),
-                  Text('EVIDENCES', style: theme.textTheme.labelMedium),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 120,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'The photo could not be loaded',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          TaskChip(label: taskStatusLabel(task.status)),
+                          if (task.isPriority)
+                            TaskChip(
+                              label: 'High priority',
+                              color: theme.colorScheme.error,
+                            ),
+                        ],
                       ),
-                    ),
-                  ),
-                ],
-                if (data.photo != null) ...[
-                  const SizedBox(height: 24),
-                  Text('EVIDENCES', style: theme.textTheme.labelMedium),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () => _openPhoto(context),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.memory(
-                        data.photo!,
-                        width: double.infinity,
-                        height: 220,
-                        fit: BoxFit.cover,
+                      const SizedBox(height: 16),
+                      ScheduledCard(
+                        task: task,
+                        reminderEnabled: data.reminderEnabled,
+                        enabled: online,
+                        onUnavailable: unavailable,
+                        onReminderChanged: (value) => _report(
+                          context,
+                          notifier().toggleReminder(value),
+                          "change this task's reminder",
+                        ),
+                        onEditDeadline: () =>
+                            _editDeadline(context, ref, task.deadline),
                       ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                Text(
-                  'Related tasks / subtasks',
-                  style: theme.textTheme.titleSmall,
-                ),
-                const SizedBox(height: 12),
-                if (data.relatedTasks.isEmpty)
-                  Text(
-                    'No related tasks',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                for (final related in data.relatedTasks) ...[
-                  TaskCard(
-                    task: related,
-                    onTap: () => context.push(Routes.taskPath(related.id)),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                const SizedBox(height: 96),
-              ],
-            );
-          },
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Text(
+                            'ASSIGNED MEMBERS',
+                            style: theme.textTheme.labelMedium,
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: online
+                                ? null
+                                : () => unavailable("edit this task's members"),
+                            child: TextButton(
+                              onPressed: online
+                                  ? () => _openEditTask(context)
+                                  : null,
+                              child: const Text('EDIT'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      AssignedMembersList(task: task, me: me),
+                      if (data.photo == null && data.photoUnavailable) ...[
+                        const SizedBox(height: 24),
+                        Text('EVIDENCES', style: theme.textTheme.labelMedium),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 120,
+                          width: double.infinity,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHigh,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Symbols.image_not_supported,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                data.fromCache
+                                    ? 'Photo not available offline'
+                                    : 'The photo could not be loaded',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (data.photo != null) ...[
+                        const SizedBox(height: 24),
+                        Text('EVIDENCES', style: theme.textTheme.labelMedium),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () => _openPhoto(context),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              data.photo!,
+                              width: double.infinity,
+                              height: 220,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      Text(
+                        'Related tasks / subtasks',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 12),
+                      if (data.relatedTasks.isEmpty)
+                        Text(
+                          'No related tasks',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      for (final related in data.relatedTasks) ...[
+                        TaskCard(
+                          task: related,
+                          onTap: () =>
+                              context.push(Routes.taskPath(related.id)),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      const SizedBox(height: 96),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

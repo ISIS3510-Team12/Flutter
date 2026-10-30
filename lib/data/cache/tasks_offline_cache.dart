@@ -63,6 +63,18 @@ class TasksOfflineCache {
         ]),
       );
 
+  Future<void> saveTask(String userId, Task task) => _write(
+    () => _tasks.upsert(
+      userId,
+      task.copyWith(
+        isMine: task.ownerId == userId || task.assigneeIds.contains(userId),
+      ),
+    ),
+  );
+
+  Future<Set<int>> loadedGroupIds(String userId) =>
+      _tasks.loadedGroupIds(userId);
+
   Future<List<TaskGroup>?> groups(String userId) async {
     final groups = await _groups.watchAll(userId).first;
     return groups.isEmpty ? null : groups;
@@ -72,9 +84,13 @@ class TasksOfflineCache {
       _projects.watchForGroup(userId, groupId).first;
 
   Future<List<Task>?> groupTasks(String userId, TaskGroup group) async {
+    final loaded = await _tasks.loadedGroupIds(userId);
+    if (!loaded.contains(group.id)) return null;
     final tasks = await _tasks.watchForGroup(userId, group.id).first;
-    if (tasks.isEmpty && group.pendingCount > 0) return null;
-    return tasks;
+    return [
+      for (final task in tasks)
+        if (task.status != TaskStatus.done) task,
+    ];
   }
 
   Future<Task?> task(String userId, String taskId) =>

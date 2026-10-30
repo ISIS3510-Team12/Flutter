@@ -4,6 +4,7 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
@@ -42,6 +43,7 @@ class GroupDrawer extends ConsumerWidget {
     WidgetRef ref,
     TaskGroup group,
     bool selected,
+    bool available,
   ) {
     final theme = Theme.of(context);
     if (selected) {
@@ -73,6 +75,14 @@ class GroupDrawer extends ConsumerWidget {
         ),
       );
     }
+    if (!available) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        enabled: false,
+        title: Text(group.name, style: theme.textTheme.bodyLarge),
+        subtitle: const Text('Not available offline'),
+      );
+    }
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(group.name, style: theme.textTheme.bodyLarge),
@@ -83,8 +93,7 @@ class GroupDrawer extends ConsumerWidget {
             .read(tasksViewModelProvider.notifier)
             .switchGroup(group);
         final message = switch (result) {
-          SwitchGroupResult.unavailable =>
-            "You're offline. Reconnect to view the tasks of ${group.name}.",
+          SwitchGroupResult.unavailable => groupNotLoadedMessage(group.name),
           SwitchGroupResult.failed =>
             "We couldn't load ${group.name}. Try again.",
           SwitchGroupResult.switched => null,
@@ -102,6 +111,7 @@ class GroupDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final state = ref.watch(tasksViewModelProvider);
+    final online = ref.watch(isOnlineProvider);
     return Drawer(
       child: SafeArea(
         child: state.when(
@@ -119,7 +129,13 @@ class GroupDrawer extends ConsumerWidget {
                 Text('Your Groups', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 16),
                 for (final group in data.groups)
-                  _groupTile(context, ref, group, group.id == data.group?.id),
+                  _groupTile(
+                    context,
+                    ref,
+                    group,
+                    group.id == data.group?.id,
+                    online || data.isLoaded(group),
+                  ),
                 const Divider(),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
