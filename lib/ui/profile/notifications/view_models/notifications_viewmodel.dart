@@ -35,6 +35,14 @@ class NotificationsViewModel
       state = AsyncError(result.error!, result.stackTrace!);
       return;
     }
+    final user = ref.read(currentUserProvider).value;
+    if (user != null) {
+      await saveQuietly(
+        () =>
+            ref.read(notificationsCacheDaoProvider).deleteById(user.userId, id),
+      );
+    }
+    if (!ref.mounted) return;
     state = AsyncData((
       value: current.value.where((n) => n.id != id).toList(),
       fromCache: false,

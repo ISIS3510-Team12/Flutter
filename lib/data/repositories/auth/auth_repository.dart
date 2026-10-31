@@ -6,6 +6,7 @@ import 'package:team12_flutter_juggle/domain/models/auth/app_user.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/auth_exceptions.dart';
 
 const signInTimeout = Duration(seconds: 20);
+const googleSignInTimeout = Duration(seconds: 60);
 
 class AuthRepository {
   AuthRepository({
@@ -47,10 +48,14 @@ class AuthRepository {
     required String lastName,
   }) async {
     final signUp = _guard('sign up', () async {
-      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential credential;
+      try {
+        credential = await _firebaseAuth
+            .createUserWithEmailAndPassword(email: email, password: password)
+            .timeout(signInTimeout);
+      } on TimeoutException {
+        throw const AuthTimeoutException();
+      }
       final user = credential.user;
       if (user == null) return;
       await user.updateDisplayName('$firstName $lastName'.trim());
@@ -69,12 +74,14 @@ class AuthRepository {
     try {
       await _googleSignIn.signOut();
       final account = await _googleSignIn.authenticate().timeout(
-        signInTimeout,
+        googleSignInTimeout,
       );
       final credential = GoogleAuthProvider.credential(
         idToken: account.authentication.idToken,
       );
-      await _firebaseAuth.signInWithCredential(credential);
+      await _firebaseAuth
+          .signInWithCredential(credential)
+          .timeout(signInTimeout);
     } on TimeoutException {
       throw const AuthTimeoutException();
     } on GoogleSignInException catch (e) {
