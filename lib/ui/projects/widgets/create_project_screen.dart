@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
+
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
   const CreateProjectScreen({super.key, required this.groupId});
@@ -116,7 +118,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final projectState = ref.watch(projectCreateViewModelProvider);
-
+    final isOnline = ref.watch(isOnlineProvider);
     final isLoading = projectState.isLoading;
 
     return Scaffold(
@@ -147,6 +149,37 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+
+            // Offline connectivity warning
+            if (!isOnline) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.wifi_off,
+                      color: theme.colorScheme.onErrorContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'You are offline. Reconnect to create a project.',
+                        style: TextStyle(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             const SizedBox(height: 24),
             TextFormField(
               controller: nameController,
@@ -231,7 +264,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
                 width: 160,
                 height: 40,
                 child: FilledButton(
-                  onPressed: isLoading ? null : _createProject,
+                  onPressed: (isLoading || !isOnline) ? null : _createProject,
                   child: isLoading
                       ? const SizedBox(
                           width: 20,

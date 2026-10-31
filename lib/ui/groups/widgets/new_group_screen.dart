@@ -10,6 +10,7 @@ import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_mod
 import 'package:team12_flutter_juggle/ui/groups/view_models/new_group_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 
 class NewGroupScreen extends ConsumerStatefulWidget {
   const NewGroupScreen({
@@ -78,6 +79,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
     
   Future<void> _createGroup() async {
     if (!_formKey.currentState!.validate()) return;
+
     final success = await ref
         .read(newGroupViewModelProvider.notifier)
         .createGroup(
@@ -91,9 +93,15 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
     if (success) {
       context.pop(true);
     } else {
+      final isOnline = ref.read(isOnlineProvider);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not create the group.'),
+        SnackBar(
+          content: Text(
+            isOnline
+                ? 'Could not create the group.'
+                : 'No internet connection. Please reconnect and try again.',
+          ),
         ),
       );
     }
@@ -104,6 +112,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
   Widget build(BuildContext context) {
     final usersState = ref.watch(groupUsersViewModelProvider);
     final groupState = ref.watch(newGroupViewModelProvider);
+    final isOnline = ref.watch(isOnlineProvider);
 
     return ScreenLoadTracker(
       screen: ScreenNames.newGroup,
@@ -119,6 +128,36 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (!isOnline) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.wifi_off,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'You are offline. Reconnect to create the group.',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+
             _buildTextField(
               context: context,
               label: 'Name',
@@ -157,6 +196,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
             _buildActionButtons(
               context,
               groupState.isLoading,
+              isOnline,
             ),
           ],
         ),
@@ -384,12 +424,13 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
   Widget _buildActionButtons(
     BuildContext context,
     bool isLoading,
+    bool isOnline,
   ) {
     return Row(
       children: [
         Expanded(
           child: FilledButton.icon(
-            onPressed: isLoading ? null : _createGroup,
+            onPressed: (isLoading || !isOnline) ? null : _createGroup,
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -412,7 +453,8 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
                     size: 20,
                   ),
             label: Text(
-              isLoading ? 'Creating...' : 'Create Group',
+              isLoading ? 'Creating...'
+              : (!isOnline ? 'Offline' : 'Create Group'),
             ),
           ),
         ),

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
-
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
@@ -25,6 +27,7 @@ class GroupDetailScreen extends ConsumerWidget {
     final groupState = ref.watch(
       groupDetailViewModelProvider(groupId),
     );
+    final isOnline = ref.watch(isOnlineProvider);
 
     return ScreenLoadTracker(
     screen: ScreenNames.groupDetail,
@@ -34,76 +37,100 @@ class GroupDetailScreen extends ConsumerWidget {
         title: const Text('Group detail'),
         actions: [
           IconButton(
-            onPressed: () async {
-              final updated = await context.push<bool>(
-                Routes.editGroupPath(groupId),
-              );
+            onPressed: !isOnline
+                ? null
+                : () async {
+                    final updated = await context.push<bool>(
+                      Routes.editGroupPath(groupId),
+                    );
 
-              if (!context.mounted) return;
+                    if (!context.mounted) return;
 
-              if (updated == true) {
-                ref.invalidate(
-                  groupDetailViewModelProvider(groupId),
-                );
-              }
-            },
+                    if (updated == true) {
+                      ref.invalidate(
+                        groupDetailViewModelProvider(groupId),
+                      );
+                    }
+                  },
             icon: const Icon(Icons.edit_outlined),
           ),
         ],
       ),
-      body: groupState.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (error, stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Could not load the group.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () {
-                    ref.invalidate(
-                      groupDetailViewModelProvider(groupId),
-                    );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: groupState.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              error: (error, stackTrace) => LoadErrorView(
+                error: error,
+                offlineMessage:
+                    'No saved group information is available while offline.',
+                genericMessage: 'Could not load the group.',
+                onRetry: () {
+                  ref.invalidate(groupDetailViewModelProvider(groupId));
+                },
+              ),
+              data: (state) => Column(
+                children: [
+                  if (state.fromCache)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .secondaryContainer,
+                      child: Text(
+                        'Showing saved information. It may be outdated.',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSecondaryContainer,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  Expanded(
+                    child: _buildContent(
+                      context,
+                      state.group,
+                      state.projects,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        data: (state) {
-          return _buildContent(
-            context,
-            state.group,
-            state.projects,
-          );
-        },
+        ],
       ),
       bottomNavigationBar: const CustomNavigationBar(),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await context.push(
-            Routes.createProjectPath(groupId),
-          );
+      onPressed: !isOnline
+          ? null
+          : () async {
+              await context.push(
+                Routes.createProjectPath(groupId),
+              );
 
-          if (!context.mounted) return;
+              if (!context.mounted) return;
 
-          ref.invalidate(
-            groupDetailViewModelProvider(groupId),
-          );
-        },
-        backgroundColor: Theme.of(context).colorScheme.primaryFixed,
-        foregroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
-        icon: const Icon(Symbols.add_circle),
-        label: const Text('Create project'),
-      ),
+              ref.invalidate(
+                groupDetailViewModelProvider(groupId),
+              );
+            },
+      backgroundColor: Theme.of(context).colorScheme.primaryFixed,
+      foregroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
+      icon: const Icon(Symbols.add_circle),
+      label: Text(isOnline ? 'Create project' : 'Offline'),
+    ),
     ),
     );
   }

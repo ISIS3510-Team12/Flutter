@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 
 class NewGroupViewModel extends AsyncNotifier<void> {
@@ -11,6 +11,16 @@ class NewGroupViewModel extends AsyncNotifier<void> {
     required String description,
     required List<String> selectedUserIds,
   }) async {
+    final isOnline = ref.read(isOnlineProvider);
+
+    if (!isOnline) {
+      state = AsyncError(
+        Exception('No internet connection. Please reconnect and try again.'),
+        StackTrace.current,
+      );
+      return false;
+    }
+
     final repository = ref.read(groupRepositoryProvider);
 
     final result = await AsyncValue.guard(() async {

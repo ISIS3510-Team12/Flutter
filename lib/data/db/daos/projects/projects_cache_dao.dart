@@ -1,12 +1,16 @@
+
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:team12_flutter_juggle/data/db/app_database.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_projects.dart';
+import 'package:team12_flutter_juggle/data/db/tables/cached_project_group_loads.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 
 part 'projects_cache_dao.g.dart';
 
-@DriftAccessor(tables: [CachedProjects])
+@DriftAccessor(
+  tables: [CachedProjects, CachedProjectGroupLoads],
+)
 class ProjectsCacheDao extends DatabaseAccessor<AppDatabase>
     with _$ProjectsCacheDaoMixin {
   ProjectsCacheDao({required AppDatabase db}) : super(db);
@@ -16,14 +20,29 @@ class ProjectsCacheDao extends DatabaseAccessor<AppDatabase>
     int groupId,
     List<Project> projects,
   ) {
-    return batch((batch) {
-      batch.deleteWhere(
-        cachedProjects,
-        (p) => p.userId.equals(userId) & p.groupId.equals(groupId),
+    return transaction(() async {
+      await (delete(cachedProjects)
+            ..where(
+              (p) => p.userId.equals(userId) & p.groupId.equals(groupId),
+            ))
+          .go();
+
+      if (projects.isNotEmpty) {
+        await batch((batch) {
+          batch.insertAll(cachedProjects, [
+            for (final project in projects)
+              _toCompanion(userId, project),
+          ]);
+        });
+      }
+
+      await into(cachedProjectGroupLoads).insertOnConflictUpdate(
+        CachedProjectGroupLoadsCompanion.insert(
+          userId: userId,
+          groupId: groupId,
+          loadedAtUtcMs: DateTime.now().toUtc().millisecondsSinceEpoch,
+        ),
       );
-      batch.insertAll(cachedProjects, [
-        for (final project in projects) _toCompanion(userId, project),
-      ]);
     });
   }
 
@@ -36,21 +55,63 @@ class ProjectsCacheDao extends DatabaseAccessor<AppDatabase>
     final query = select(cachedProjects)
       ..where((p) => p.userId.equals(userId) & p.groupId.equals(groupId))
       ..orderBy([(p) => OrderingTerm.asc(p.deadlineUtcMs)]);
+
     return query.watch().map((rows) => rows.map(_toProject).toList());
   }
 
-  Future<List<Project>> findForGroup(String userId, int groupId) =>
-      watchForGroup(userId, groupId).first;
+  Future<List<Project>?> findForGroup(
+    String userId,
+    int groupId,
+  ) async {
+    final load = await (select(cachedProjectGroupLoads)
+          ..where(
+            (p) => p.userId.equals(userId) & p.groupId.equals(groupId),
+          ))
+        .getSingleOrNull();
+
+    if (load == null) return null;
+
+    final query = select(cachedProjects)
+      ..where((p) => p.userId.equals(userId) & p.groupId.equals(groupId))
+      ..orderBy([(p) => OrderingTerm.asc(p.deadlineUtcMs)]);
+
+    final rows = await query.get();
+    return rows.map(_toProject).toList();
+  }
+
+  Future<bool> isGroupLoaded(String userId, int groupId) async {
+    final load = await (select(cachedProjectGroupLoads)
+          ..where(
+            (p) => p.userId.equals(userId) & p.groupId.equals(groupId),
+          ))
+        .getSingleOrNull();
+
+    return load != null;
+  }
 
   Stream<Project?> watchProject(String userId, int projectId) {
     final query = select(cachedProjects)
       ..where((p) => p.userId.equals(userId) & p.id.equals(projectId));
+
     return query.watchSingleOrNull().map(
       (row) => row == null ? null : _toProject(row),
     );
   }
 
-  CachedProjectsCompanion _toCompanion(String userId, Project project) {
+  Future<Project?> findProject(String userId, int projectId) async {
+    final row = await (select(cachedProjects)
+          ..where(
+            (p) => p.userId.equals(userId) & p.id.equals(projectId),
+          ))
+        .getSingleOrNull();
+
+    return row == null ? null : _toProject(row);
+  }
+
+  CachedProjectsCompanion _toCompanion(
+    String userId,
+    Project project,
+  ) {
     return CachedProjectsCompanion.insert(
       userId: userId,
       id: project.id,
