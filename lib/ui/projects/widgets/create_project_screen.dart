@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
@@ -18,7 +20,10 @@ class CreateProjectScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
-    with ShakeResetMixin<CreateProjectScreen> {
+    with ShakeResetMixin<CreateProjectScreen>, FeatureSessionMixin<CreateProjectScreen> {
+  @override
+  String get featureName => FeatureNames.createProject;
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController deadlineController = TextEditingController();
@@ -98,6 +103,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
     if (!mounted) return;
 
     if (createdProject != null) {
+      markFeatureCompleted();
       context.pop(createdProject);
       return;
     }
