@@ -7,6 +7,7 @@ import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao_provide
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
+import 'package:team12_flutter_juggle/ui/core/network/parallel_wait.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel.dart';
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
@@ -67,24 +68,25 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
   Future<EditTaskFormState> build() async {
     final repository = ref.watch(taskRepositoryProvider);
     final currentUser = ref.watch(currentUserProvider.future);
-    final task = await repository.getTask(taskId);
-    Uint8List? photo;
-    if (task.hasPhoto) {
-      try {
-        photo = await repository.getTaskPhoto(taskId);
-      } catch (_) {
-        photo = null;
-      }
-    }
-    final groups = await ref.watch(groupRepositoryProvider).getGroups();
+    final groupRepository = ref.watch(groupRepositoryProvider);
+    final projectRepository = ref.watch(projectRepositoryProvider);
+    final (task, groups) = await waitBoth(
+      repository.getTask(taskId),
+      groupRepository.getGroups(),
+    );
     TaskGroup? group;
     for (final candidate in groups) {
       if (candidate.id == task.groupId) group = candidate;
     }
     group ??= groups.isEmpty ? null : groups.first;
-    final projects = group == null
-        ? <Project>[]
-        : await ref.watch(projectRepositoryProvider).getGroupProjects(group.id);
+    final (photo, projects) = await waitBoth(
+      task.hasPhoto
+          ? repository.getTaskPhoto(taskId).catchError((Object _) => null)
+          : Future<Uint8List?>.value(),
+      group == null
+          ? Future.value(<Project>[])
+          : projectRepository.getGroupProjects(group.id),
+    );
     final me = (await currentUser)!;
     final tasksCache = ref.read(tasksCacheDaoProvider);
     await saveQuietly(() => tasksCache.saveDetail(me.userId, task));
