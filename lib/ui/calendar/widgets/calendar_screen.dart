@@ -6,6 +6,8 @@ import 'package:team12_flutter_juggle/ui/calendar/widgets/day_selector.dart';
 import 'package:team12_flutter_juggle/ui/calendar/widgets/schedule_card.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
@@ -21,12 +23,19 @@ class CalendarScreen extends ConsumerWidget {
       state: calendarState,
       child: Scaffold(
       appBar: const CustomAppBar(),
-      body: calendarState.when(
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: calendarState.when(
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
-        error: (error, stackTrace) => Center(
-          child: Text('Error: $error'),
+        error: (error, stackTrace) => LoadErrorView(
+          error: error,
+          offlineMessage: "You're offline. Reconnect to load your schedule.",
+          genericMessage: "We couldn't load your schedule.",
+          onRetry: () => ref.invalidate(calendarViewModelProvider),
         ),
         data: (calendar) {
           final selectedDate = calendar.selectedDate;
@@ -102,6 +111,9 @@ class CalendarScreen extends ConsumerWidget {
             ],
           );
         },
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: const CustomNavigationBar(),
     ),

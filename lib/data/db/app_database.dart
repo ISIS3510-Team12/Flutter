@@ -32,7 +32,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 1;
 
   Future<void> clearCache() {
     return transaction(() async {
@@ -45,20 +45,10 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (m, from, to) async {
-      if (from < 3) {
-        for (final table in allTables.toList()) {
-          await m.drop(table);
-        }
-        await m.createAll();
-      } else if (from < 4) {
-        await m.createTable(cachedProjectGroupLoads);
-        await m.createTable(cachedProjectTasks);
-        await m.createTable(cachedProjectTaskLoads);
+      for (final table in allTables.toList()) {
+        await m.drop(table);
       }
-
-      if (from < 5) {
-        await m.createTable(cachedGroupListLoads);
-      }
+      await m.createAll();
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

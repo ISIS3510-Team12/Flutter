@@ -1,5 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
+import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
 import 'package:team12_flutter_juggle/ui/calendar/strategies/day_schedule_strategy.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
@@ -11,19 +15,29 @@ class CalendarViewModel extends AsyncNotifier<CalendarState> {
 
   @override
   Future<CalendarState> build() async {
-    final taskRepository = ref.watch(taskRepositoryProvider);
+    final user = await ref.watch(currentUserProvider.future);
+    if (user == null) throw StateError('User is not logged in');
 
-    final selectedDate = DateTime.now();
-    final tasks = await taskRepository.getAllTasks();
+    final taskRepository = ref.watch(taskRepositoryProvider);
+    final cache = ref.read(tasksCacheDaoProvider);
+    final selectedDate = state.value?.selectedDate ?? DateTime.now();
+
+    final read = await networkFirst(
+      isOnline: ref.watch(isOnlineProvider),
+      fetch: () => taskRepository.getAllTasks(mine: true),
+      save: (tasks) => cache.replaceForUser(user.userId, tasks),
+      fallback: () => cache.findMine(user.userId),
+    );
 
     return CalendarState(
       selectedDate: selectedDate,
       week: _getWeek(selectedDate),
-      tasks: tasks,
+      tasks: read.value,
       schedule: _scheduleStrategy.getSchedule(
-        tasks,
+        read.value,
         selectedDate,
       ),
+      fromCache: read.fromCache,
     );
   }
 
@@ -88,5 +102,6 @@ abstract class CalendarState with _$CalendarState {
     required List<DateTime> week,
     required List<Task> tasks,
     required List<Task> schedule,
+    @Default(false) bool fromCache,
   }) = _CalendarState;
 }

@@ -85,7 +85,7 @@
             "default_client_dart": null,
             "dsl_features": [],
             "type_converter": {
-              "dart_expr": "const StringListConverter()",
+              "dart_expr": "CachedTasks.assigneesConverter",
               "dart_type_name": "List<String>"
             }
           },
@@ -166,6 +166,92 @@
               "sqlite": "CHECK (\"needs_help\" IN (0, 1))"
             },
             "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "owner_id",
+            "getter_name": "ownerId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "assignee_ids",
+            "getter_name": "assigneeIds",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "CachedTasks.assigneesConverter",
+              "dart_type_name": "List<String>"
+            }
+          },
+          {
+            "name": "project_id",
+            "getter_name": "projectId",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "project_name",
+            "getter_name": "projectName",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "related_task_ids",
+            "getter_name": "relatedTaskIds",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "CachedTasks.assigneesConverter",
+              "dart_type_name": "List<String>"
+            }
+          },
+          {
+            "name": "related_tasks",
+            "getter_name": "relatedTasks",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "CachedTasks.relatedTasksConverter",
+              "dart_type_name": "List<Task>"
+            }
+          },
+          {
+            "name": "has_photo",
+            "getter_name": "hasPhoto",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"has_photo\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"has_photo\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('0')",
             "default_client_dart": null,
             "dsl_features": []
           }
@@ -331,9 +417,19 @@
             "default_client_dart": null,
             "dsl_features": [],
             "type_converter": {
-              "dart_expr": "const TaskMemberListConverter()",
+              "dart_expr": "CachedGroups.membersConverter",
               "dart_type_name": "List<TaskMember>"
             }
+          },
+          {
+            "name": "position",
+            "getter_name": "position",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
           }
         ],
         "is_virtual": false,
@@ -427,6 +523,309 @@
     },
     {
       "id": 4,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_group_loads",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "group_id",
+            "getter_name": "groupId",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "loaded_at_utc_ms",
+            "getter_name": "loadedAtUtcMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id",
+          "group_id"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_user_locations",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "latitude",
+            "getter_name": "latitude",
+            "moor_type": "double",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "longitude",
+            "getter_name": "longitude",
+            "moor_type": "double",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "notify_within",
+            "getter_name": "notifyWithin",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_project_group_loads",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "group_id",
+            "getter_name": "groupId",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "loaded_at_utc_ms",
+            "getter_name": "loadedAtUtcMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id",
+          "group_id"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_project_tasks",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "project_id",
+            "getter_name": "projectId",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "task_id",
+            "getter_name": "taskId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "task_json",
+            "getter_name": "taskJson",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id",
+          "project_id",
+          "task_id"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_project_task_loads",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "project_id",
+            "getter_name": "projectId",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "loaded_at_utc_ms",
+            "getter_name": "loadedAtUtcMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id",
+          "project_id"
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "cached_group_list_loads",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "user_id",
+            "getter_name": "userId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "loaded_at_utc_ms",
+            "getter_name": "loadedAtUtcMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "user_id"
+        ]
+      }
+    },
+    {
+      "id": 10,
       "references": [
         0
       ],
@@ -449,7 +848,7 @@
       }
     },
     {
-      "id": 5,
+      "id": 11,
       "references": [
         0
       ],
@@ -472,7 +871,7 @@
       }
     },
     {
-      "id": 6,
+      "id": 12,
       "references": [
         1
       ],
@@ -495,7 +894,7 @@
       }
     },
     {
-      "id": 7,
+      "id": 13,
       "references": [
         3
       ],
@@ -516,6 +915,29 @@
           }
         ]
       }
+    },
+    {
+      "id": 14,
+      "references": [
+        7
+      ],
+      "type": "index",
+      "data": {
+        "on": 7,
+        "name": "cached_project_tasks_user_project",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "user_id",
+            "order_by": null
+          },
+          {
+            "column": "project_id",
+            "order_by": null
+          }
+        ]
+      }
     }
   ],
   "fixed_sql": [
@@ -524,7 +946,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"cached_tasks\" (\"user_id\" TEXT NOT NULL, \"id\" TEXT NOT NULL, \"title\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"group_name\" TEXT NOT NULL, \"group_id\" INTEGER NULL, \"assignees\" TEXT NOT NULL, \"type\" TEXT NOT NULL, \"status\" TEXT NOT NULL, \"deadline_utc_ms\" INTEGER NOT NULL, \"is_mine\" INTEGER NOT NULL CHECK (\"is_mine\" IN (0, 1)), \"is_priority\" INTEGER NOT NULL CHECK (\"is_priority\" IN (0, 1)), \"needs_help\" INTEGER NOT NULL CHECK (\"needs_help\" IN (0, 1)), PRIMARY KEY (\"user_id\", \"id\")) STRICT;"
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_tasks\" (\"user_id\" TEXT NOT NULL, \"id\" TEXT NOT NULL, \"title\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"group_name\" TEXT NOT NULL, \"group_id\" INTEGER NULL, \"assignees\" TEXT NOT NULL, \"type\" TEXT NOT NULL, \"status\" TEXT NOT NULL, \"deadline_utc_ms\" INTEGER NOT NULL, \"is_mine\" INTEGER NOT NULL CHECK (\"is_mine\" IN (0, 1)), \"is_priority\" INTEGER NOT NULL CHECK (\"is_priority\" IN (0, 1)), \"needs_help\" INTEGER NOT NULL CHECK (\"needs_help\" IN (0, 1)), \"owner_id\" TEXT NULL, \"assignee_ids\" TEXT NOT NULL, \"project_id\" INTEGER NULL, \"project_name\" TEXT NULL, \"related_task_ids\" TEXT NOT NULL, \"related_tasks\" TEXT NOT NULL, \"has_photo\" INTEGER NOT NULL DEFAULT 0 CHECK (\"has_photo\" IN (0, 1)), PRIMARY KEY (\"user_id\", \"id\")) STRICT;"
         }
       ]
     },
@@ -542,7 +964,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"cached_groups\" (\"user_id\" TEXT NOT NULL, \"id\" INTEGER NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"pending_count\" INTEGER NOT NULL, \"members\" TEXT NOT NULL, PRIMARY KEY (\"user_id\", \"id\")) STRICT;"
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_groups\" (\"user_id\" TEXT NOT NULL, \"id\" INTEGER NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"pending_count\" INTEGER NOT NULL, \"members\" TEXT NOT NULL, \"position\" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (\"user_id\", \"id\")) STRICT;"
         }
       ]
     },
@@ -552,6 +974,60 @@
         {
           "dialect": "sqlite",
           "sql": "CREATE TABLE IF NOT EXISTS \"cached_projects\" (\"user_id\" TEXT NOT NULL, \"id\" INTEGER NOT NULL, \"group_id\" INTEGER NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"deadline_utc_ms\" INTEGER NOT NULL, PRIMARY KEY (\"user_id\", \"id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_group_loads",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_group_loads\" (\"user_id\" TEXT NOT NULL, \"group_id\" INTEGER NOT NULL, \"loaded_at_utc_ms\" INTEGER NOT NULL, PRIMARY KEY (\"user_id\", \"group_id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_user_locations",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_user_locations\" (\"user_id\" TEXT NOT NULL, \"latitude\" REAL NOT NULL, \"longitude\" REAL NOT NULL, \"notify_within\" INTEGER NOT NULL, PRIMARY KEY (\"user_id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_project_group_loads",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_project_group_loads\" (\"user_id\" TEXT NOT NULL, \"group_id\" INTEGER NOT NULL, \"loaded_at_utc_ms\" INTEGER NOT NULL, PRIMARY KEY (\"user_id\", \"group_id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_project_tasks",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_project_tasks\" (\"user_id\" TEXT NOT NULL, \"project_id\" INTEGER NOT NULL, \"task_id\" TEXT NOT NULL, \"task_json\" TEXT NOT NULL, PRIMARY KEY (\"user_id\", \"project_id\", \"task_id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_project_task_loads",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_project_task_loads\" (\"user_id\" TEXT NOT NULL, \"project_id\" INTEGER NOT NULL, \"loaded_at_utc_ms\" INTEGER NOT NULL, PRIMARY KEY (\"user_id\", \"project_id\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "cached_group_list_loads",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"cached_group_list_loads\" (\"user_id\" TEXT NOT NULL, \"loaded_at_utc_ms\" INTEGER NOT NULL, PRIMARY KEY (\"user_id\")) STRICT;"
         }
       ]
     },
@@ -588,6 +1064,15 @@
         {
           "dialect": "sqlite",
           "sql": "CREATE INDEX cached_projects_user_group ON cached_projects (user_id, group_id)"
+        }
+      ]
+    },
+    {
+      "name": "cached_project_tasks_user_project",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX cached_project_tasks_user_project ON cached_project_tasks (user_id, project_id)"
         }
       ]
     }
