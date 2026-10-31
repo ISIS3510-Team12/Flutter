@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
@@ -12,7 +14,7 @@ import 'package:team12_flutter_juggle/ui/groups/view_models/group_detail_view_mo
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
-class GroupDetailScreen extends ConsumerWidget {
+class GroupDetailScreen extends ConsumerStatefulWidget {
   const GroupDetailScreen({
     super.key,
     required this.groupId,
@@ -21,7 +23,18 @@ class GroupDetailScreen extends ConsumerWidget {
   final int groupId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GroupDetailScreen> createState() => _GroupDetailScreenState();
+}
+
+class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
+    with FeatureSessionMixin<GroupDetailScreen> {
+  int get groupId => widget.groupId;
+
+  @override
+  String get featureName => FeatureNames.viewGroup;
+
+  @override
+  Widget build(BuildContext context) {
     final groupState = ref.watch(
       groupDetailViewModelProvider(groupId),
     );
@@ -35,6 +48,7 @@ class GroupDetailScreen extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () async {
+              markFeatureCompleted();
               final updated = await context.push<bool>(
                 Routes.editGroupPath(groupId),
               );
@@ -89,6 +103,7 @@ class GroupDetailScreen extends ConsumerWidget {
       bottomNavigationBar: const CustomNavigationBar(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          markFeatureCompleted();
           await context.push(
             Routes.createProjectPath(groupId),
           );
@@ -211,6 +226,7 @@ class GroupDetailScreen extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
+          markFeatureCompleted();
           context.push(
             Routes.projectDetailPath(project.id),
           );

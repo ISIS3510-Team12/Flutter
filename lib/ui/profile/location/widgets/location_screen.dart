@@ -16,11 +16,22 @@ import 'package:team12_flutter_juggle/ui/profile/location/widgets/location_map_p
 import 'package:team12_flutter_juggle/ui/profile/location/widgets/offline_map_notice.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
-class LocationScreen extends ConsumerWidget {
+class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
+
+  @override
+  ConsumerState<LocationScreen> createState() => _LocationScreenState();
+}
+
+class _LocationScreenState extends ConsumerState<LocationScreen>
+    with FeatureSessionMixin<LocationScreen> {
+  @override
+  String get featureName => FeatureNames.locationReminders;
 
   Future<void> _pickPlace(
     BuildContext context,
@@ -63,6 +74,7 @@ class LocationScreen extends ConsumerWidget {
   Future<void> _save(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
     final outcome = await ref.read(locationViewModelProvider.notifier).save();
+    if (outcome != SaveOutcome.failed) markFeatureCompleted();
     final (message, openSettings) = switch (outcome) {
       SaveOutcome.saved => (
         'Location saved. We’ll remind you when you’re nearby.',
@@ -109,7 +121,7 @@ class LocationScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = ref.watch(locationViewModelProvider);
     return ScreenLoadTracker(

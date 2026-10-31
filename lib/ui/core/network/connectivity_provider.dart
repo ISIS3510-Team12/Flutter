@@ -12,6 +12,7 @@ abstract class ConnectivityState with _$ConnectivityState {
 
   const factory ConnectivityState({
     @Default({ConnectivityResult.wifi}) Set<ConnectivityResult> results,
+    DateTime? lastOnlineAt,
   }) = _ConnectivityState;
 
   bool get isOnline => results.any((r) => r != ConnectivityResult.none);
@@ -60,7 +61,15 @@ class ConnectivityNotifier extends Notifier<ConnectivityState> {
 
   void _update(List<ConnectivityResult> results) {
     if (!ref.mounted) return;
-    state = state.copyWith(results: results.toSet());
+    final next = results.toSet();
+    final wasOnline = state.isOnline;
+    final isOnline = next.any((r) => r != ConnectivityResult.none);
+    state = state.copyWith(
+      results: next,
+      lastOnlineAt: wasOnline && !isOnline
+          ? DateTime.now()
+          : state.lastOnlineAt,
+    );
   }
 
   void _logError(String source, Object error, StackTrace stack) {
@@ -70,10 +79,14 @@ class ConnectivityNotifier extends Notifier<ConnectivityState> {
 
 final connectivityNotifierProvider =
     NotifierProvider<ConnectivityNotifier, ConnectivityState>(
-  ConnectivityNotifier.new,
+      ConnectivityNotifier.new,
+    );
+
+final lastOnlineAtProvider = Provider<DateTime?>(
+  (ref) =>
+      ref.watch(connectivityNotifierProvider.select((s) => s.lastOnlineAt)),
 );
 
 final isOnlineProvider = Provider<bool>(
   (ref) => ref.watch(connectivityNotifierProvider.select((s) => s.isOnline)),
 );
-
