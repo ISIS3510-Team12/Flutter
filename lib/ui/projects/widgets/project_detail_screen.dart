@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -23,7 +25,11 @@ class ProjectDetailScreen extends ConsumerStatefulWidget {
       _ProjectDetailScreenState();
 }
 
-class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
+class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
+    with FeatureSessionMixin<ProjectDetailScreen> {
+  @override
+  String get featureName => FeatureNames.viewProject;
+
   String selectedFilter = 'In progress';
 
   String _getDueText(DateTime deadline) {
@@ -170,6 +176,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           text: 'In progress',
                           selected: selectedFilter == 'In progress',
                           onTap: () {
+                            markFeatureCompleted();
                             setState(() {
                               selectedFilter = 'In progress';
                             });
@@ -182,6 +189,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           text: 'Upcoming',
                           selected: selectedFilter == 'Upcoming',
                           onTap: () {
+                            markFeatureCompleted();
                             setState(() {
                               selectedFilter = 'Upcoming';
                             });
@@ -194,6 +202,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           text: 'Completed',
                           selected: selectedFilter == 'Completed',
                           onTap: () {
+                            markFeatureCompleted();
                             setState(() {
                               selectedFilter = 'Completed';
                             });
@@ -221,6 +230,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                       dueText: _getDueText(task.deadline),
                       assigneeInitial: task.assigneeInitial,
                       onTap: () {
+                        markFeatureCompleted();
                         context.push(Routes.taskPath(task.id));
                       },
                     ),
@@ -234,7 +244,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
         backgroundColor: theme.colorScheme.onPrimaryContainer,
         foregroundColor: theme.colorScheme.primaryContainer,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        onPressed: () => context.push(Routes.createTask),
+        onPressed: () {
+          markFeatureCompleted();
+          context.push(Routes.createTask);
+        },
         icon: const Icon(Symbols.stars, fill: 1),
         label: Text(
           'Add task',

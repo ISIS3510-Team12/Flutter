@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
@@ -28,7 +30,10 @@ class CreateTaskScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
-    with ShakeResetMixin<CreateTaskScreen> {
+    with ShakeResetMixin<CreateTaskScreen>, FeatureSessionMixin<CreateTaskScreen> {
+  @override
+  String get featureName => FeatureNames.createTask;
+
   final _titleController = TextEditingController();
   final _deadlineController = TextEditingController();
   final _timeController = TextEditingController();
@@ -104,6 +109,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
         );
       return;
     }
+    markFeatureCompleted();
     context.pop();
     if (result == CreateTaskResult.queued) {
       messenger

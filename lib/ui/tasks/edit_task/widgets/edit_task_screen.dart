@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
@@ -29,7 +31,10 @@ class EditTaskScreen extends ConsumerStatefulWidget {
 }
 
 class _EditTaskScreenState extends ConsumerState<EditTaskScreen>
-    with ShakeResetMixin<EditTaskScreen> {
+    with ShakeResetMixin<EditTaskScreen>, FeatureSessionMixin<EditTaskScreen> {
+  @override
+  String get featureName => FeatureNames.editTask;
+
   final _deadlineController = TextEditingController();
   final _timeController = TextEditingController();
 
@@ -88,6 +93,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen>
         );
       return;
     }
+    markFeatureCompleted();
     context.pop();
     if (photoError != null) {
       messenger.showSnackBar(
