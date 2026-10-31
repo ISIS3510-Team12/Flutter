@@ -24,6 +24,20 @@ bool isOfflineFailure(Object error) =>
     error is NetworkUnavailableException ||
     error is ServiceUnavailableException;
 
+String writeFailureMessage(
+  Object? error, {
+  required bool isOnline,
+  required String fallback,
+}) {
+  if (!isOnline || error is NetworkUnavailableException) {
+    return 'No internet connection. Please reconnect and try again.';
+  }
+  if (error is ServiceUnavailableException) {
+    return 'The service is not responding right now. Try again in a moment.';
+  }
+  return fallback;
+}
+
 Exception repositoryError(String action, Object error) {
   if (error is NetworkUnavailableException ||
       error is ServiceUnavailableException) {
