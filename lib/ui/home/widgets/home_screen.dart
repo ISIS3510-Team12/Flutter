@@ -50,8 +50,12 @@ class HomeScreen extends ConsumerWidget {
                         OverviewSection(
                           dueTodayTasks: data.dueTodayTasks,
                           recentActivity: data.recentActivity,
-                          numTasks: data.numUrgentTasks,
-                          numNotifications: data.numNotifications,
+                          numTasks: data.dataUnavailable
+                              ? null
+                              : data.numUrgentTasks,
+                          numNotifications: data.dataUnavailable
+                              ? null
+                              : data.numNotifications,
                         ),
                       ],
                     ),
@@ -139,8 +143,8 @@ class UserSection extends ConsumerWidget {
 class OverviewSection extends StatelessWidget {
   final List<HomeTaskItem> dueTodayTasks;
   final List<AppNotification> recentActivity;
-  final int numTasks;
-  final int numNotifications;
+  final int? numTasks;
+  final int? numNotifications;
 
   const OverviewSection({
     super.key,
@@ -164,6 +168,7 @@ class OverviewSection extends StatelessWidget {
         OverviewTabs(
           dueTodayTasks: dueTodayTasks,
           recentActivity: recentActivity,
+          dataUnavailable: numTasks == null,
         ),
         SizedBox(height: 10),
       ],

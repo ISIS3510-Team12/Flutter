@@ -68,26 +68,30 @@ class AllTasksViewModel extends AsyncNotifier<AllTasksState> {
     };
   }
 
-  Future<List<Task>> _fromCache(
+  Future<List<Task>?> _fromCache(
     TasksCacheDao cache,
     String userId,
     TaskFilter filter,
     DateTime now,
   ) async {
+    final saved = filter == TaskFilter.urgent
+        ? await cache.findAll(userId)
+        : await cache.findMine(userId);
+    if (saved.isEmpty) return null;
     final limit = now.add(const Duration(days: 7));
     return switch (filter) {
       TaskFilter.urgent => [
-        for (final task in await cache.findAll(userId))
+        for (final task in saved)
           if (task.isPriority && task.status != TaskStatus.done) task,
       ],
       TaskFilter.dueSoon => [
-        for (final task in await cache.findMine(userId))
+        for (final task in saved)
           if (task.status != TaskStatus.done &&
               !task.deadline.isBefore(now) &&
               task.deadline.isBefore(limit))
             task,
       ],
-      TaskFilter.assignedToMe => await cache.findMine(userId),
+      TaskFilter.assignedToMe => saved,
     };
   }
 

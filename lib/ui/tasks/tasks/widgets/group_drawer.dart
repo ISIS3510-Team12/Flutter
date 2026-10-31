@@ -148,9 +148,11 @@ class GroupDrawer extends ConsumerWidget {
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
+                  enabled: online,
                   leading: const Icon(Symbols.add_circle),
                   title: Text('New Group', style: theme.textTheme.bodyLarge),
-                  onTap: () => _createGroup(context, ref),
+                  subtitle: online ? null : const Text('Not available offline'),
+                  onTap: online ? () => _createGroup(context, ref) : null,
                 ),
               ],
             );

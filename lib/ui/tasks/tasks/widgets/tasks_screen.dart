@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
@@ -44,6 +45,7 @@ class TasksScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final state = ref.watch(tasksViewModelProvider);
+    final online = ref.watch(isOnlineProvider);
     return ScreenLoadTracker(
       screen: ScreenNames.tasks,
       state: state,
@@ -107,7 +109,7 @@ class TasksScreen extends ConsumerWidget {
                           ),
                           const Spacer(),
                           TextButton.icon(
-                            onPressed: data.group == null
+                            onPressed: data.group == null || !online
                                 ? null
                                 : () => _openEditGroup(
                                     context,
