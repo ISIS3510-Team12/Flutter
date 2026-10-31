@@ -17,7 +17,8 @@ import 'package:team12_flutter_juggle/ui/tasks/widgets/task_form_sections.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_picker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
-import 'package:shake/shake.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
 
 class CreateTaskScreen extends ConsumerStatefulWidget {
   const CreateTaskScreen({super.key});
@@ -26,12 +27,11 @@ class CreateTaskScreen extends ConsumerStatefulWidget {
   ConsumerState<CreateTaskScreen> createState() => _CreateTaskScreenState();
 }
 
-class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
+class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
+    with ShakeResetMixin<CreateTaskScreen> {
   final _titleController = TextEditingController();
   final _deadlineController = TextEditingController();
   final _timeController = TextEditingController();
-  ShakeDetector? _shakeDetector;
-  bool _isConfirmingReset = false;
 
   Future<void> _pickDeadline() async {
     final picked = await showDatePicker(
@@ -57,34 +57,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   }
 
   Future<void> _resetForm() async {
-    if (!mounted || _isConfirmingReset) return;
+    if (!mounted) return;
 
     final current = ref.read(createTaskViewModelProvider);
 
     if (current.isLoading) return;
 
-    _isConfirmingReset = true;
-
-    try {
-      final shouldReset = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Reset task form?'),
-          content: const Text(
-            'This will clear the information you have entered.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Reset'),
-            ),
-          ],
-        ),
-      );
+    await runGuardedReset(() async {
+      final shouldReset = await showShakeClearDialog(context: context);
 
       if (!mounted || shouldReset != true) return;
 
@@ -93,9 +73,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       _titleController.clear();
       _deadlineController.clear();
       _timeController.clear();
-    } finally {
-      _isConfirmingReset = false;
-    }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Form cleared.'),
+        ),
+      );
+    });
   }
 
   Future<void> _submit() async {
@@ -147,21 +131,12 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   void initState() {
     super.initState();
 
-    _shakeDetector = ShakeDetector.autoStart(
-      onPhoneShake: (ShakeEvent event) {
-        if (!mounted) return;
-        _resetForm();
-      },
-      shakeThresholdGravity: 2.7,
-      shakeSlopTimeMS: 1000,
-      minimumShakeCount: 2,
-      useFilter: true,
-    );
+    startShakeDetector(_resetForm);
   }
 
   @override
   void dispose() {
-    _shakeDetector?.stopListening();
+    stopShakeDetector();
     _titleController.dispose();
     _deadlineController.dispose();
     _timeController.dispose();

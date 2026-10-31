@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shake/shake.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
@@ -90,7 +91,8 @@ class _GroupEditForm extends ConsumerStatefulWidget {
       _GroupEditFormState();
 }
 
-class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
+class _GroupEditFormState extends ConsumerState<_GroupEditForm>
+    with ShakeResetMixin<_GroupEditForm> {
   late final TextEditingController nameController;
   late final TextEditingController descriptionController;
   late final TextEditingController searchController;
@@ -98,8 +100,6 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
   final _formKey = GlobalKey<FormState>();
   final Set<String> selectedUserIds = {};
   String searchQuery = '';
-  ShakeDetector? _shakeDetector;
-  bool _isConfirmingReset = false;
 
   @override
   void initState() {
@@ -119,21 +119,12 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
       widget.group.members.map((member) => member.id),
     );
 
-    _shakeDetector = ShakeDetector.autoStart(
-      onPhoneShake: (ShakeEvent event) {
-        if (!mounted) return;
-        _resetForm();
-      },
-      shakeThresholdGravity: 2.7,
-      shakeSlopTimeMS: 1000,
-      minimumShakeCount: 2,
-      useFilter: true,
-    );
+    startShakeDetector(_resetForm);
   }
 
   @override
   void dispose() {
-    _shakeDetector?.stopListening();
+    stopShakeDetector();
     nameController.dispose();
     descriptionController.dispose();
     searchController.dispose();
@@ -149,34 +140,11 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
       return;
     }
 
-    if (_isConfirmingReset) return;
 
-    _isConfirmingReset = true;
-
-    try {
-      final shouldReset = await showDialog<bool>(
+    await runGuardedReset(() async {
+      final shouldReset = await showShakeDiscardDialog(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Discard changes?'),
-          content: const Text(
-            'Do you want to discard your changes and restore '
-            'the group information to its original values?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-              child: const Text('Discard changes'),
-            ),
-          ],
-        ),
+        entity: 'group',
       );
 
       if (!mounted || shouldReset != true) return;
@@ -202,9 +170,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm> {
           content: Text('Changes discarded.'),
         ),
       );
-    } finally {
-      _isConfirmingReset = false;
-    }
+    });
   }
 
   Future<void> _updateGroup(

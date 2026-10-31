@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
@@ -26,7 +28,8 @@ class EditTaskScreen extends ConsumerStatefulWidget {
   ConsumerState<EditTaskScreen> createState() => _EditTaskScreenState();
 }
 
-class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
+class _EditTaskScreenState extends ConsumerState<EditTaskScreen>
+    with ShakeResetMixin<EditTaskScreen> {
   final _deadlineController = TextEditingController();
   final _timeController = TextEditingController();
 
@@ -98,10 +101,44 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    startShakeDetector(_resetForm);
+  }
+
+  @override
   void dispose() {
+    stopShakeDetector();
     _deadlineController.dispose();
     _timeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _resetForm() async {
+    if (!mounted) return;
+
+    final provider = editTaskViewModelProvider(widget.taskId);
+
+    if (ref.read(provider).isLoading) return;
+
+    await runGuardedReset(() async {
+      final shouldReset = await showShakeDiscardDialog(
+        context: context,
+        entity: 'task',
+      );
+
+      if (!mounted || shouldReset != true) return;
+
+      _controllersFilled = false;
+      ref.invalidate(provider);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Changes discarded.'),
+        ),
+      );
+    });
   }
 
   @override
