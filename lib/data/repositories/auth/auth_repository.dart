@@ -5,6 +5,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:team12_flutter_juggle/domain/models/auth/app_user.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/auth_exceptions.dart';
 
+const signInTimeout = Duration(seconds: 20);
+
 class AuthRepository {
   AuthRepository({
     required FirebaseAuth firebaseAuth,
@@ -29,10 +31,13 @@ class AuthRepository {
 
   Future<void> signIn({required String email, required String password}) =>
       _guard('sign in', () async {
-        await _firebaseAuth.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
+        try {
+          await _firebaseAuth
+              .signInWithEmailAndPassword(email: email, password: password)
+              .timeout(signInTimeout);
+        } on TimeoutException {
+          throw const AuthTimeoutException();
+        }
       });
 
   Future<void> signUp({
@@ -63,11 +68,15 @@ class AuthRepository {
   Future<void> signInWithGoogle() => _guard('sign in with Google', () async {
     try {
       await _googleSignIn.signOut();
-      final account = await _googleSignIn.authenticate();
+      final account = await _googleSignIn.authenticate().timeout(
+        signInTimeout,
+      );
       final credential = GoogleAuthProvider.credential(
         idToken: account.authentication.idToken,
       );
       await _firebaseAuth.signInWithCredential(credential);
+    } on TimeoutException {
+      throw const AuthTimeoutException();
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) {
         throw const AuthCancelledException();

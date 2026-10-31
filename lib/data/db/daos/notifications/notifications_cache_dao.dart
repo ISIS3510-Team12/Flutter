@@ -24,6 +24,14 @@ class NotificationsCacheDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
+  Future<List<AppNotification>?> findForUser(String userId) async {
+    final query = select(cachedNotifications)
+      ..where((n) => n.userId.equals(userId))
+      ..orderBy([(n) => OrderingTerm.desc(n.occurredAtUtcMs)]);
+    final rows = await query.get();
+    return rows.isEmpty ? null : rows.map(_toNotification).toList();
+  }
+
   Stream<List<AppNotification>> watchBetween(
     String userId, {
     required int startMs,

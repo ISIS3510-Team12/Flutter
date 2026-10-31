@@ -24,17 +24,20 @@ final homeViewModelProvider = StreamProvider.autoDispose<HomeState>((ref) async*
   final notificationApi = ref.read(notificationsRepositoryProvider);
   final now = ref.read(clockProvider).now;
 
+  var serviceUnavailable = false;
   if (isOnline) {
     try {
-      await Future.wait([
+      final results = await Future.wait([
         localTask.refresh(user.userId, () => taskApi.getAllTasks(mine: true)),
         localNotification.refresh(
           user.userId,
           notificationApi.getNotifications,
         ),
       ]).timeout(const Duration(seconds: 10));
+      serviceUnavailable = results.any((refreshed) => !refreshed);
     } catch (error, stack) {
       debugPrint('Home refresh failed, showing cache: $error\n$stack');
+      serviceUnavailable = true;
     }
   }
 
@@ -55,8 +58,11 @@ final homeViewModelProvider = StreamProvider.autoDispose<HomeState>((ref) async*
     ),
     (urgentCount, dueToday, todayNotifications) => HomeState(
       user: user,
+      serviceUnavailable: serviceUnavailable,
       numUrgentTasks: urgentCount,
-      dueTodayTasks: dueToday.map(HomeTaskItem.fromTask).toList(),
+      dueTodayTasks: dueToday
+          .map((task) => HomeTaskItem.fromTask(task, nowValue))
+          .toList(),
       recentActivity: todayNotifications,
     ),
   );

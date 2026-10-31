@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:team12_flutter_juggle/data/repositories/smart/next_task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/smart/next_task.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
+import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/deadline_format.dart';
 
@@ -35,14 +36,14 @@ abstract class NextTaskState with _$NextTaskState {
   bool get hasTask => card != null;
 }
 
-NextTaskCard buildNextTaskCard(NextTask task) {
+NextTaskCard buildNextTaskCard(NextTask task, DateTime now) {
   final due = task.dueAt;
   final subtitleParts = [
     if (task.groupName.isNotEmpty) task.groupName,
     if (due != null)
       task.reason == NextTaskReason.overdue
           ? deadlineDate(due)
-          : deadlineText(due),
+          : deadlineText(due, now: now),
   ];
   final flagText = task.reasonText;
   return NextTaskCard(
@@ -94,7 +95,7 @@ class NextTaskViewModel extends AsyncNotifier<NextTaskState> {
   Future<NextTaskState> _load() async {
     final result = await ref.read(nextTaskRepositoryProvider).getNextTask();
     final task = result.task;
-    if (task != null) return NextTaskState(card: buildNextTaskCard(task));
+    if (task != null) return NextTaskState(card: buildNextTaskCard(task, ref.read(clockProvider).now()));
     return NextTaskState(message: result.message ?? noPendingTasksMessage);
   }
 }

@@ -7,11 +7,11 @@ class NotificationCard extends StatelessWidget {
   const NotificationCard({
     super.key,
     required this.notification,
-    required this.onDelete,
+    this.onDelete,
   });
 
   final AppNotification notification;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -66,10 +66,8 @@ class NotificationCard extends StatelessWidget {
             ),
             Center(
               child: IconButton(
-                icon: Icon(
-                  Symbols.delete,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                icon: const Icon(Symbols.delete),
+                color: theme.colorScheme.onSurfaceVariant,
                 onPressed: onDelete,
               ),
             ),

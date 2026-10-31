@@ -19,7 +19,8 @@ class NotificationsScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
-        data: (notifications) {
+        data: (read) {
+          final notifications = read.value;
           if (notifications.isEmpty) {
             return const Center(child: Text('No notifications yet'));
           }
@@ -30,9 +31,11 @@ class NotificationsScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               return NotificationCard(
                 notification: notifications[index],
-                onDelete: () => ref
-                    .read(notificationsViewModelProvider.notifier)
-                    .deleteNotification(notifications[index].id),
+                onDelete: read.fromCache
+                    ? null
+                    : () => ref
+                          .read(notificationsViewModelProvider.notifier)
+                          .deleteNotification(notifications[index].id),
               );
             },
           );

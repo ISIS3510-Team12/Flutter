@@ -7,8 +7,10 @@ import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/service_unavailable_banner.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_state.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/custom_bottom_sheet.dart';
+import 'package:team12_flutter_juggle/ui/home/widgets/next_task_section.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_cards.dart';
 import 'package:team12_flutter_juggle/ui/home/widgets/overview_tabs.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
@@ -38,7 +40,13 @@ class HomeScreen extends ConsumerWidget {
                       spacing: 20,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (data.serviceUnavailable)
+                          ServiceUnavailableBanner(
+                            onRetry: () =>
+                                ref.invalidate(homeViewModelProvider),
+                          ),
                         UserSection(firstName: data.user.firstName),
+                        const NextTaskSection(),
                         OverviewSection(
                           dueTodayTasks: data.dueTodayTasks,
                           recentActivity: data.recentActivity,
