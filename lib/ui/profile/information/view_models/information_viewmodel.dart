@@ -17,6 +17,8 @@ abstract class InformationState with _$InformationState {
   }) = _InformationState;
 
   String get initial => firstName.isEmpty ? '' : firstName[0].toUpperCase();
+
+  bool get isEmpty => firstName.isEmpty && lastName.isEmpty;
 }
 
 class InformationViewModel extends AsyncNotifier<InformationState> {

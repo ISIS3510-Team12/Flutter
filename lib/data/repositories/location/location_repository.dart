@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/user_location.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 
 class LocationRepository {
   LocationRepository(this._dio);
@@ -14,7 +15,7 @@ class LocationRepository {
       return UserLocation.fromJson(response.data!);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
-      throw Exception('Failed to load location: $e');
+      throw repositoryError('load location', e);
     }
   }
 
@@ -26,7 +27,7 @@ class LocationRepository {
       );
       return UserLocation.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to save location: $e');
+      throw repositoryError('save location', e);
     }
   }
 

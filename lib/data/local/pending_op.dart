@@ -1,10 +1,11 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:team12_flutter_juggle/data/local/task_codec.dart';
+import 'package:team12_flutter_juggle/domain/models/profile/user_location.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 
 part 'pending_op.freezed.dart';
 
-enum PendingOpType { createTask }
+enum PendingOpType { createTask, saveLocation }
 
 enum PendingOpStatus { pending, failed }
 
@@ -45,7 +46,11 @@ abstract class PendingOp with _$PendingOp {
     );
   }
 
+  bool get isTask => type == PendingOpType.createTask;
+
   Task get task => taskFromJson(payload);
+
+  UserLocation get location => UserLocation.fromJson(payload);
 
   Map<String, dynamic> toJson() => {
     'id': id,

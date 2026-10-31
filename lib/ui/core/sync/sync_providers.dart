@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:team12_flutter_juggle/data/local/hive_store.dart';
 import 'package:team12_flutter_juggle/data/local/pending_op.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/location_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/sync/outbox_store.dart';
 import 'package:team12_flutter_juggle/data/sync/outbox_sync_service.dart';
@@ -12,6 +13,7 @@ import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_mode
 import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 
@@ -31,13 +33,19 @@ final outboxSyncServiceProvider = Provider<OutboxSyncService>((ref) {
   final service = OutboxSyncService(
     store: ref.watch(outboxStoreProvider),
     repository: () => ref.read(taskRepositoryProvider),
+    locationRepository: () => ref.read(locationRepositoryProvider),
     userId: () => _currentUid(ref),
     isOnline: () => ref.read(isOnlineProvider),
-    onSynced: () {
-      ref.invalidate(tasksViewModelProvider);
-      ref.invalidate(tasksOverviewProvider);
-      ref.invalidate(calendarViewModelProvider);
-      ref.invalidate(homeViewModelProvider);
+    onSynced: (types) {
+      if (types.contains(PendingOpType.createTask)) {
+        ref.invalidate(tasksViewModelProvider);
+        ref.invalidate(tasksOverviewProvider);
+        ref.invalidate(calendarViewModelProvider);
+        ref.invalidate(homeViewModelProvider);
+      }
+      if (types.contains(PendingOpType.saveLocation)) {
+        ref.invalidate(locationViewModelProvider);
+      }
     },
   );
   ref.onDispose(service.dispose);

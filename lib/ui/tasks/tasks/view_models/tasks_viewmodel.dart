@@ -49,7 +49,7 @@ abstract class TasksState with _$TasksState {
     final queued = [
       if (groupId != null)
         for (final op in pending)
-          if (op.task.groupId == groupId) PendingTaskEntry(op),
+          if (op.isTask && op.task.groupId == groupId) PendingTaskEntry(op),
     ];
     final uploadedIds = {for (final entry in queued) ?entry.op.serverTaskId};
     final entries = <TaskListEntry>[
