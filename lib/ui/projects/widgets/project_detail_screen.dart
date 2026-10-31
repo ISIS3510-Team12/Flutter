@@ -1,17 +1,20 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
-import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/projects/widgets/pace_warning_card.dart';
-import 'package:team12_flutter_juggle/ui/projects/widgets/task_filter_card.dart';
 import 'package:team12_flutter_juggle/ui/projects/widgets/task_card.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/task_filter_card.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
@@ -25,7 +28,11 @@ class ProjectDetailScreen extends ConsumerStatefulWidget {
       _ProjectDetailScreenState();
 }
 
-class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
+class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
+    with FeatureSessionMixin<ProjectDetailScreen> {
+  @override
+  String get featureName => FeatureNames.viewProject;
+
   String selectedFilter = 'In progress';
 
   String _getDueText(DateTime deadline) {
@@ -156,7 +163,6 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                               ),
                             ),
                           ),
-
                         Text(
                           project.name,
                           style: theme.textTheme.titleLarge,
@@ -169,7 +175,6 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
                         _InfoSection(
                           title: 'Progress',
                           subtitle:
@@ -181,13 +186,11 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           total: tasks.length,
                         ),
                         const SizedBox(height: 16),
-
                         _InfoSection(
                           title: 'Deadline',
                           subtitle: deadline,
                         ),
                         const SizedBox(height: 16),
-
                         if (prediction != null) ...[
                           _InfoSection(
                             title: 'Current pace',
@@ -205,15 +208,12 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
-
                         const SizedBox(height: 24),
-
                         Text(
                           'Tasks',
                           style: theme.textTheme.titleLarge,
                         ),
                         const SizedBox(height: 12),
-
                         ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: Row(
@@ -224,6 +224,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                   selected:
                                       selectedFilter == 'In progress',
                                   onTap: () {
+                                    markFeatureCompleted();
                                     setState(() {
                                       selectedFilter = 'In progress';
                                     });
@@ -236,6 +237,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                   text: 'Upcoming',
                                   selected: selectedFilter == 'Upcoming',
                                   onTap: () {
+                                    markFeatureCompleted();
                                     setState(() {
                                       selectedFilter = 'Upcoming';
                                     });
@@ -248,6 +250,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                   text: 'Completed',
                                   selected: selectedFilter == 'Completed',
                                   onTap: () {
+                                    markFeatureCompleted();
                                     setState(() {
                                       selectedFilter = 'Completed';
                                     });
@@ -257,9 +260,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
                         if (filteredTasks.isEmpty)
                           const ProjectTaskCard(
                             title: 'No tasks',
@@ -276,6 +277,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                               dueText: _getDueText(task.deadline),
                               assigneeInitial: task.assigneeInitial,
                               onTap: () {
+                                markFeatureCompleted();
                                 context.push(Routes.taskPath(task.id));
                               },
                             ),
@@ -295,7 +297,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           onPressed: isOnline
-              ? () => context.push(Routes.createTask)
+              ? () {
+                  markFeatureCompleted();
+                  context.push(Routes.createTask);
+                }
               : null,
           icon: const Icon(Symbols.stars, fill: 1),
           label: Text(

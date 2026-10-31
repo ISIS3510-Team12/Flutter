@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
@@ -19,12 +21,24 @@ import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/task_chip.dart'
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
-class ViewTaskScreen extends ConsumerWidget {
+class ViewTaskScreen extends ConsumerStatefulWidget {
   const ViewTaskScreen({super.key, required this.taskId});
 
   final String taskId;
 
+  @override
+  ConsumerState<ViewTaskScreen> createState() => _ViewTaskScreenState();
+}
+
+class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
+    with FeatureSessionMixin<ViewTaskScreen> {
+  String get taskId => widget.taskId;
+
+  @override
+  String get featureName => FeatureNames.viewTask;
+
   void _openEditTask(BuildContext context) {
+    markFeatureCompleted();
     context.push(Routes.editTaskPath(taskId));
   }
 
@@ -63,6 +77,7 @@ class ViewTaskScreen extends ConsumerWidget {
       initialTime: TimeOfDay.fromDateTime(current),
     );
     if (time == null) return;
+    markFeatureCompleted();
     final result = await ref
         .read(viewTaskViewModelProvider(taskId).notifier)
         .updateDeadline(
@@ -80,10 +95,12 @@ class ViewTaskScreen extends ConsumerWidget {
   }
 
   void _openPhoto(BuildContext context) {
+    markFeatureCompleted();
     context.push(Routes.taskPhotoPath(taskId));
   }
 
   Future<void> _deleteTask(BuildContext context, WidgetRef ref) async {
+    markFeatureCompleted();
     final result = await ref
         .read(viewTaskViewModelProvider(taskId).notifier)
         .deleteTask();
@@ -99,7 +116,7 @@ class ViewTaskScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = ref.watch(viewTaskViewModelProvider(taskId));
     final me = ref.watch(currentUserProvider).value;
@@ -112,6 +129,7 @@ class ViewTaskScreen extends ConsumerWidget {
       Future<TaskActionResult> Function() operation,
       String action,
     ) async {
+      markFeatureCompleted();
       final result = await operation();
       if (context.mounted) _report(context, result, action);
     }
@@ -185,11 +203,14 @@ class ViewTaskScreen extends ConsumerWidget {
                         reminderEnabled: data.reminderEnabled,
                         enabled: online,
                         onUnavailable: unavailable,
-                        onReminderChanged: (value) => _report(
-                          context,
-                          notifier().toggleReminder(value),
-                          "change this task's reminder",
-                        ),
+                        onReminderChanged: (value) {
+                          markFeatureCompleted();
+                          _report(
+                            context,
+                            notifier().toggleReminder(value),
+                            "change this task's reminder",
+                          );
+                        },
                         onEditDeadline: () =>
                             _editDeadline(context, ref, task.deadline),
                       ),
@@ -282,8 +303,10 @@ class ViewTaskScreen extends ConsumerWidget {
                       for (final related in data.relatedTasks) ...[
                         TaskCard(
                           task: related,
-                          onTap: () =>
-                              context.push(Routes.taskPath(related.id)),
+                          onTap: () {
+                            markFeatureCompleted();
+                            context.push(Routes.taskPath(related.id));
+                          },
                         ),
                         const SizedBox(height: 12),
                       ],

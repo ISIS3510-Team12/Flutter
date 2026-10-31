@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
@@ -93,7 +95,10 @@ class _GroupEditForm extends ConsumerStatefulWidget {
 }
 
 class _GroupEditFormState extends ConsumerState<_GroupEditForm>
-    with ShakeResetMixin<_GroupEditForm> {
+    with ShakeResetMixin<_GroupEditForm>, FeatureSessionMixin<_GroupEditForm> {
+  @override
+  String get featureName => FeatureNames.editGroup;
+
   late final TextEditingController nameController;
   late final TextEditingController descriptionController;
   late final TextEditingController searchController;
@@ -209,6 +214,7 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
     if (!mounted) return;
 
     if (success) {
+      markFeatureCompleted();
       context.pop(true);
     } else {
       final isOnline = ref.read(isOnlineProvider);

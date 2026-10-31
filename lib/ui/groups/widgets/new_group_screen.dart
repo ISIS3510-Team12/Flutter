@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,7 +24,10 @@ class NewGroupScreen extends ConsumerStatefulWidget {
 }
 
 class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
-    with ShakeResetMixin<NewGroupScreen> {
+    with ShakeResetMixin<NewGroupScreen>, FeatureSessionMixin<NewGroupScreen> {
+  @override
+  String get featureName => FeatureNames.createGroup;
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController classController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
@@ -91,6 +96,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
     if (!mounted) return;
 
     if (success) {
+      markFeatureCompleted();
       context.pop(true);
     } else {
       final isOnline = ref.read(isOnlineProvider);

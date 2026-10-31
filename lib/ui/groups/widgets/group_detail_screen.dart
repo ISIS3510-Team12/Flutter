@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
@@ -14,7 +16,7 @@ import 'package:team12_flutter_juggle/ui/groups/view_models/group_detail_view_mo
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
-class GroupDetailScreen extends ConsumerWidget {
+class GroupDetailScreen extends ConsumerStatefulWidget {
   const GroupDetailScreen({
     super.key,
     required this.groupId,
@@ -23,115 +25,133 @@ class GroupDetailScreen extends ConsumerWidget {
   final int groupId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GroupDetailScreen> createState() =>
+      _GroupDetailScreenState();
+}
+
+class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
+    with FeatureSessionMixin<GroupDetailScreen> {
+  int get groupId => widget.groupId;
+
+  @override
+  String get featureName => FeatureNames.viewGroup;
+
+  @override
+  Widget build(BuildContext context) {
     final groupState = ref.watch(
       groupDetailViewModelProvider(groupId),
     );
     final isOnline = ref.watch(isOnlineProvider);
 
     return ScreenLoadTracker(
-    screen: ScreenNames.groupDetail,
-    state: groupState,
-    child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Group detail'),
-        actions: [
-          IconButton(
-            onPressed: !isOnline
-                ? null
-                : () async {
-                    final updated = await context.push<bool>(
-                      Routes.editGroupPath(groupId),
-                    );
+      screen: ScreenNames.groupDetail,
+      state: groupState,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Group detail'),
+          actions: [
+            IconButton(
+              onPressed: !isOnline
+                  ? null
+                  : () async {
+                      markFeatureCompleted();
 
-                    if (!context.mounted) return;
-
-                    if (updated == true) {
-                      ref.invalidate(
-                        groupDetailViewModelProvider(groupId),
+                      final updated = await context.push<bool>(
+                        Routes.editGroupPath(groupId),
                       );
-                    }
+
+                      if (!context.mounted) return;
+
+                      if (updated == true) {
+                        ref.invalidate(
+                          groupDetailViewModelProvider(groupId),
+                        );
+                      }
+                    },
+              icon: const Icon(Icons.edit_outlined),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: groupState.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (error, stackTrace) => LoadErrorView(
+                  error: error,
+                  offlineMessage:
+                      'No saved group information is available while offline.',
+                  genericMessage: 'Could not load the group.',
+                  onRetry: () {
+                    ref.invalidate(
+                      groupDetailViewModelProvider(groupId),
+                    );
                   },
-            icon: const Icon(Icons.edit_outlined),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          const OfflineBanner(),
-          Expanded(
-            child: groupState.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              error: (error, stackTrace) => LoadErrorView(
-                error: error,
-                offlineMessage:
-                    'No saved group information is available while offline.',
-                genericMessage: 'Could not load the group.',
-                onRetry: () {
-                  ref.invalidate(groupDetailViewModelProvider(groupId));
-                },
-              ),
-              data: (state) => Column(
-                children: [
-                  if (state.fromCache)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                ),
+                data: (state) => Column(
+                  children: [
+                    if (state.fromCache)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .secondaryContainer,
+                        child: Text(
+                          'Showing saved information. It may be outdated.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSecondaryContainer,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      color: Theme.of(context)
-                          .colorScheme
-                          .secondaryContainer,
-                      child: Text(
-                        'Showing saved information. It may be outdated.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSecondaryContainer,
-                            ),
-                        textAlign: TextAlign.center,
+                    Expanded(
+                      child: _buildContent(
+                        context,
+                        state.group,
+                        state.projects,
                       ),
                     ),
-                  Expanded(
-                    child: _buildContent(
-                      context,
-                      state.group,
-                      state.projects,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: const CustomNavigationBar(),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: !isOnline
+              ? null
+              : () async {
+                  markFeatureCompleted();
+
+                  await context.push(
+                    Routes.createProjectPath(groupId),
+                  );
+
+                  if (!context.mounted) return;
+
+                  ref.invalidate(
+                    groupDetailViewModelProvider(groupId),
+                  );
+                },
+          backgroundColor: Theme.of(context).colorScheme.primaryFixed,
+          foregroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
+          icon: const Icon(Symbols.add_circle),
+          label: Text(isOnline ? 'Create project' : 'Offline'),
+        ),
       ),
-      bottomNavigationBar: const CustomNavigationBar(),
-      floatingActionButton: FloatingActionButton.extended(
-      onPressed: !isOnline
-          ? null
-          : () async {
-              await context.push(
-                Routes.createProjectPath(groupId),
-              );
-
-              if (!context.mounted) return;
-
-              ref.invalidate(
-                groupDetailViewModelProvider(groupId),
-              );
-            },
-      backgroundColor: Theme.of(context).colorScheme.primaryFixed,
-      foregroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
-      icon: const Icon(Symbols.add_circle),
-      label: Text(isOnline ? 'Create project' : 'Offline'),
-    ),
-    ),
     );
   }
 
@@ -161,10 +181,7 @@ class GroupDetailScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildMembers(
-            context,
-            group.members,
-          ),
+          _buildMembers(context, group.members),
           const SizedBox(height: 32),
           Text(
             'Related projects',
@@ -177,10 +194,7 @@ class GroupDetailScreen extends ConsumerWidget {
             const Text('No projects found.')
           else
             ...projects.map(
-              (project) => _buildProjectCard(
-                context,
-                project,
-              ),
+              (project) => _buildProjectCard(context, project),
             ),
         ],
       ),
@@ -206,13 +220,11 @@ class GroupDetailScreen extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor:
-                  theme.colorScheme.primaryContainer,
+              backgroundColor: theme.colorScheme.primaryContainer,
               child: Text(
                 member.initial,
                 style: TextStyle(
-                  color:
-                      theme.colorScheme.onPrimaryContainer,
+                  color: theme.colorScheme.onPrimaryContainer,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -238,6 +250,7 @@ class GroupDetailScreen extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
+          markFeatureCompleted();
           context.push(
             Routes.projectDetailPath(project.id),
           );
@@ -248,24 +261,20 @@ class GroupDetailScreen extends ConsumerWidget {
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor:
-                    theme.colorScheme.primaryContainer,
+                backgroundColor: theme.colorScheme.primaryContainer,
                 child: Icon(
                   Icons.folder_outlined,
-                  color:
-                      theme.colorScheme.onPrimaryContainer,
+                  color: theme.colorScheme.onPrimaryContainer,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       project.name,
-                      style:
-                          theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
