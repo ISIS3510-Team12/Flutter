@@ -12,6 +12,7 @@ import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_pr
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/next_task_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -181,5 +182,6 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
     ref.invalidate(tasksOverviewProvider);
     ref.invalidate(calendarViewModelProvider);
     ref.invalidate(homeViewModelProvider);
+    ref.read(nextTaskViewModelProvider.notifier).refresh();
   }
 }
