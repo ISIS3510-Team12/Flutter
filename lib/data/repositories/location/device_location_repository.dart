@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/lru_cache.dart';
 
 enum LocationAccess { granted, denied, permanentlyDenied, serviceDisabled }
 
@@ -18,6 +20,11 @@ class CurrentLocation {
 }
 
 class DeviceLocationRepository {
+  DeviceLocationRepository({required LruCache<String, String> placeNameCache})
+    : _placeNameCache = placeNameCache;
+
+  final LruCache<String, String> _placeNameCache;
+
   Future<LocationAccess> requestWhileInUse() async {
     final status = await Permission.locationWhenInUse.request();
     if (status.isPermanentlyDenied) return LocationAccess.permanentlyDenied;
@@ -54,7 +61,29 @@ class DeviceLocationRepository {
     }
   }
 
-  Future<String?> placeName(LatLng point) async {
+  Future<String?> placeName(LatLng point) {
+    final key =
+        '${point.latitude.toStringAsFixed(4)},${point.longitude.toStringAsFixed(4)}';
+    return _placeNameCache
+        .getOrLoad(key, () {
+          _log('geocoder call $key');
+          return _lookupPlaceName(point);
+        })
+        .then((name) {
+          _log(
+            '$key -> ${name ?? 'none'} '
+            '(hits=${_placeNameCache.hits}, misses=${_placeNameCache.misses}, '
+            'entries=${_placeNameCache.length})',
+          );
+          return name;
+        });
+  }
+
+  void _log(String message) {
+    if (kDebugMode) debugPrint('Place name cache: $message');
+  }
+
+  Future<String?> _lookupPlaceName(LatLng point) async {
     try {
       final placemarks = await Geocoding().placemarkFromCoordinates(
         point.latitude,
