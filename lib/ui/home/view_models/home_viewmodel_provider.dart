@@ -41,6 +41,11 @@ final homeViewModelProvider = StreamProvider.autoDispose<HomeState>((ref) async*
     }
   }
 
+  final hasStoredData =
+      (await localTask.findAll(user.userId)).isNotEmpty ||
+      await localNotification.findForUser(user.userId) != null;
+  final dataUnavailable = !hasStoredData && (!isOnline || serviceUnavailable);
+
   final nowValue = now();
   final (:startMs, :endMs) = todayWindow(nowValue);
 
@@ -59,6 +64,7 @@ final homeViewModelProvider = StreamProvider.autoDispose<HomeState>((ref) async*
     (urgentCount, dueToday, todayNotifications) => HomeState(
       user: user,
       serviceUnavailable: serviceUnavailable,
+      dataUnavailable: dataUnavailable,
       numUrgentTasks: urgentCount,
       dueTodayTasks: dueToday
           .map((task) => HomeTaskItem.fromTask(task, nowValue))

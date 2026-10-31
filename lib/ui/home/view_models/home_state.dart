@@ -38,6 +38,7 @@ abstract class HomeState with _$HomeState {
     required List<HomeTaskItem> dueTodayTasks,
     required List<AppNotification> recentActivity,
     @Default(false) bool serviceUnavailable,
+    @Default(false) bool dataUnavailable,
   }) = _HomeState;
 
   int get numNotifications => recentActivity.length;

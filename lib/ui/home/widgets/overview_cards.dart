@@ -40,8 +40,8 @@ class OverviewCards extends StatelessWidget {
             title: card.title,
             description: card.description,
             route: card.route,
-            numTasks: numTasks ?? 0,
-            numNotifications: numNotifications ?? 0,
+            numTasks: numTasks,
+            numNotifications: numNotifications,
           ),
         );
       }).toList(),
@@ -64,8 +64,8 @@ class CardItem extends StatelessWidget {
   final String title;
   final String description;
   final String route;
-  final int numTasks;
-  final int numNotifications;
+  final int? numTasks;
+  final int? numNotifications;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +100,7 @@ class CardItem extends StatelessWidget {
                 children: [
                   if (description == 'Tasks')
                     Text(
-                      '$numTasks',
+                      '${numTasks ?? '-'}',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: .bold,
@@ -109,7 +109,7 @@ class CardItem extends StatelessWidget {
                     )
                   else if (description == 'Notifications')
                     Text(
-                      '$numNotifications',
+                      '${numNotifications ?? '-'}',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: .bold,

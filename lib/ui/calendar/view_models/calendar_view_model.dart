@@ -26,7 +26,10 @@ class CalendarViewModel extends AsyncNotifier<CalendarState> {
       isOnline: ref.watch(isOnlineProvider),
       fetch: () => taskRepository.getAllTasks(mine: true),
       save: (tasks) => cache.replaceForUser(user.userId, tasks),
-      fallback: () => cache.findMine(user.userId),
+      fallback: () async {
+        final saved = await cache.findMine(user.userId);
+        return saved.isEmpty ? null : saved;
+      },
     );
 
     return CalendarState(

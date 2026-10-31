@@ -22,6 +22,7 @@ final connectivityProvider = Provider<Connectivity>((ref) => Connectivity());
 
 class ConnectivityNotifier extends Notifier<ConnectivityState> {
   bool _streamEmitted = false;
+  bool _confirmedOnline = false;
 
   @override
   ConnectivityState build() {
@@ -64,11 +65,11 @@ class ConnectivityNotifier extends Notifier<ConnectivityState> {
     final next = results.toSet();
     final wasOnline = state.isOnline;
     final isOnline = next.any((r) => r != ConnectivityResult.none);
+    final lostConnection = _confirmedOnline && wasOnline && !isOnline;
+    if (isOnline) _confirmedOnline = true;
     state = state.copyWith(
       results: next,
-      lastOnlineAt: wasOnline && !isOnline
-          ? DateTime.now()
-          : state.lastOnlineAt,
+      lastOnlineAt: lostConnection ? DateTime.now() : state.lastOnlineAt,
     );
   }
 

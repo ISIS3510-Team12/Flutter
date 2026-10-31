@@ -9,10 +9,12 @@ class OverviewTabs extends StatefulWidget {
     super.key,
     required this.dueTodayTasks,
     required this.recentActivity,
+    this.dataUnavailable = false,
   });
 
   final List<HomeTaskItem> dueTodayTasks;
   final List<AppNotification> recentActivity;
+  final bool dataUnavailable;
   @override
   State<OverviewTabs> createState() => _OverviewTabsState();
 }
@@ -61,7 +63,9 @@ class _OverviewTabsState extends State<OverviewTabs> {
             ),
             if (_selectedTab == 0)
               OverviewList(
-                emptyText: 'No upcoming tasks',
+                emptyText: widget.dataUnavailable
+                    ? "We couldn't load your tasks yet"
+                    : 'No upcoming tasks',
                 items: [
                   for (final task in widget.dueTodayTasks)
                     CardItem(
@@ -75,7 +79,9 @@ class _OverviewTabsState extends State<OverviewTabs> {
               )
             else
               OverviewList(
-                emptyText: 'No recent activity',
+                emptyText: widget.dataUnavailable
+                    ? "We couldn't load your activity yet"
+                    : 'No recent activity',
                 items: [
                   for (final activity in widget.recentActivity)
                     CardItem(
