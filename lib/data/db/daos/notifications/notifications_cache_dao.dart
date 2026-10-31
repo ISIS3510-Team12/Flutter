@@ -24,6 +24,20 @@ class NotificationsCacheDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
+  Future<void> deleteById(String userId, String id) async {
+    await (delete(
+      cachedNotifications,
+    )..where((n) => n.userId.equals(userId) & n.id.equals(id))).go();
+  }
+
+  Future<List<AppNotification>?> findForUser(String userId) async {
+    final query = select(cachedNotifications)
+      ..where((n) => n.userId.equals(userId))
+      ..orderBy([(n) => OrderingTerm.desc(n.occurredAtUtcMs)]);
+    final rows = await query.get();
+    return rows.isEmpty ? null : rows.map(_toNotification).toList();
+  }
+
   Stream<List<AppNotification>> watchBetween(
     String userId, {
     required int startMs,
@@ -53,7 +67,7 @@ class NotificationsCacheDao extends DatabaseAccessor<AppDatabase>
       return false;
     }
   }
-  
+
   CachedNotificationsCompanion _toCompanion(
     String userId,
     AppNotification notification,
@@ -67,8 +81,6 @@ class NotificationsCacheDao extends DatabaseAccessor<AppDatabase>
       type: notification.type,
     );
   }
-
-  
 
   AppNotification _toNotification(CachedNotificationRow row) {
     return AppNotification(

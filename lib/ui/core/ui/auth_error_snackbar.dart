@@ -8,6 +8,7 @@ extension AuthErrorListener on WidgetRef {
   void listenForAuthErrors(BuildContext context) {
     listen(authViewModelProvider, (_, next) {
       if (next case AsyncError(:final error)) {
+        if (error is AuthTimeoutException) return;
         if (error is NetworkAuthException && !read(isOnlineProvider)) {
           return;
         }

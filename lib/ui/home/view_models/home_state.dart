@@ -16,11 +16,11 @@ abstract class HomeTaskItem with _$HomeTaskItem {
     String? assignee,
   }) = _HomeTaskItem;
 
-  factory HomeTaskItem.fromTask(Task task) {
+  factory HomeTaskItem.fromTask(Task task, DateTime now) {
     return HomeTaskItem(
       title: task.title,
       isPriority: task.isPriority,
-      description: deadlineText(task.deadline),
+      description: deadlineText(task.deadline, now: now),
       group: task.groupName.isEmpty ? null : task.groupName,
       assignee: task.assigneeName.isEmpty ? null : task.assigneeName,
     );
@@ -37,6 +37,7 @@ abstract class HomeState with _$HomeState {
     required int numUrgentTasks,
     required List<HomeTaskItem> dueTodayTasks,
     required List<AppNotification> recentActivity,
+    @Default(false) bool serviceUnavailable,
   }) = _HomeState;
 
   int get numNotifications => recentActivity.length;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-String deadlineText(DateTime deadline) {
-  final now = DateTime.now();
+String deadlineText(DateTime deadline, {DateTime? now}) {
+  now ??= DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final day = DateTime(deadline.year, deadline.month, deadline.day);
   final daysAway = day.difference(today).inDays;

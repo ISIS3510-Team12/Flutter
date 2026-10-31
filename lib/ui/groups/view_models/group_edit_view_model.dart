@@ -8,6 +8,8 @@ import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart
 import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
 
 class GroupEditViewModel extends AsyncNotifier<TaskGroup> {
+  Object? lastFailure;
+
   GroupEditViewModel(this.groupId);
 
   final int groupId;
@@ -84,7 +86,7 @@ class GroupEditViewModel extends AsyncNotifier<TaskGroup> {
 
       final updatedGroup = await repository.getGroup(groupId);
 
-      await cache.save(user.userId, updatedGroup);
+      await saveQuietly(() => cache.save(user.userId, updatedGroup));
 
       return updatedGroup;
     });
@@ -92,6 +94,8 @@ class GroupEditViewModel extends AsyncNotifier<TaskGroup> {
     if (!ref.mounted) {
       return false;
     }
+
+    lastFailure = result.error;
 
     if (result.hasError) {
       // Restore the previous state and preserve the form.

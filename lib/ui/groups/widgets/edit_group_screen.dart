@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -222,9 +223,11 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isOnline
-                ? 'Could not update the group. Please try again.'
-                : 'No internet connection. Please reconnect and try again.',
+            writeFailureMessage(
+              viewModel.lastFailure,
+              isOnline: isOnline,
+              fallback: 'Could not update the group. Please try again.',
+            ),
           ),
         ),
       );

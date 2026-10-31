@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter/services.dart';
@@ -104,9 +105,11 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isOnline
-                ? 'Could not create the group.'
-                : 'No internet connection. Please reconnect and try again.',
+            writeFailureMessage(
+              ref.read(newGroupViewModelProvider).error,
+              isOnline: isOnline,
+              fallback: 'Could not create the group.',
+            ),
           ),
         ),
       );

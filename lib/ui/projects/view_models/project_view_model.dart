@@ -11,6 +11,7 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
+import 'package:team12_flutter_juggle/ui/core/network/parallel_wait.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 
 part 'project_view_model.freezed.dart';
@@ -32,7 +33,7 @@ class ProjectDetailViewModel extends AsyncNotifier<ProjectDetailState> {
     final projectsCache = ref.watch(projectsCacheDaoProvider);
     final tasksCache = ref.watch(projectTasksCacheDaoProvider);
 
-    final (projectResult, tasksResult) = await (
+    final (projectResult, tasksResult) = await waitBoth(
       networkFirst<Project>(
         isOnline: isOnline,
         fetch: () => projectRepository.getProject(projectId),
@@ -42,11 +43,10 @@ class ProjectDetailViewModel extends AsyncNotifier<ProjectDetailState> {
       networkFirst<List<Task>>(
         isOnline: isOnline,
         fetch: () => taskRepository.getProjectTasks(projectId),
-        save: (tasks) =>
-            tasksCache.replaceForProject(userId, projectId, tasks),
+        save: (tasks) => tasksCache.replaceForProject(userId, projectId, tasks),
         fallback: () => tasksCache.findForProject(userId, projectId),
       ),
-    ).wait;
+    );
 
     if (!ref.mounted) {
       throw StateError('Project detail provider was disposed.');
@@ -107,8 +107,7 @@ class ProjectCreateViewModel extends AsyncNotifier<Project?> {
         groupId: groupId,
       );
 
-      final createdProject =
-          await projectRepository.createProject(projectData);
+      final createdProject = await projectRepository.createProject(projectData);
 
       if (!ref.mounted) return createdProject;
 
@@ -120,9 +119,7 @@ class ProjectCreateViewModel extends AsyncNotifier<Project?> {
       final friendlyError = switch (error) {
         NetworkUnavailableException() => error,
         ServiceUnavailableException() => error,
-        _ => Exception(
-            'Could not create the project. Please try again.',
-          ),
+        _ => Exception('Could not create the project. Please try again.'),
       };
 
       state = AsyncError(friendlyError, stackTrace);

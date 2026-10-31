@@ -18,6 +18,7 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/next_task_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
 import 'package:team12_flutter_juggle/ui/core/network/parallel_wait.dart';
@@ -330,6 +331,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
         ref.invalidate(tasksOverviewProvider);
         ref.invalidate(calendarViewModelProvider);
         ref.invalidate(homeViewModelProvider);
+        ref.read(nextTaskViewModelProvider.notifier).refresh();
       }
     }
     return CreateTaskResult.created;

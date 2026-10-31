@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
@@ -99,20 +100,11 @@ class GroupsScreen extends ConsumerWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(),
       ),
-      error: (error, stackTrace) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Could not load groups.'),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () {
-                ref.invalidate(groupsViewModelProvider);
-              },
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (error, stackTrace) => LoadErrorView(
+        error: error,
+        offlineMessage: "You're offline. Reconnect to load your groups.",
+        genericMessage: 'Could not load groups.',
+        onRetry: () => ref.invalidate(groupsViewModelProvider),
       ),
       data: (state) {
         final groups = state.filteredGroups;

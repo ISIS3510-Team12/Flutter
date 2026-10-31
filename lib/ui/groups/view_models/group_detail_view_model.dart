@@ -9,6 +9,7 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
+import 'package:team12_flutter_juggle/ui/core/network/parallel_wait.dart';
 
 part 'group_detail_view_model.freezed.dart';
 
@@ -28,7 +29,7 @@ class GroupDetailViewModel extends AsyncNotifier<GroupDetailState> {
     final groupsCache = ref.watch(groupsCacheDaoProvider);
     final projectsCache = ref.watch(projectsCacheDaoProvider);
 
-    final (groupResult, projectsResult) = await (
+    final (groupResult, projectsResult) = await waitBoth(
       networkFirst<TaskGroup>(
         isOnline: isOnline,
         fetch: () => groupRepository.getGroup(groupId),
@@ -42,7 +43,7 @@ class GroupDetailViewModel extends AsyncNotifier<GroupDetailState> {
             projectsCache.replaceForGroup(userId, groupId, projects),
         fallback: () => projectsCache.findForGroup(userId, groupId),
       ),
-    ).wait;
+    );
 
     if (!ref.mounted) {
       throw StateError('Group detail provider was disposed.');

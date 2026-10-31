@@ -13,6 +13,7 @@ import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_mode
 import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/next_task_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
@@ -42,6 +43,7 @@ final outboxSyncServiceProvider = Provider<OutboxSyncService>((ref) {
         ref.invalidate(tasksOverviewProvider);
         ref.invalidate(calendarViewModelProvider);
         ref.invalidate(homeViewModelProvider);
+        ref.read(nextTaskViewModelProvider.notifier).refresh();
       }
       if (types.contains(PendingOpType.saveLocation)) {
         ref.invalidate(locationViewModelProvider);

@@ -4,6 +4,7 @@ import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/auth_timeout_message.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
@@ -200,6 +201,7 @@ class _SignupFormState extends ConsumerState<SignupForm>
                   ),
                 ),
               ),
+              const AuthTimeoutMessage(),
               BottomAuthOptions(
                 label: 'Already have an account?',
                 buttonText: 'Sign in',

@@ -21,6 +21,14 @@ class NetworkAuthException extends AuthException {
       );
 }
 
+class AuthTimeoutException extends AuthException {
+  const AuthTimeoutException()
+    : super(
+        'Sign in took too long. Check your connection and try again.',
+        code: 'timeout',
+      );
+}
+
 class AuthCancelledException extends AuthException {
   const AuthCancelledException()
     : super('Sign in was cancelled', code: 'cancelled');

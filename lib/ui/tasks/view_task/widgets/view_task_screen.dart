@@ -176,6 +176,15 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
                   return ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
+                      if (!online) ...[
+                        Text(
+                          "You're offline. Reconnect to make changes.",
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       Text(task.title, style: theme.textTheme.titleMedium),
                       const SizedBox(height: 4),
                       Text(

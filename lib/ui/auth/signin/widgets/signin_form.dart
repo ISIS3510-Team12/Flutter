@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/auth_timeout_message.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
 import 'package:go_router/go_router.dart';
@@ -133,6 +134,7 @@ class _SigninFormState extends ConsumerState<SigninForm>
                   ),
                 ),
               ),
+              const AuthTimeoutMessage(),
               BottomAuthOptions(
                 label: 'Dont have an account?',
                 buttonText: 'Sign up',
