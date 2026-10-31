@@ -2,8 +2,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/repositories/profile/daily_reminder_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/profile/settings_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/app_settings.dart';
+import 'package:team12_flutter_juggle/ui/core/background/daily_reminder_callback.dart';
 
 class SettingsViewModel extends AsyncNotifier<AppSettings> {
   @override
@@ -38,6 +40,13 @@ class SettingsViewModel extends AsyncNotifier<AppSettings> {
           .read(settingsRepositoryProvider)
           .updateDailyReminders(enabled),
     );
+
+    if (enabled) {
+      final reminders = ref.read(dailyReminderRepositoryProvider);
+      await reminders.requestNotificationPermission();
+      await reminders.requestExactAlarmPermission();
+    }
+    await _syncDailyReminder();
   }
 
   Future<void> updateDailyReminderTime(String time) async {
@@ -50,6 +59,22 @@ class SettingsViewModel extends AsyncNotifier<AppSettings> {
           .read(settingsRepositoryProvider)
           .updateDailyReminderTime(time),
     );
+
+    await _syncDailyReminder();
+  }
+
+  Future<void> _syncDailyReminder() async {
+    if (!ref.mounted) return;
+    final current = state.value;
+    if (current == null) return;
+
+    final reminders = ref.read(dailyReminderRepositoryProvider);
+    final time = current.dailyReminderTime;
+    if (current.dailyRemindersEnabled && time != null) {
+      await reminders.schedule(time, dailyReminderTriggered);
+    } else {
+      await reminders.cancel();
+    }
   }
 
   Future<void> _persist(

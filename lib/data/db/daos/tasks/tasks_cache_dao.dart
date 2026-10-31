@@ -121,6 +121,22 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
     return query.watchSingle().map((row) => row.read(count) ?? 0);
   }
 
+  Future<List<Task>> findAll(String userId) async {
+    final query = select(cachedTasks)
+      ..where((t) => t.userId.equals(userId))
+      ..orderBy([(t) => OrderingTerm.asc(t.deadlineUtcMs)]);
+    final rows = await query.get();
+    return rows.map(_toTask).toList();
+  }
+
+  Future<List<Task>> findMine(String userId) async {
+    final query = select(cachedTasks)
+      ..where((t) => t.userId.equals(userId) & t.isMine.equals(true))
+      ..orderBy([(t) => OrderingTerm.asc(t.deadlineUtcMs)]);
+    final rows = await query.get();
+    return rows.map(_toTask).toList();
+  }
+
   Future<bool> refresh(
     String userId,
     Future<List<Task>> Function() fetch,

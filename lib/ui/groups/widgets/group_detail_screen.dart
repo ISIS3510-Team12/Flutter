@@ -92,6 +92,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   },
                 ),
                 data: (state) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (state.fromCache)
                       Container(
