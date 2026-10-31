@@ -10,7 +10,7 @@ import 'package:team12_flutter_juggle/data/local/hive_store.dart';
 import './dev_config.dart';
 import './firebase_options.dart';
 
-const bool useDevConfig = true;
+const bool useDevConfig = false;
 
 Future<void> _connectDevConfig() async {
   await FirebaseAuth.instance.useAuthEmulator(
