@@ -6,6 +6,7 @@ import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
+import 'package:team12_flutter_juggle/ui/core/network/parallel_wait.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
@@ -56,16 +57,16 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
         fromCache: true,
       );
     }
-    await _saveTask(task);
-    Uint8List? photo;
-    var photoUnavailable = false;
-    if (task.hasPhoto) {
-      try {
-        photo = await repository.getTaskPhoto(taskId);
-      } catch (_) {
-        photoUnavailable = true;
-      }
-    }
+    final Future<({Uint8List? bytes, bool unavailable})> photoLoad =
+        task.hasPhoto
+        ? repository
+              .getTaskPhoto(taskId)
+              .then((bytes) => (bytes: bytes, unavailable: false))
+              .catchError((Object _) => (bytes: null, unavailable: true))
+        : Future.value((bytes: null, unavailable: false));
+    final (_, loaded) = await waitBoth(_saveTask(task), photoLoad);
+    final photo = loaded.bytes;
+    final photoUnavailable = loaded.unavailable;
     return ViewTaskState(
       task: task,
       relatedTasks: task.relatedTasks,

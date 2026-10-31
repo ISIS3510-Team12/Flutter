@@ -20,6 +20,7 @@ import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_mode
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
+import 'package:team12_flutter_juggle/ui/core/network/parallel_wait.dart';
 import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
@@ -105,7 +106,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
 
   Future<_GroupData> _groupData(String userId, TaskGroup group) async {
     final online = _isOnline();
-    final (projects, candidates) = await (
+    final (projects, candidates) = await waitBoth(
       networkFirst(
         isOnline: online,
         fetch: () =>
@@ -121,7 +122,7 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
         fallback: () async =>
             await _tasksCache.findPendingForGroup(userId, group.id) ?? [],
       ),
-    ).wait;
+    );
     return (
       projects: projects.value,
       candidates: candidates.value,

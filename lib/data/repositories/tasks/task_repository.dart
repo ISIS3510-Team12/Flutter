@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/today_summary.dart';
+import 'package:team12_flutter_juggle/ui/core/network/parallel_wait.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/auth_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
@@ -47,8 +48,10 @@ class TaskRepository {
 
   Future<List<Task>> getGroupTasks(TaskGroup group) async {
     try {
-      final own = await _dio.get<List<dynamic>>('/tasks/own/${group.id}');
-      final others = await _dio.get<List<dynamic>>('/tasks/group/${group.id}');
+      final (own, others) = await waitBoth(
+        _dio.get<List<dynamic>>('/tasks/own/${group.id}'),
+        _dio.get<List<dynamic>>('/tasks/group/${group.id}'),
+      );
       return [
         for (final json in own.data!)
           Task.fromJson(json as Map<String, dynamic>, groupName: group.name),
@@ -70,15 +73,17 @@ class TaskRepository {
     int? dueWithinDays,
   }) async {
     try {
-      final response = await _dio.get<List<dynamic>>(
-        '/tasks/all',
-        queryParameters: {
-          'mine': mine,
-          'priority': priority,
-          'due_within_days': ?dueWithinDays,
-        },
+      final (response, groups) = await waitBoth(
+        _dio.get<List<dynamic>>(
+          '/tasks/all',
+          queryParameters: {
+            'mine': mine,
+            'priority': priority,
+            'due_within_days': ?dueWithinDays,
+          },
+        ),
+        _loadGroupNames(),
       );
-      final groups = await _loadGroupNames();
       return response.data!.map((json) {
         final map = json as Map<String, dynamic>;
         return Task.fromJson(
@@ -125,9 +130,11 @@ class TaskRepository {
 
   Future<Task> getTask(String id) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/tasks/$id');
+      final (response, groups) = await waitBoth(
+        _dio.get<Map<String, dynamic>>('/tasks/$id'),
+        _loadGroupNames(),
+      );
       final json = response.data!;
-      final groups = await _loadGroupNames();
       return Task.fromJson(json, groupName: groups[json['group_id']] ?? '');
     } catch (e) {
       throw repositoryError('load task', e);
