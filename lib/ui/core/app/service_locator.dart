@@ -1,24 +1,25 @@
+import 'package:clock/clock.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:team12_flutter_juggle/data/local/hive_store.dart';
+
+import './dev_config.dart';
 import './firebase_options.dart';
 
-Future<void> setupDependencies() async {
-  await dotenv.load(fileName: '.env');
+const bool useDevConfig = false;
 
-  if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  }
-
-  await GoogleSignIn.instance.initialize();
+Future<void> _connectDevConfig() async {
+  await FirebaseAuth.instance.useAuthEmulator(
+    DevConfig.host,
+    DevConfig.authPort,
+  );
 }
 
-Future<void> setupBackgroundDependencies() async {
+Future<void> setupDependencies() async {
   if (!dotenv.isInitialized) {
     await dotenv.load(fileName: '.env');
   }
@@ -27,8 +28,14 @@ Future<void> setupBackgroundDependencies() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    if (useDevConfig) await _connectDevConfig();
   }
+
+  await initHive();
+
+  await GoogleSignIn.instance.initialize();
 }
 
 final googleSignInProvider = Provider((ref) => GoogleSignIn.instance);
 final firebaseAuthProvider = Provider((ref) => FirebaseAuth.instance);
+final clockProvider = Provider<Clock>((ref) => const Clock());

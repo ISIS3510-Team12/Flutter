@@ -1,0 +1,8 @@
+class DevConfig {
+
+  static String get host => Uri.parse(apiUrl).host;
+
+  static const int authPort = 9099;
+
+  static const String apiUrl = 'http://10.0.2.2:8000';
+}

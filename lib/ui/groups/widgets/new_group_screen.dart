@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
 import 'package:team12_flutter_juggle/domain/models/user/user.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/group_users_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/groups/view_models/new_group_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 
 class NewGroupScreen extends ConsumerStatefulWidget {
   const NewGroupScreen({
@@ -17,16 +24,58 @@ class NewGroupScreen extends ConsumerStatefulWidget {
   ConsumerState<NewGroupScreen> createState() => _NewGroupScreenState();
 }
 
-class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
+class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
+    with ShakeResetMixin<NewGroupScreen>, FeatureSessionMixin<NewGroupScreen> {
+  @override
+  String get featureName => FeatureNames.createGroup;
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController classController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
 
+  final _formKey = GlobalKey<FormState>();
   final Set<String> selectedUserIds = {};
   String searchQuery = '';
 
+  Future<void> _resetForm() async {
+    if (!mounted) return;
+
+    if (ref.read(newGroupViewModelProvider).isLoading) return;
+
+    await runGuardedReset(() async {
+      final shouldClear = await showShakeClearDialog(context: context);
+
+      if (!mounted || shouldClear != true) return;
+
+      nameController.clear();
+      classController.clear();
+      searchController.clear();
+
+      selectedUserIds.clear();
+      _formKey.currentState?.reset();
+
+      setState(() {
+        searchQuery = '';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Form cleared.'),
+        ),
+      );
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    startShakeDetector(_resetForm);
+  }
+
   @override
   void dispose() {
+    stopShakeDetector();
     nameController.dispose();
     classController.dispose();
     searchController.dispose();
@@ -35,6 +84,8 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
 
     
   Future<void> _createGroup() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final success = await ref
         .read(newGroupViewModelProvider.notifier)
         .createGroup(
@@ -46,11 +97,20 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
     if (!mounted) return;
 
     if (success) {
+      markFeatureCompleted();
       context.pop(true);
     } else {
+      final isOnline = ref.read(isOnlineProvider);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not create the group.'),
+        SnackBar(
+          content: Text(
+            writeFailureMessage(
+              ref.read(newGroupViewModelProvider).error,
+              isOnline: isOnline,
+              fallback: 'Could not create the group.',
+            ),
+          ),
         ),
       );
     }
@@ -61,6 +121,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
   Widget build(BuildContext context) {
     final usersState = ref.watch(groupUsersViewModelProvider);
     final groupState = ref.watch(newGroupViewModelProvider);
+    final isOnline = ref.watch(isOnlineProvider);
 
     return ScreenLoadTracker(
       screen: ScreenNames.newGroup,
@@ -71,15 +132,50 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (!isOnline) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.wifi_off,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'You are offline. Reconnect to create the group.',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+
             _buildTextField(
               context: context,
               label: 'Name',
               hintText: 'An amazing group',
               helperText: 'Give your group a name',
               controller: nameController,
+              validator: Validators.name,
+              inputFormatters: Validators.titleTextInputFormatters,
+              maxLength: Validators.maxNameLength,
             ),
             const SizedBox(height: 20),
             _buildTextField(
@@ -88,6 +184,8 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
               hintText: 'ISIS-3510 group',
               helperText: 'Enter the group description',
               controller: classController,
+              inputFormatters: Validators.descriptionTextInputFormatters,
+              maxLength: Validators.maxDescriptionLength,
             ),
             const SizedBox(height: 28),
             Text(
@@ -107,8 +205,10 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
             _buildActionButtons(
               context,
               groupState.isLoading,
+              isOnline,
             ),
           ],
+        ),
         ),
       ),
     ),
@@ -189,6 +289,9 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
     required String hintText,
     required String helperText,
     required TextEditingController controller,
+    FormFieldValidator<String>? validator,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
   }) {
     final theme = Theme.of(context);
 
@@ -202,8 +305,11 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
+          validator: validator,
+          inputFormatters: inputFormatters,
+          maxLength: maxLength,
           decoration: InputDecoration(
             hintText: hintText,
             helperText: helperText,
@@ -327,12 +433,13 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
   Widget _buildActionButtons(
     BuildContext context,
     bool isLoading,
+    bool isOnline,
   ) {
     return Row(
       children: [
         Expanded(
           child: FilledButton.icon(
-            onPressed: isLoading ? null : _createGroup,
+            onPressed: (isLoading || !isOnline) ? null : _createGroup,
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -355,7 +462,8 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen> {
                     size: 20,
                   ),
             label: Text(
-              isLoading ? 'Creating...' : 'Create Group',
+              isLoading ? 'Creating...'
+              : (!isOnline ? 'Offline' : 'Create Group'),
             ),
           ),
         ),

@@ -22,4 +22,27 @@ class TelemetryRepository {
       return false;
     }
   }
+
+  Future<bool> registerFeatureSession({
+    required String feature,
+    required DateTime openedAt,
+    required DateTime closedAt,
+    required bool completed,
+  }) async {
+    try {
+      await _dio.post<void>(
+        completed
+            ? '/telemetry/feature-session'
+            : '/telemetry/feature-session/abandoned',
+        data: {
+          'feature': feature,
+          'opened_at': openedAt.toUtc().toIso8601String(),
+          'closed_at': closedAt.toUtc().toIso8601String(),
+        },
+      );
+      return true;
+    } on DioException {
+      return false;
+    }
+  }
 }

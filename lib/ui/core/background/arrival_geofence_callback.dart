@@ -10,7 +10,7 @@ import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';
 Future<void> arrivalGeofenceTriggered(GeofenceCallbackParams params) async {
   if (params.event != GeofenceEvent.enter) return;
   try {
-    await setupBackgroundDependencies();
+    await setupDependencies();
     final auth = FirebaseAuth.instance;
     final user =
         auth.currentUser ??

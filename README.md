@@ -14,7 +14,19 @@ Juggle is a smart task coordination platform for university students, especially
 flutter pub get
 ```
 
-2. Create a `.env` file in the root directory of the project and add the following environment variables with the Firebase project credentials:
+2. Generate the Freezed and Drift files by running the following command in the terminal:
+
+```bash
+dart run build_runner build
+```
+
+   Whenever you change a Drift table (`lib/data/db/tables/*.dart`), bump `AppDatabase.schemaVersion` and export a snapshot of the new schema for future migration checks:
+
+   ```bash
+   dart run drift_dev schema dump lib/data/db/app_database.dart drift_schemas/
+   ```
+
+3. Create a `.env` file in the root directory of the project and add the following environment variables with the Firebase project credentials:
 
 ```
 APIKEY=
@@ -25,9 +37,37 @@ STORAGEBUCKET=
 API_URL=http://10.0.2.2:8000
 ```
 
-3. In `android/local.properties`, add the following line with the Google Maps API key:
+4. In `android/local.properties`, add the following line with the Google Maps API key:
 
 ```
 MAPS_API_KEY=GOOGLE_MAPS_API_KEY
 ```
 
+
+## Firebase Auth emulator
+
+Enable it to use Firebase Auth Emulator to avoid using real Firebase Auth during development.
+
+### Backend
+
+1. Start the Firebase Auth emulator by running the following command in the terminal from the backend root directory
+
+```bash
+firebase emulators:start --only auth
+```
+
+The emulator UI is available at http://localhost:4000
+
+2. Add the following variable to the backend environment file and start the backend
+
+```
+FIREBASE_AUTH_EMULATOR_HOST=host.docker.internal:9099
+```
+
+### Flutter
+
+To use the Firebase Auth emulator and the local backend, set `useDevConfig` to `true` in `lib/ui/core/app/service_locator.dart`:
+
+```dart
+const bool useDevConfig = true;
+```

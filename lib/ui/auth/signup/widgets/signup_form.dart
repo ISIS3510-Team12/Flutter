@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/input_field.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/auth_timeout_message.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/bottom_auth_options.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
-import 'package:flutter/services.dart';
 
-typedef SignupCallback = Future<void> Function({
+typedef SignupCallback = void Function({
   required String firstName,
   required String lastName,
   required String email,
   required String password,
 });
 
-class SignupForm extends StatefulWidget {
+class SignupForm extends ConsumerStatefulWidget {
   const SignupForm({
     super.key,
     required this.isLoading,
@@ -25,28 +30,61 @@ class SignupForm extends StatefulWidget {
   final GoogleSignInCallback onGoogleSignIn;
 
   @override
-  State<SignupForm> createState() => _SignupFormState();
+  ConsumerState<SignupForm> createState() => _SignupFormState();
 }
 
-class _SignupFormState extends State<SignupForm> {
+class _SignupFormState extends ConsumerState<SignupForm>
+    with ShakeResetMixin<SignupForm> {
   final formKey = GlobalKey<FormState>();
+  final confirmKey = GlobalKey<FormFieldState<String>>();
   String? firstName;
   String? lastName;
   String? email;
   String? password;
-  String? confirmPassword;
-  bool? obscurePassword = true;
-  bool? obscureConfirmPassword = true;
+  bool obscurePassword = true;
+  bool obscureConfirmPassword = true;
 
-  Future<void> _submit() async {
+
+  @override
+  void initState() {
+    super.initState();
+
+    startShakeDetector(_resetForm);
+  }
+
+  @override
+  void dispose() {
+    stopShakeDetector();
+    super.dispose();
+  }
+
+  Future<void> _resetForm() async {
+    if (!mounted) return;
+
+    if (widget.isLoading) return;
+
+    await runGuardedReset(() async {
+      final shouldClear = await showShakeClearDialog(context: context);
+
+      if (!mounted || shouldClear != true) return;
+
+      formKey.currentState?.reset();
+      password = null;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Form cleared.'),
+        ),
+      );
+    });
+  }
+
+  void _submit() {
     final form = formKey.currentState;
-    if (form == null) {
-      return;
-    }
+    if (form == null || !form.validate()) return;
     form.save();
-    if (!form.validate()) return;
 
-    await widget.onSubmit(
+    widget.onSubmit(
       firstName: firstName!,
       lastName: lastName!,
       email: email!,
@@ -54,20 +92,29 @@ class _SignupFormState extends State<SignupForm> {
     );
   }
 
+  void _validateConfirmIfFilled() {
+    final confirmField = confirmKey.currentState;
+    if (confirmField == null) return;
+
+    final hasConfirmText = confirmField.value?.isNotEmpty ?? false;
+    if (hasConfirmText) confirmField.validate();
+  }
+
   void togglePasswordVisibility() {
     setState(() {
-      obscurePassword = !obscurePassword!;
+      obscurePassword = !obscurePassword;
     });
   }
 
   void toggleConfirmPasswordVisibility() {
     setState(() {
-      obscureConfirmPassword = !obscureConfirmPassword!;
+      obscureConfirmPassword = !obscureConfirmPassword;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isOnline = ref.watch(isOnlineProvider);
     return Form(
       key: formKey,
       child: SafeArea(
@@ -80,65 +127,69 @@ class _SignupFormState extends State<SignupForm> {
               InputField(
                 labelText: 'First Name',
                 icon: Icons.person_outline,
-                onSaved: (firstName) {
-                  this.firstName = firstName;
+                onSaved: (value) {
+                  firstName = value?.trim();
                 },
-                validator: Validators.name,
+                validator: Validators.personName,
                 keyboardType: TextInputType.name,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]')),
-                ],
+                inputFormatters: [Validators.personNameTextInputFormatter],
+                maxLength: Validators.maxPersonNameLength,
               ),
               InputField(
                 labelText: 'Last Name',
                 icon: Icons.person_outline,
-                onSaved: (lastName) {
-                  this.lastName = lastName;
+                onSaved: (value) {
+                  lastName = value?.trim();
                 },
-                validator: Validators.name,
+                validator: Validators.personName,
                 keyboardType: TextInputType.name,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]')),
-                ],
+                inputFormatters: [Validators.personNameTextInputFormatter],
+                maxLength: Validators.maxPersonNameLength,
               ),
               const SizedBox(height: 5),
               InputField(
                 labelText: 'Email',
                 icon: Icons.email_outlined,
-                onSaved: (email) {
-                  this.email = email;
+                onSaved: (value) {
+                  email = value?.trim();
                 },
                 validator: Validators.email,
                 keyboardType: TextInputType.emailAddress,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]')),
-                ],
+                inputFormatters: [Validators.emailTextInputFormatter],
+                autovalidateMode: AutovalidateMode.onUserInteraction,
               ),
               InputField(
                 labelText: 'Password',
                 icon: Icons.lock_outline,
-                onSaved: (password) {
-                  this.password = password;
+                onSaved: (value) {
+                  password = value;
+                },
+                onChanged: (value) {
+                  password = value;
+                  _validateConfirmIfFilled();
                 },
                 validator: Validators.password,
+                inputFormatters: [Validators.passwordTextInputFormatter],
                 obscureText: obscurePassword,
                 onTogglePasswordVisibility: togglePasswordVisibility,
                 keyboardType: TextInputType.visiblePassword,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
               ),
               InputField(
+                fieldKey: confirmKey,
                 labelText: 'Confirm Password',
                 icon: Icons.lock_outline,
-                onSaved: (confirmPassword) {
-                  this.confirmPassword = confirmPassword;
-                },
-                validator: (confirmPassword) => Validators.confirmPassword(confirmPassword, password),
+                validator: (value) =>
+                    Validators.confirmPassword(value, password),
+                inputFormatters: [Validators.passwordTextInputFormatter],
                 obscureText: obscureConfirmPassword,
                 onTogglePasswordVisibility: toggleConfirmPasswordVisibility,
                 keyboardType: TextInputType.visiblePassword,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
               ),
               Center(
                 child: FilledButton(
-                  onPressed: widget.isLoading ? null : _submit,
+                  onPressed: widget.isLoading || !isOnline ? null : _submit,
                   style: FilledButton.styleFrom(fixedSize: const Size(100, 40)),
                   child: Text(
                     'Sign Up',
@@ -150,11 +201,14 @@ class _SignupFormState extends State<SignupForm> {
                   ),
                 ),
               ),
+              const AuthTimeoutMessage(),
               BottomAuthOptions(
                 label: 'Already have an account?',
                 buttonText: 'Sign in',
-                onPressed: () => context.go('/signin'), 
+                onPressed: () => context.go(Routes.signin),
+                isLoading: widget.isLoading,
                 onGoogleSignIn: widget.onGoogleSignIn,
+                isOnline: isOnline,
               ),
             ],
           ),

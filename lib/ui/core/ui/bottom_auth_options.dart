@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/google_signin_button.dart';
 
-typedef GoogleSignInCallback = Future<void> Function();
+typedef GoogleSignInCallback = void Function();
 
 class BottomAuthOptions extends StatelessWidget {
-  const BottomAuthOptions({super.key, required this.label, required this.buttonText, required this.onPressed, required this.onGoogleSignIn});
+  const BottomAuthOptions({
+    super.key,
+    required this.label,
+    required this.buttonText,
+    required this.onPressed,
+    required this.onGoogleSignIn,
+    required this.isLoading,
+    this.isOnline = true,
+  });
 
   final String label;
   final String buttonText;
   final VoidCallback? onPressed;
   final GoogleSignInCallback? onGoogleSignIn;
+  final bool isLoading;
+  final bool isOnline;
 
   @override
   Widget build(BuildContext context) {
-
     final theme = Theme.of(context);
 
     return Container(
@@ -29,26 +38,20 @@ class BottomAuthOptions extends StatelessWidget {
               ),
               Text(
                 'OR',
-                style: theme.textTheme.bodySmall!.copyWith(
-                  fontWeight: .bold,
-                ),
+                style: theme.textTheme.bodySmall!.copyWith(fontWeight: .bold),
               ),
             ],
           ),
           const SizedBox(height: 1),
           GoogleSigninButton(
             onPressed: onGoogleSignIn,
+            isLoading: isLoading || !isOnline,
           ),
           const SizedBox(height: 2),
-          Center(
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
+          Center(child: Text(label, style: theme.textTheme.bodySmall)),
           Center(
             child: FilledButton(
-              onPressed: onPressed,
+              onPressed: isLoading ? null : onPressed,
               style: FilledButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 fixedSize: const Size(100, 40),

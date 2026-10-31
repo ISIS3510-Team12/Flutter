@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/tasks/all_tasks/view_models/all_tasks_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/tasks/all_tasks/view_models/all_tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
@@ -26,9 +28,18 @@ class AllTasksScreen extends ConsumerWidget {
       child: Scaffold(
       appBar: AppBar(title: const Text('All tasks')),
       bottomNavigationBar: const CustomNavigationBar(),
-      body: state.when(
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        error: (error, stackTrace) => LoadErrorView(
+          error: error,
+          offlineMessage: "You're offline. Reconnect to load your tasks.",
+          genericMessage: "We couldn't load your tasks.",
+          onRetry: () => ref.invalidate(allTasksViewModelProvider),
+        ),
         data: (data) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -57,6 +68,9 @@ class AllTasksScreen extends ConsumerWidget {
             ],
           ],
         ),
+            ),
+          ),
+        ],
       ),
     ),
     );

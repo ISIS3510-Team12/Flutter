@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
+import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/validators.dart';
 import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
+
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
   const CreateProjectScreen({super.key, required this.groupId});
@@ -14,26 +21,72 @@ class CreateProjectScreen extends ConsumerStatefulWidget {
       _CreateProjectScreenState();
 }
 
-class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
+class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
+    with ShakeResetMixin<CreateProjectScreen>, FeatureSessionMixin<CreateProjectScreen> {
+  @override
+  String get featureName => FeatureNames.createProject;
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController deadlineController = TextEditingController();
 
+  final _formKey = GlobalKey<FormState>();
   DateTime? selectedDeadline;
 
   @override
+  void initState() {
+    super.initState();
+
+    startShakeDetector(_resetForm);
+  }
+
+  @override
   void dispose() {
+    stopShakeDetector();
     nameController.dispose();
     descriptionController.dispose();
     deadlineController.dispose();
     super.dispose();
   }
 
+  Future<void> _resetForm() async {
+    if (!mounted) return;
+
+    if (ref.read(projectCreateViewModelProvider).isLoading) {
+      return;
+    }
+
+
+    await runGuardedReset(() async {
+      final shouldClear = await showShakeClearDialog(context: context);
+
+      if (!mounted || shouldClear != true) return;
+
+      nameController.clear();
+      descriptionController.clear();
+      deadlineController.clear();
+
+      setState(() {
+        selectedDeadline = null;
+      });
+
+      _formKey.currentState?.reset();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Form cleared.'),
+        ),
+      );
+    });
+  }
+
   Future<void> _createProject() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final name = nameController.text.trim();
     final description = descriptionController.text.trim();
 
-    if (name.isEmpty || description.isEmpty || selectedDeadline == null) {
+    if (selectedDeadline == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please complete all fields.')),
       );
@@ -52,6 +105,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
     if (!mounted) return;
 
     if (createdProject != null) {
+      markFeatureCompleted();
       context.pop(createdProject);
       return;
     }
@@ -70,7 +124,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final projectState = ref.watch(projectCreateViewModelProvider);
-
+    final isOnline = ref.watch(isOnlineProvider);
     final isLoading = projectState.isLoading;
 
     return Scaffold(
@@ -83,7 +137,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -99,9 +155,43 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+
+            // Offline connectivity warning
+            if (!isOnline) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.wifi_off,
+                      color: theme.colorScheme.onErrorContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'You are offline. Reconnect to create a project.',
+                        style: TextStyle(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             const SizedBox(height: 24),
-            TextField(
+            TextFormField(
               controller: nameController,
+              validator: Validators.name,
+              inputFormatters: Validators.titleTextInputFormatters,
+              maxLength: Validators.maxNameLength,
               decoration: InputDecoration(
                 labelText: 'Project name',
                 hintText: 'Enter project name',
@@ -111,9 +201,11 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
+            TextFormField(
               controller: descriptionController,
+              inputFormatters: Validators.descriptionTextInputFormatters,
               maxLines: 2,
+              maxLength: Validators.maxDescriptionLength,
               decoration: InputDecoration(
                 labelText: 'Description',
                 hintText: 'Describe the project',
@@ -178,7 +270,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                 width: 160,
                 height: 40,
                 child: FilledButton(
-                  onPressed: isLoading ? null : _createProject,
+                  onPressed: (isLoading || !isOnline) ? null : _createProject,
                   child: isLoading
                       ? const SizedBox(
                           width: 20,
@@ -190,6 +282,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
       bottomNavigationBar: const CustomNavigationBar(),

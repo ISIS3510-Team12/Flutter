@@ -6,27 +6,36 @@ class InputField extends StatelessWidget {
     super.key,
     required this.labelText,
     this.icon,
+    this.fieldKey,
     this.validator,
     this.obscureText,
     this.onSaved,
+    this.onChanged,
     this.onTogglePasswordVisibility,
     this.keyboardType,
     this.inputFormatters,
+    this.autovalidateMode,
+    this.maxLength,
   });
 
+  final Key? fieldKey;
   final String labelText;
   final IconData? icon;
-  final String? Function(String?)? validator;
-  final void Function(String?)? onSaved;
+  final FormFieldValidator<String>? validator;
+  final FormFieldSetter<String>? onSaved;
+  final ValueChanged<String>? onChanged;
   final bool? obscureText;
   final Function()? onTogglePasswordVisibility;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
+  final AutovalidateMode? autovalidateMode;
+  final int? maxLength;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return TextFormField(
+      key: fieldKey,
       decoration: InputDecoration(
         labelText: labelText,
         labelStyle: theme.textTheme.bodyMedium,
@@ -36,7 +45,9 @@ class InputField extends StatelessWidget {
         suffixIcon: onTogglePasswordVisibility != null
             ? IconButton(
                 icon: Icon(
-                  obscureText == true ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  obscureText == true
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                 ),
                 color: theme.colorScheme.onSurfaceVariant,
                 onPressed: onTogglePasswordVisibility,
@@ -45,9 +56,12 @@ class InputField extends StatelessWidget {
       ),
       validator: validator,
       onSaved: onSaved,
+      onChanged: onChanged,
       obscureText: obscureText ?? false,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
+      autovalidateMode: autovalidateMode ?? AutovalidateMode.disabled,
+      maxLength: maxLength,
     );
   }
 }

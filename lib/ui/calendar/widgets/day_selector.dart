@@ -31,45 +31,50 @@ class DaySelector extends StatelessWidget {
 
           Expanded(
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: dates.map((date) {
                 final isSelected =
                     date.year == selectedDate.year &&
                     date.month == selectedDate.month &&
                     date.day == selectedDate.day;
 
-                return GestureDetector(
-                  onTap: () => onDateSelected(date),
-                  child: Column(
-                    children: [
-                      Text(
-                        _getWeekday(date),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : Colors.transparent,
-                          shape: BoxShape.circle,
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => onDateSelected(date),
+                    child: Column(
+                      children: [
+                        Text(
+                          _getWeekday(date),
+                          style: theme.textTheme.bodySmall,
                         ),
-                        child: Text(
-                          '${date.day}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isSelected
-                                ? theme.colorScheme.onPrimary
-                                : theme.colorScheme.onSurface,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
+                        const SizedBox(height: 6),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 40),
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : Colors.transparent,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${date.day}',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: isSelected
+                                      ? theme.colorScheme.onPrimary
+                                      : theme.colorScheme.onSurface,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               }).toList(),

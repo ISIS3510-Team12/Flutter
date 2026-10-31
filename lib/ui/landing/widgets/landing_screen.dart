@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({super.key});
@@ -73,7 +74,7 @@ class LandingScreen extends StatelessWidget {
                     ],
                   ),
                   FilledButton(
-                    onPressed: () => context.go('/signup'),
+                    onPressed: () => context.go(Routes.signin),
                     style: FilledButton.styleFrom(
                       fixedSize: const Size(251, 40),
                       backgroundColor: theme.colorScheme.primary,

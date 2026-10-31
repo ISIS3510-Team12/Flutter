@@ -1,20 +1,57 @@
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
+import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
 import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/task_group.dart';
 import 'package:team12_flutter_juggle/domain/models/tasks/today_summary.dart';
+import 'package:team12_flutter_juggle/ui/core/network/parallel_wait.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/auth_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/photo_upload_exception.dart';
+import 'package:path_provider/path_provider.dart';
 
 class TaskRepository {
   TaskRepository(this._dio);
 
   final Dio _dio;
+  static const int _maxCachedTaskPhotos = 50;
+
+  Future<File> _taskPhotoCacheFile(String taskId) async {
+    final appDirectory = await getApplicationSupportDirectory();
+
+    final cacheDirectory = Directory(
+      '${appDirectory.path}${Platform.pathSeparator}task_photo_cache',
+    );
+
+    await cacheDirectory.create(recursive: true);
+
+    final safeTaskId = taskId.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+
+    return File('${cacheDirectory.path}${Platform.pathSeparator}$safeTaskId');
+  }
+
+  Future<void> _deleteCachedTaskPhoto(String taskId) async {
+    try {
+      final file = await _taskPhotoCacheFile(taskId);
+
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } on FileSystemException {
+      // Cache cleanup must not prevent the main operation
+    } catch (_) {
+      // Cache cleanup is best-effort
+    }
+  }
 
   Future<List<Task>> getGroupTasks(TaskGroup group) async {
     try {
-      final own = await _dio.get<List<dynamic>>('/tasks/own/${group.id}');
-      final others = await _dio.get<List<dynamic>>('/tasks/group/${group.id}');
+      final (own, others) = await waitBoth(
+        _dio.get<List<dynamic>>('/tasks/own/${group.id}'),
+        _dio.get<List<dynamic>>('/tasks/group/${group.id}'),
+      );
       return [
         for (final json in own.data!)
           Task.fromJson(json as Map<String, dynamic>, groupName: group.name),
@@ -26,7 +63,7 @@ class TaskRepository {
           ),
       ];
     } catch (e) {
-      throw Exception('Failed to load group tasks: $e');
+      throw repositoryError('load group tasks', e);
     }
   }
 
@@ -36,15 +73,17 @@ class TaskRepository {
     int? dueWithinDays,
   }) async {
     try {
-      final response = await _dio.get<List<dynamic>>(
-        '/tasks/all',
-        queryParameters: {
-          'mine': mine,
-          'priority': priority,
-          'due_within_days': ?dueWithinDays,
-        },
+      final (response, groups) = await waitBoth(
+        _dio.get<List<dynamic>>(
+          '/tasks/all',
+          queryParameters: {
+            'mine': mine,
+            'priority': priority,
+            'due_within_days': ?dueWithinDays,
+          },
+        ),
+        _loadGroupNames(),
       );
-      final groups = await _loadGroupNames();
       return response.data!.map((json) {
         final map = json as Map<String, dynamic>;
         return Task.fromJson(
@@ -54,7 +93,7 @@ class TaskRepository {
         );
       }).toList();
     } catch (e) {
-      throw Exception('Failed to load tasks: $e');
+      throw repositoryError('load tasks', e);
     }
   }
 
@@ -80,7 +119,7 @@ class TaskRepository {
       );
       return TodaySummary.fromJson(response.data!);
     } catch (e) {
-      throw Exception('Failed to load today summary: $e');
+      throw repositoryError('load today summary', e);
     }
   }
 
@@ -91,12 +130,14 @@ class TaskRepository {
 
   Future<Task> getTask(String id) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/tasks/$id');
+      final (response, groups) = await waitBoth(
+        _dio.get<Map<String, dynamic>>('/tasks/$id'),
+        _loadGroupNames(),
+      );
       final json = response.data!;
-      final groups = await _loadGroupNames();
       return Task.fromJson(json, groupName: groups[json['group_id']] ?? '');
     } catch (e) {
-      throw Exception('Failed to load task: $e');
+      throw repositoryError('load task', e);
     }
   }
 
@@ -121,7 +162,7 @@ class TaskRepository {
         relatedTaskIds: task.relatedTaskIds,
       );
     } catch (e) {
-      throw Exception('Failed to create task: $e');
+      throw repositoryError('create task', e);
     }
   }
 
@@ -140,7 +181,7 @@ class TaskRepository {
         projectName: updated.projectName,
       );
     } catch (e) {
-      throw Exception('Failed to update task: $e');
+      throw repositoryError('update task', e);
     }
   }
 
@@ -159,22 +200,64 @@ class TaskRepository {
         projectName: current.projectName,
       );
     } catch (e) {
-      throw Exception('Failed to update task status: $e');
+      throw repositoryError('update task status', e);
     }
   }
 
   Future<void> uploadTaskPhoto(String taskId, String path) async {
+    Directory? tempDirectory;
+
     try {
+      final extension = path.split('.').last.toLowerCase();
+      String uploadPath = path;
+
+      // HEIC/HEIF are not supported by the image package
+      // Keep the original file for these formats
+      if (extension != 'heic' && extension != 'heif') {
+        // Decode, resize and compress the image in a background isolate
+        final processedBytes = await compute(
+          _processTaskPhoto,
+          <String, String>{'path': path, 'extension': extension},
+        );
+
+        tempDirectory = await Directory.systemTemp.createTemp(
+          'juggle_task_photo_',
+        );
+
+        final outputExtension = extension == 'png' || extension == 'webp'
+            ? extension
+            : 'jpg';
+
+        final processedFile = File(
+          '${tempDirectory.path}/photo.$outputExtension',
+        );
+
+        await processedFile.writeAsBytes(processedBytes, flush: true);
+        uploadPath = processedFile.path;
+      }
+
+      // Validate the final file, not the original image
+      if (await File(uploadPath).length() > 5 * 1024 * 1024) {
+        throw const PhotoUploadException(
+          'The photo is too large. The maximum size is 5 MB.',
+        );
+      }
+
+      final subtype = _photoSubtype(uploadPath);
+
       await _dio.put<void>(
         '/tasks/$taskId/photo',
         data: FormData.fromMap({
           'file': await MultipartFile.fromFile(
-            path,
-            filename: 'photo.${_photoSubtype(path)}',
-            contentType: DioMediaType('image', _photoSubtype(path)),
+            uploadPath,
+            filename: 'photo.$subtype',
+            contentType: DioMediaType('image', subtype),
           ),
         }),
       );
+      await _deleteCachedTaskPhoto(taskId);
+    } on PhotoUploadException {
+      rethrow;
     } on DioException catch (e) {
       switch (e.response?.statusCode) {
         case 413:
@@ -186,13 +269,55 @@ class TaskRepository {
             'Only JPEG, PNG, WebP or HEIC photos are allowed.',
           );
         default:
+          if (isNetworkFailure(e)) throw repositoryError('upload photo', e);
           throw const PhotoUploadException('The photo could not be uploaded.');
+      }
+    } catch (_) {
+      throw const PhotoUploadException(
+        'The photo could not be processed or uploaded.',
+      );
+    } finally {
+      if (tempDirectory != null) {
+        try {
+          if (await tempDirectory.exists()) {
+            await tempDirectory.delete(recursive: true);
+          }
+        } on FileSystemException {
+          // Temporary files could not be removed
+        }
       }
     }
   }
 
   Future<Uint8List?> getTaskPhoto(String taskId) async {
+    File? cacheFile;
+
+    //Try to load the photo from local storage first
     try {
+      cacheFile = await _taskPhotoCacheFile(taskId);
+
+      if (await cacheFile.exists()) {
+        try {
+          final bytes = await cacheFile.readAsBytes();
+
+          // Update the last access time for LRU tracking
+          try {
+            await cacheFile.setLastModified(DateTime.now());
+          } on FileSystemException {
+            // The cached image can still be used.
+          }
+
+          return bytes;
+        } on FileSystemException {
+          // If the cached file cannot be read, try the backend
+        }
+      }
+    } catch (_) {
+      //If local caching is unavailable, continue with the backend.
+    }
+
+    try {
+      //Download the photo only when it is not available locally.
       final response = await _dio.get<List<int>>(
         '/tasks/$taskId/photo',
         options: Options(
@@ -200,19 +325,126 @@ class TaskRepository {
           validateStatus: (status) => status == 200 || status == 404,
         ),
       );
-      if (response.statusCode == 404) return null;
-      return Uint8List.fromList(response.data!);
+
+      if (response.statusCode == 404) {
+        await _deleteCachedTaskPhoto(taskId);
+        return null;
+      }
+
+      final bytes = Uint8List.fromList(response.data!);
+
+      //Save the downloaded photo for future requests.
+      try {
+        cacheFile ??= await _taskPhotoCacheFile(taskId);
+
+        await cacheFile.writeAsBytes(bytes, flush: true);
+        // Enforce the LRU cache limit.
+        await _enforceTaskPhotoCacheLimit(protectedTaskId: taskId);
+      } catch (_) {
+        // The photo can still be displayed if caching fails.
+      }
+
+      return bytes;
     } catch (e) {
-      throw Exception('Failed to load photo: $e');
+      throw repositoryError('load photo', e);
     }
   }
 
   Future<void> deleteTask(String id) async {
     try {
       await _dio.delete('/tasks/$id');
+      await _deleteCachedTaskPhoto(id);
     } catch (e) {
-      throw Exception('Failed to delete task: $e');
+      throw repositoryError('delete task', e);
     }
+  }
+
+  Future<void> _enforceTaskPhotoCacheLimit({String? protectedTaskId}) async {
+    try {
+      final appDirectory = await getApplicationSupportDirectory();
+
+      final cacheDirectory = Directory(
+        '${appDirectory.path}${Platform.pathSeparator}task_photo_cache',
+      );
+
+      if (!await cacheDirectory.exists()) return;
+
+      final files = await cacheDirectory
+          .list()
+          .where((entity) => entity is File)
+          .cast<File>()
+          .toList();
+
+      final filesWithAccessTime = await Future.wait(
+        files.map((file) async {
+          return MapEntry(file, await file.lastModified());
+        }),
+      );
+
+      // Sort from least recently used to most recently used
+      filesWithAccessTime.sort((a, b) => a.value.compareTo(b.value));
+
+      final protectedFile = protectedTaskId == null
+          ? null
+          : await _taskPhotoCacheFile(protectedTaskId);
+
+      final evictionCandidates = filesWithAccessTime
+          .where((entry) => entry.key.path != protectedFile?.path)
+          .toList();
+
+      var cachedFileCount = files.length;
+
+      // Remove the least recently used images until the limit is reached
+      for (final entry in evictionCandidates) {
+        if (cachedFileCount <= _maxCachedTaskPhotos) break;
+
+        if (await entry.key.exists()) {
+          await entry.key.delete();
+          cachedFileCount--;
+        }
+      }
+    } catch (_) {
+      // Cache cleanup must not prevent images from being displayed.
+    }
+  }
+}
+
+Uint8List _processTaskPhoto(Map<String, String> args) {
+  final path = args['path']!;
+  final extension = args['extension']!;
+
+  final bytes = File(path).readAsBytesSync();
+  final decoded = img.decodeImage(bytes);
+
+  if (decoded == null) {
+    throw const FormatException('The image could not be decoded.');
+  }
+
+  // Keep the aspect ratio and limit the longest side to 1600 pixels.
+  final img.Image resized;
+
+  if (decoded.width > 1600 || decoded.height > 1600) {
+    if (decoded.width >= decoded.height) {
+      resized = img.copyResize(decoded, width: 1600);
+    } else {
+      resized = img.copyResize(decoded, height: 1600);
+    }
+  } else {
+    resized = decoded;
+  }
+
+  // Encode the image in its original supported format.
+  switch (extension) {
+    case 'png':
+      return Uint8List.fromList(img.encodePng(resized));
+
+    case 'webp':
+      return Uint8List.fromList(
+        img.encodeWebP(resized, lossless: false, quality: 85),
+      );
+
+    default:
+      return Uint8List.fromList(img.encodeJpg(resized, quality: 85));
   }
 }
 

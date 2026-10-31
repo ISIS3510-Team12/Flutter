@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:team12_flutter_juggle/domain/models/auth/app_user.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 
 class RouterNotifier extends ChangeNotifier {
   
   RouterNotifier(Ref ref) {
-    ref.listen<AsyncValue<User?>>(
+    ref.listen<AsyncValue<AppUser?>>(
       authStateProvider,
       (_, next) {
         _authState = next;
@@ -18,7 +18,7 @@ class RouterNotifier extends ChangeNotifier {
     );
   }
 
-  AsyncValue<User?> _authState = const AsyncValue.loading();
+  AsyncValue<AppUser?> _authState = const AsyncValue.loading();
 
   String? redirect(GoRouterState state) {
     if (_authState.isLoading) {

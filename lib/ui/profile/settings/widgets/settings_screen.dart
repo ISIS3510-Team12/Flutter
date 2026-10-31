@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/auth/view_models/auth_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/view_models/settings_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
@@ -10,6 +11,37 @@ import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
+
+  Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+    final ops = ref.read(pendingOpsProvider).value ?? const [];
+    final pending = ops.length;
+    if (pending > 0) {
+      final noun = ops.every((op) => op.isTask) ? 'task' : 'change';
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Sign out?'),
+          content: Text(
+            pending == 1
+                ? '1 $noun is still waiting to upload and will be discarded if you sign out.'
+                : '$pending ${noun}s are still waiting to upload and will be discarded if you sign out.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Stay signed in'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Sign out'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+    await ref.read(authViewModelProvider.notifier).signOut();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,11 +59,10 @@ class SettingsScreen extends ConsumerWidget {
         data: (settings) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
+            Material(
+              color: theme.colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [
                   SettingsMenuTile(
@@ -50,6 +81,84 @@ class SettingsScreen extends ConsumerWidget {
                     subtitle: 'Get notified near a saved place',
                     onTap: () => context.push(Routes.profileLocation),
                   ),
+                  // Daily reminders
+                  Column(
+                    children: [
+                      SettingsMenuTile(
+                        title: 'Daily reminders',
+                        subtitle: 'Get notified at a specific time',
+                        showChevron: false,
+                        trailing: Switch(
+                          value: settings.dailyRemindersEnabled,
+                          onChanged: (value) => ref
+                              .read(settingsViewModelProvider.notifier)
+                              .updateDailyReminders(value),
+                        ),
+                      ),
+                      if (settings.dailyRemindersEnabled) ...[
+                        Divider(
+                          height: 1,
+                          indent: 16,
+                          endIndent: 16,
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                        InkWell(
+                          onTap: () async {
+                            final currentTime = settings.dailyReminderTime;
+                            final parts = currentTime?.split(':');
+
+                            final selectedTime = await showTimePicker(
+                              context: context,
+                              initialTime: parts != null
+                                  ? TimeOfDay(
+                                      hour: int.parse(parts[0]),
+                                      minute: int.parse(parts[1]),
+                                    )
+                                  : const TimeOfDay(hour: 16, minute: 0),
+                            );
+
+                            if (selectedTime == null) return;
+
+                            final formattedTime =
+                                '${selectedTime.hour.toString().padLeft(2, '0')}:'
+                                '${selectedTime.minute.toString().padLeft(2, '0')}';
+
+                            await ref
+                                .read(settingsViewModelProvider.notifier)
+                                .updateDailyReminderTime(formattedTime);
+                          },
+                          child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  settings.dailyReminderTime == null
+                                      ? 'Choose reminder time'
+                                      : 'Every day at ${settings.dailyReminderTime}',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.edit_outlined,
+                                  color: theme.colorScheme.primary,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -62,7 +171,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 onPressed: authState.isLoading
                     ? null
-                    : () => ref.read(authViewModelProvider.notifier).signOut(),
+                    : () => _signOut(context, ref),
                 child: authState.isLoading
                     ? const SizedBox(
                         height: 16,

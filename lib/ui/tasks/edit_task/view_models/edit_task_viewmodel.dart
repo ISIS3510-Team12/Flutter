@@ -1,9 +1,15 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/db/daos/projects/projects_cache_dao_provider.dart';
+import 'package:team12_flutter_juggle/data/db/daos/tasks/tasks_cache_dao_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/groups/group_repository_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
+import 'package:team12_flutter_juggle/ui/core/network/parallel_wait.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel.dart';
 import 'package:team12_flutter_juggle/data/repositories/project/project_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
@@ -13,40 +19,35 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task_member.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/home/view_models/next_task_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_overview_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/tasks_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel_provider.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class EditTaskFormState {
-  const EditTaskFormState({
-    required this.task,
-    required this.group,
-    required this.projectOptions,
-    required this.selectedProject,
-    required this.members,
-    required this.type,
-    required this.selectedMemberIds,
-    required this.deadline,
-    required this.time,
-    required this.isPriority,
-    required this.needsHelp,
-    required this.currentPhoto,
-    this.newPhotoPath,
-  });
+import 'dart:typed_data';
 
-  final Task task;
-  final TaskGroup? group;
-  final List<Project> projectOptions;
-  final String? selectedProject;
-  final List<TaskMember> members;
-  final TaskType type;
-  final Set<String> selectedMemberIds;
-  final DateTime deadline;
-  final TimeOfDay time;
-  final bool isPriority;
-  final bool needsHelp;
-  final Uint8List? currentPhoto;
-  final String? newPhotoPath;
+part 'edit_task_viewmodel.freezed.dart';
+
+@freezed
+abstract class EditTaskFormState with _$EditTaskFormState {
+  const EditTaskFormState._();
+
+  const factory EditTaskFormState({
+    required Task task,
+    required TaskGroup? group,
+    required List<Project> projectOptions,
+    required String? selectedProject,
+    required List<TaskMember> members,
+    required TaskType type,
+    required Set<String> selectedMemberIds,
+    required DateTime deadline,
+    required TimeOfDay time,
+    required bool isPriority,
+    required bool needsHelp,
+    required Uint8List? currentPhoto,
+    String? newPhotoPath,
+  }) = _EditTaskFormState;
 
   List<String> get projects =>
       projectOptions.map((project) => project.name).toList();
@@ -57,33 +58,6 @@ class EditTaskFormState {
       .where((project) => project.name == selectedProject)
       .map((project) => project.id)
       .firstOrNull;
-
-  EditTaskFormState copyWith({
-    String? selectedProject,
-    TaskType? type,
-    Set<String>? selectedMemberIds,
-    DateTime? deadline,
-    TimeOfDay? time,
-    bool? isPriority,
-    bool? needsHelp,
-    String? newPhotoPath,
-  }) {
-    return EditTaskFormState(
-      task: task,
-      group: group,
-      projectOptions: projectOptions,
-      selectedProject: selectedProject ?? this.selectedProject,
-      members: members,
-      type: type ?? this.type,
-      selectedMemberIds: selectedMemberIds ?? this.selectedMemberIds,
-      deadline: deadline ?? this.deadline,
-      time: time ?? this.time,
-      isPriority: isPriority ?? this.isPriority,
-      needsHelp: needsHelp ?? this.needsHelp,
-      currentPhoto: currentPhoto,
-      newPhotoPath: newPhotoPath ?? this.newPhotoPath,
-    );
-  }
 }
 
 class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
@@ -95,18 +69,35 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
   Future<EditTaskFormState> build() async {
     final repository = ref.watch(taskRepositoryProvider);
     final currentUser = ref.watch(currentUserProvider.future);
-    final task = await repository.getTask(taskId);
-    final photo = task.hasPhoto ? await repository.getTaskPhoto(taskId) : null;
-    final groups = await ref.watch(groupRepositoryProvider).getGroups();
+    final groupRepository = ref.watch(groupRepositoryProvider);
+    final projectRepository = ref.watch(projectRepositoryProvider);
+    final (task, groups) = await waitBoth(
+      repository.getTask(taskId),
+      groupRepository.getGroups(),
+    );
     TaskGroup? group;
     for (final candidate in groups) {
       if (candidate.id == task.groupId) group = candidate;
     }
     group ??= groups.isEmpty ? null : groups.first;
-    final projects = group == null
-        ? <Project>[]
-        : await ref.watch(projectRepositoryProvider).getGroupProjects(group.id);
+    final (photo, projects) = await waitBoth(
+      task.hasPhoto
+          ? repository.getTaskPhoto(taskId).catchError((Object _) => null)
+          : Future<Uint8List?>.value(),
+      group == null
+          ? Future.value(<Project>[])
+          : projectRepository.getGroupProjects(group.id),
+    );
     final me = (await currentUser)!;
+    final tasksCache = ref.read(tasksCacheDaoProvider);
+    await saveQuietly(() => tasksCache.saveDetail(me.userId, task));
+    if (group != null) {
+      final groupId = group.id;
+      final projectsCache = ref.read(projectsCacheDaoProvider);
+      await saveQuietly(
+        () => projectsCache.replaceForGroup(me.userId, groupId, projects),
+      );
+    }
     final members = membersWithYou(group, me);
     return EditTaskFormState(
       task: task,
@@ -161,9 +152,12 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
     state = AsyncData(update(current));
   }
 
-  Future<void> submit() async {
+  Future<TaskActionResult> submit() async {
     final current = state.value;
-    if (current == null) return;
+    if (current == null) return TaskActionResult.failed;
+    if (!ref.read(isOnlineProvider)) {
+      return TaskActionResult.offline;
+    }
     final selectedMembers = current.members
         .where((member) => current.selectedMemberIds.contains(member.id))
         .toList();
@@ -185,7 +179,13 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
       needsHelp: current.needsHelp,
     );
     final repository = ref.read(taskRepositoryProvider);
-    await repository.updateTask(updated);
+    try {
+      await repository.updateTask(updated);
+    } catch (error) {
+      return isOfflineFailure(error)
+          ? TaskActionResult.offline
+          : TaskActionResult.failed;
+    }
     try {
       final photoPath = current.newPhotoPath;
       if (photoPath != null) {
@@ -197,8 +197,10 @@ class EditTaskViewModel extends AsyncNotifier<EditTaskFormState> {
         ref.invalidate(tasksOverviewProvider);
         ref.invalidate(calendarViewModelProvider);
         ref.invalidate(homeViewModelProvider);
+        ref.read(nextTaskViewModelProvider.notifier).refresh();
         ref.invalidate(viewTaskViewModelProvider(taskId));
       }
     }
+    return TaskActionResult.done;
   }
 }
