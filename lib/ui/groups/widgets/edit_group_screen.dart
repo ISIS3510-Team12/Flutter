@@ -17,26 +17,36 @@ import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 
 class GroupEditScreen extends ConsumerStatefulWidget {
-  const GroupEditScreen({super.key, required this.groupId});
+  const GroupEditScreen({
+    super.key,
+    required this.groupId,
+  });
 
   final int groupId;
 
   @override
-  ConsumerState<GroupEditScreen> createState() => _GroupEditScreenState();
+  ConsumerState<GroupEditScreen> createState() =>
+      _GroupEditScreenState();
 }
 
 class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   @override
   Widget build(BuildContext context) {
-    final groupState = ref.watch(groupEditViewModelProvider(widget.groupId));
+    final groupState = ref.watch(
+      groupEditViewModelProvider(widget.groupId),
+    );
 
     return ScreenLoadTracker(
       screen: ScreenNames.editGroup,
       state: groupState,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Edit Group')),
+        appBar: AppBar(
+          title: const Text('Edit Group'),
+        ),
         body: groupState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(
+            child: CircularProgressIndicator(),
+          ),
           error: (error, stackTrace) => Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -60,8 +70,10 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
               ),
             ),
           ),
-          data: (group) =>
-              _GroupEditForm(group: group, groupId: widget.groupId),
+          data: (group) => _GroupEditForm(
+            group: group,
+            groupId: widget.groupId,
+          ),
         ),
         bottomNavigationBar: const CustomNavigationBar(),
       ),
@@ -70,13 +82,17 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
 }
 
 class _GroupEditForm extends ConsumerStatefulWidget {
-  const _GroupEditForm({required this.group, required this.groupId});
+  const _GroupEditForm({
+    required this.group,
+    required this.groupId,
+  });
 
   final TaskGroup group;
   final int groupId;
 
   @override
-  ConsumerState<_GroupEditForm> createState() => _GroupEditFormState();
+  ConsumerState<_GroupEditForm> createState() =>
+      _GroupEditFormState();
 }
 
 class _GroupEditFormState extends ConsumerState<_GroupEditForm>
@@ -96,7 +112,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
   void initState() {
     super.initState();
 
-    nameController = TextEditingController(text: widget.group.name);
+    nameController = TextEditingController(
+      text: widget.group.name,
+    );
 
     descriptionController = TextEditingController(
       text: widget.group.description,
@@ -104,7 +122,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
 
     searchController = TextEditingController();
 
-    selectedUserIds.addAll(widget.group.members.map((member) => member.id));
+    selectedUserIds.addAll(
+      widget.group.members.map((member) => member.id),
+    );
 
     startShakeDetector(_resetForm);
   }
@@ -121,7 +141,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
   Future<void> _resetForm() async {
     if (!mounted) return;
 
-    if (ref.read(groupEditViewModelProvider(widget.groupId)).isLoading) {
+    if (ref.read(
+      groupEditViewModelProvider(widget.groupId),
+    ).isLoading) {
       return;
     }
 
@@ -139,7 +161,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
 
       selectedUserIds
         ..clear()
-        ..addAll(widget.group.members.map((member) => member.id));
+        ..addAll(
+          widget.group.members.map((member) => member.id),
+        );
 
       _formKey.currentState?.reset();
 
@@ -147,8 +171,11 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
         searchQuery = '';
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Changes discarded.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Changes discarded.'),
+        ),
+      );
     });
   }
 
@@ -173,7 +200,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
         .toList();
 
     final userIdsToRemove = originalUserIds
-        .where((userId) => !selectedUserIds.contains(userId))
+        .where(
+          (userId) => !selectedUserIds.contains(userId),
+        )
         .toList();
 
     final success = await viewModel.updateGroup(
@@ -211,7 +240,8 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
     if (query.isEmpty) return users;
 
     return users.where((user) {
-      final fullName = '${user.firstName} ${user.lastName}'.toLowerCase();
+      final fullName =
+          '${user.firstName} ${user.lastName}'.toLowerCase();
       final email = user.email.toLowerCase();
 
       return fullName.contains(query) || email.contains(query);
@@ -220,7 +250,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
 
   @override
   Widget build(BuildContext context) {
-    final groupState = ref.watch(groupEditViewModelProvider(widget.groupId));
+    final groupState = ref.watch(
+      groupEditViewModelProvider(widget.groupId),
+    );
 
     final usersState = ref.watch(groupUsersViewModelProvider);
     final isOnline = ref.watch(isOnlineProvider);
@@ -250,14 +282,18 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
                   children: [
                     Icon(
                       Icons.wifi_off,
-                      color: Theme.of(context).colorScheme.onErrorContainer,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onErrorContainer,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'You are offline. Reconnect to save group changes.',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onErrorContainer,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onErrorContainer,
                         ),
                       ),
                     ),
@@ -288,7 +324,12 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
               ),
             ],
             const SizedBox(height: 28),
-            _buildButtons(context, isLoading, users, isOnline),
+            _buildButtons(
+              context,
+              isLoading,
+              users,
+              isOnline,
+            ),
           ],
         ),
       ),
@@ -320,7 +361,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
               horizontal: 14,
               vertical: 12,
             ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         ),
         const SizedBox(height: 5),
@@ -357,7 +400,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
               horizontal: 14,
               vertical: 9,
             ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         ),
         const SizedBox(height: 5),
@@ -415,7 +460,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
           if (users.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: Text('No users found.')),
+              child: Center(
+                child: Text('No users found.'),
+              ),
             )
           else
             ...users.map(
@@ -432,7 +479,8 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
                   });
                 },
                 secondary: CircleAvatar(
-                  backgroundColor: theme.colorScheme.secondaryContainer,
+                  backgroundColor:
+                      theme.colorScheme.secondaryContainer,
                   child: Text(
                     user.firstName.isNotEmpty
                         ? user.firstName[0].toUpperCase()
@@ -443,7 +491,9 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
                     ),
                   ),
                 ),
-                title: Text('${user.firstName} ${user.lastName}'),
+                title: Text(
+                  '${user.firstName} ${user.lastName}',
+                ),
                 subtitle: Text(user.email),
               ),
             ),
@@ -484,17 +534,26 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
                     width: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onPrimaryContainer,
                     ),
                   )
                 : const Icon(Icons.check),
             label: Text(
-              isLoading ? 'Editing...' : (!isOnline ? 'Offline' : 'Edit Group'),
+              isLoading
+                  ? 'Editing...'
+                  : (!isOnline ? 'Offline' : 'Edit Group'),
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              backgroundColor:
+                  Theme.of(context).colorScheme.primaryContainer,
+              foregroundColor:
+                  Theme.of(context).colorScheme.onPrimaryContainer,
+              padding: const EdgeInsets.symmetric(
+                vertical: 10,
+                horizontal: 20,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(40),
               ),
@@ -512,7 +571,10 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
                   .colorScheme
                   .surfaceContainerHighest,
               foregroundColor: Theme.of(context).colorScheme.primary,
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              padding: const EdgeInsets.symmetric(
+                vertical: 10,
+                horizontal: 20,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(40),
               ),

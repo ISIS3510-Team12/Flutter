@@ -16,7 +16,9 @@ import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 
 class NewGroupScreen extends ConsumerStatefulWidget {
-  const NewGroupScreen({super.key});
+  const NewGroupScreen({
+    super.key,
+  });
 
   @override
   ConsumerState<NewGroupScreen> createState() => _NewGroupScreenState();
@@ -56,8 +58,11 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
         searchQuery = '';
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Form cleared.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Form cleared.'),
+        ),
+      );
     });
   }
 
@@ -77,6 +82,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
     super.dispose();
   }
 
+    
   Future<void> _createGroup() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -110,6 +116,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     final usersState = ref.watch(groupUsersViewModelProvider);
@@ -120,82 +127,91 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
       screen: ScreenNames.newGroup,
       state: usersState,
       child: Scaffold(
-        appBar: AppBar(title: const Text('New Group')),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!isOnline) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.errorContainer,
-                      borderRadius: BorderRadius.circular(12),
+      appBar: AppBar(
+        title: const Text('New Group'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isOnline) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.wifi_off,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.wifi_off,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'You are offline. Reconnect to create the group.',
+                        style: TextStyle(
                           color: Theme.of(context).colorScheme.onErrorContainer,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'You are offline. Reconnect to create the group.',
-                            style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onErrorContainer,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+            ],
 
-                _buildTextField(
-                  context: context,
-                  label: 'Name',
-                  hintText: 'An amazing group',
-                  helperText: 'Give your group a name',
-                  controller: nameController,
-                  validator: Validators.name,
-                  inputFormatters: Validators.titleTextInputFormatters,
-                  maxLength: Validators.maxNameLength,
-                ),
-                const SizedBox(height: 20),
-                _buildTextField(
-                  context: context,
-                  label: 'Description',
-                  hintText: 'ISIS-3510 group',
-                  helperText: 'Enter the group description',
-                  controller: classController,
-                  inputFormatters: Validators.descriptionTextInputFormatters,
-                  maxLength: Validators.maxDescriptionLength,
-                ),
-                const SizedBox(height: 28),
-                Text(
-                  'Add People',
-                  style: Theme.of(context).textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                _buildSearchField(context),
-                const SizedBox(height: 12),
-                _buildUsersContent(context, usersState),
-                const SizedBox(height: 24),
-                _buildActionButtons(context, groupState.isLoading, isOnline),
-              ],
+
+            _buildTextField(
+              context: context,
+              label: 'Name',
+              hintText: 'An amazing group',
+              helperText: 'Give your group a name',
+              controller: nameController,
+              validator: Validators.name,
+              inputFormatters: Validators.titleTextInputFormatters,
+              maxLength: Validators.maxNameLength,
             ),
-          ),
+            const SizedBox(height: 20),
+            _buildTextField(
+              context: context,
+              label: 'Description',
+              hintText: 'ISIS-3510 group',
+              helperText: 'Enter the group description',
+              controller: classController,
+              inputFormatters: Validators.descriptionTextInputFormatters,
+              maxLength: Validators.maxDescriptionLength,
+            ),
+            const SizedBox(height: 28),
+            Text(
+              'Add People',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            _buildSearchField(context),
+            const SizedBox(height: 12),
+            _buildUsersContent(
+              context,
+              usersState,
+            ),
+            const SizedBox(height: 24),
+            _buildActionButtons(
+              context,
+              groupState.isLoading,
+              isOnline,
+            ),
+          ],
+        ),
         ),
       ),
+    ),
     );
   }
 
@@ -212,7 +228,11 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
       ),
       error: (error, stackTrace) => Row(
         children: [
-          const Expanded(child: Text('Could not load users.')),
+          const Expanded(
+            child: Text(
+              'Could not load users.',
+            ),
+          ),
           TextButton(
             onPressed: () {
               ref.invalidate(groupUsersViewModelProvider);
@@ -227,14 +247,19 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
         if (filteredUsers.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Text('No users found.'),
+            child: Text(
+              'No users found.',
+            ),
           );
         }
 
         return Column(
           children: [
             ...filteredUsers.map(
-              (user) => _buildUserTile(context: context, user: user),
+              (user) => _buildUserTile(
+                context: context,
+                user: user,
+              ),
             ),
           ],
         );
@@ -250,7 +275,8 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
     }
 
     return users.where((user) {
-      final fullName = '${user.firstName} ${user.lastName}'.toLowerCase();
+      final fullName =
+          '${user.firstName} ${user.lastName}'.toLowerCase();
 
       return fullName.contains(query) ||
           user.email.toLowerCase().contains(query);
@@ -299,7 +325,9 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: theme.colorScheme.primary),
+              borderSide: BorderSide(
+                color: theme.colorScheme.primary,
+              ),
             ),
           ),
         ),
@@ -327,7 +355,9 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide(color: theme.colorScheme.primary),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+          ),
         ),
       ),
       onChanged: (value) {
@@ -338,7 +368,10 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
     );
   }
 
-  Widget _buildUserTile({required BuildContext context, required User user}) {
+  Widget _buildUserTile({
+    required BuildContext context,
+    required User user,
+  }) {
     final theme = Theme.of(context);
 
     final name = '${user.firstName} ${user.lastName}'.trim();
@@ -373,7 +406,10 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(user.email, style: theme.textTheme.bodySmall),
+                Text(
+                  user.email,
+                  style: theme.textTheme.bodySmall,
+                ),
               ],
             ),
           ),
@@ -421,11 +457,13 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
                       color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                   )
-                : const Icon(Icons.check, size: 20),
+                : const Icon(
+                    Icons.check,
+                    size: 20,
+                  ),
             label: Text(
-              isLoading
-                  ? 'Creating...'
-                  : (!isOnline ? 'Offline' : 'Create Group'),
+              isLoading ? 'Creating...'
+              : (!isOnline ? 'Offline' : 'Create Group'),
             ),
           ),
         ),
