@@ -17,6 +17,7 @@ import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
+import 'package:team12_flutter_juggle/domain/models/project/project.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   const ProjectDetailScreen({super.key, required this.projectId});
@@ -58,6 +59,22 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
     return 'Due in $difference days';
   }
 
+  Future<void> _editProject(Project project) async {
+    markFeatureCompleted();
+
+    final updated = await context.push<bool>(
+      Routes.editProjectPath(project.id, project.groupId),
+    );
+
+    if (!mounted) return;
+
+    if (updated == true) {
+      ref.invalidate(
+        projectDetailViewModelProvider(widget.projectId),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -67,6 +84,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
     );
 
     final isOnline = ref.watch(isOnlineProvider);
+    final project = projectState.asData?.value.project;
 
     return ScreenLoadTracker(
       screen: ScreenNames.projectDetail,
@@ -83,6 +101,16 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
             'Project detail',
             style: theme.textTheme.titleMedium,
           ),
+          actions: [
+            IconButton(
+              tooltip: 'Edit project',
+              icon: const Icon(Symbols.edit),
+              onPressed: project != null && isOnline
+                  ? () => _editProject(project)
+                  : null,
+            ),
+            const SizedBox(width: 8),
+          ],
         ),
         body: Column(
           children: [

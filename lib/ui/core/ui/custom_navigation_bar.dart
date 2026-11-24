@@ -11,6 +11,7 @@ class CustomNavigationBar extends StatelessWidget {
     (Symbols.checklist_rtl, 'Tasks', Routes.tasks),
     (Symbols.groups, 'Groups', Routes.groups),
     (Symbols.calendar_today, 'Calendar', Routes.calendar),
+    (Symbols.handyman, 'Tools', Routes.tools),
   ];
 
   @override

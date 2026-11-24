@@ -8,4 +8,5 @@ abstract final class FeatureNames {
   static const viewTask = 'view_task';
   static const viewProject = 'view_project';
   static const viewGroup = 'view_group';
+  static const editProject = 'edit_project';
 }

@@ -21,6 +21,8 @@ import 'package:team12_flutter_juggle/ui/tasks/edit_task/widgets/edit_task_scree
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/tasks_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/view_task_screen.dart';
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_viewer.dart';
+import 'package:team12_flutter_juggle/ui/projects/widgets/edit_project_screen.dart';
+import 'package:team12_flutter_juggle/ui/tools/widgets/tools_screen.dart';
 
 import 'package:team12_flutter_juggle/ui/groups/widgets/group_detail_screen.dart';
 import 'package:team12_flutter_juggle/ui/groups/widgets/new_group_screen.dart';
@@ -167,4 +169,29 @@ final routes = <RouteBase>[
       );
     },
   ),
+  GoRoute(
+    path: Routes.editProject,
+    pageBuilder: (context, state) {
+      final projectId = int.parse(
+        state.pathParameters['projectId']!,
+      );
+
+      final groupId = int.parse(
+        state.uri.queryParameters['groupId']!,
+      );
+
+      return sharedAxisPage(
+        state: state,
+        child: EditProjectScreen(
+          projectId: projectId,
+          groupId: groupId,
+        ),
+      );
+    },
+  ),
+  GoRoute(
+    path: Routes.tools,
+    builder: (context, state) => const ToolsScreen(),
+  ),
+
 ];
