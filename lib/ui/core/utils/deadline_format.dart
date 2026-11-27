@@ -2,21 +2,31 @@ import 'package:flutter/material.dart';
 
 String deadlineText(DateTime deadline, {DateTime? now}) {
   now ??= DateTime.now();
+  final remaining = deadline.difference(now);
+  return '${deadlineDay(deadline, now: now)} - ${_remainingLabel(remaining)}';
+}
+
+String deadlineDay(DateTime deadline, {DateTime? now}) {
+  now ??= DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final day = DateTime(deadline.year, deadline.month, deadline.day);
-  final daysAway = day.difference(today).inDays;
-  final remaining = deadline.difference(now);
+  return switch (day.difference(today).inDays) {
+    0 => 'Today',
+    1 => 'Tomorrow',
+    _ => deadlineDate(deadline),
+  };
+}
 
-  String label;
-  if (daysAway == 0) {
-    label = 'Today';
-  } else if (daysAway == 1) {
-    label = 'Tomorrow';
-  } else {
-    label = deadlineDate(deadline);
+String updatedAgo(DateTime changedAt, {DateTime? now}) {
+  final elapsed = (now ?? DateTime.now()).difference(changedAt);
+  if (elapsed.inMinutes < 1) return 'Updated just now';
+  if (elapsed.inHours < 1) {
+    return 'Updated ${_plural(elapsed.inMinutes, 'minute')} ago';
   }
-
-  return '$label - ${_remainingLabel(remaining)}';
+  if (elapsed.inDays < 1) {
+    return 'Updated ${_plural(elapsed.inHours, 'hour')} ago';
+  }
+  return 'Updated ${_plural(elapsed.inDays, 'day')} ago';
 }
 
 String _remainingLabel(Duration remaining) {
