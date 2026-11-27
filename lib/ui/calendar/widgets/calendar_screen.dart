@@ -1,9 +1,17 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:team12_flutter_juggle/domain/models/calendar/calendar_view_mode.dart';
 import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
+import 'package:team12_flutter_juggle/ui/calendar/widgets/calendar_sync_notice.dart';
+import 'package:team12_flutter_juggle/ui/calendar/widgets/calendar_view_toggle.dart';
 import 'package:team12_flutter_juggle/ui/calendar/widgets/day_selector.dart';
+import 'package:team12_flutter_juggle/ui/calendar/widgets/day_sheet.dart';
+import 'package:team12_flutter_juggle/ui/calendar/widgets/month_view.dart';
 import 'package:team12_flutter_juggle/ui/calendar/widgets/schedule_card.dart';
+import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
@@ -14,9 +22,12 @@ import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
 
+  static const _minBodyHeight = 460.0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final calendarState = ref.watch(calendarViewModelProvider);
+    final isOnline = ref.watch(isOnlineProvider);
 
     return ScreenLoadTracker(
       screen: ScreenNames.calendar,
@@ -28,6 +39,7 @@ class CalendarScreen extends ConsumerWidget {
           const OfflineBanner(),
           Expanded(
             child: calendarState.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
@@ -40,8 +52,41 @@ class CalendarScreen extends ConsumerWidget {
         data: (calendar) {
           final selectedDate = calendar.selectedDate;
 
-          return Column(
+          final viewModel = ref.read(calendarViewModelProvider.notifier);
+
+          return LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: SizedBox(
+                height: max(constraints.maxHeight, _minBodyHeight),
+                child: Column(
             children: [
+              CalendarViewToggle(
+                selected: calendar.viewMode,
+                onSelected: viewModel.changeViewMode,
+              ),
+
+              CalendarSyncNotice(
+                isOnline: isOnline,
+                fromCache: calendar.fromCache,
+                isRefreshing: calendar.isRefreshing,
+                refreshFailed: calendar.refreshFailed,
+                onRetry: () => ref.invalidate(calendarViewModelProvider),
+              ),
+
+              if (calendar.viewMode == CalendarViewMode.month)
+                Expanded(
+                  child: MonthView(
+                    calendar: calendar,
+                    onPreviousMonth: viewModel.previousMonth,
+                    onNextMonth: viewModel.nextMonth,
+                    onToday: viewModel.goToToday,
+                    onDaySelected: (date) {
+                      viewModel.selectDate(date);
+                      showDaySheet(context, date);
+                    },
+                  ),
+                )
+              else ...[
               const SizedBox(height: 16),
 
               Text(
@@ -107,8 +152,11 @@ class CalendarScreen extends ConsumerWidget {
                         },
                       ),
               ),
-
+              ],
             ],
+                ),
+              ),
+            ),
           );
         },
             ),
