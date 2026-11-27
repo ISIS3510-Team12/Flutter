@@ -72,27 +72,30 @@ class PendingPhotoTile extends StatelessWidget {
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
           ColoredBox(color: Colors.black.withValues(alpha: 0.45)),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: Colors.white,
+          MediaQuery.withClampedTextScaling(
+            maxScaleFactor: 1.1,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                if (value != null && !failed) ...[
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: value,
-                    color: Colors.white,
-                    backgroundColor: Colors.white.withValues(alpha: 0.35),
-                  ),
+                  if (value != null && !failed) ...[
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: value,
+                      color: Colors.white,
+                      backgroundColor: Colors.white.withValues(alpha: 0.35),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],

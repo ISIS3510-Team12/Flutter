@@ -31,30 +31,32 @@ Future<ImageSource?> showAddPhotoSheet(BuildContext context) {
       );
 
       return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                'Add photo',
-                style: Theme.of(sheetContext).textTheme.titleMedium,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  'Add photo',
+                  style: Theme.of(sheetContext).textTheme.titleMedium,
+                ),
               ),
-            ),
-            option(
-              icon: Symbols.photo_camera,
-              title: 'Take photo',
-              subtitle: 'Use the camera',
-              source: ImageSource.camera,
-            ),
-            option(
-              icon: Symbols.photo_library,
-              title: 'Choose from gallery',
-              subtitle: 'Select one or more photos',
-              source: ImageSource.gallery,
-            ),
-          ],
+              option(
+                icon: Symbols.photo_camera,
+                title: 'Take photo',
+                subtitle: 'Use the camera',
+                source: ImageSource.camera,
+              ),
+              option(
+                icon: Symbols.photo_library,
+                title: 'Choose from gallery',
+                subtitle: 'Select one or more photos',
+                source: ImageSource.gallery,
+              ),
+            ],
+          ),
         ),
       );
     },
