@@ -11,12 +11,14 @@ class RelatedTasksSection extends StatelessWidget {
     required this.selectedIds,
     required this.onQueryChanged,
     required this.onToggle,
+    this.queryController,
   });
 
   final List<Task> tasks;
   final Set<String> selectedIds;
   final ValueChanged<String> onQueryChanged;
   final ValueChanged<String> onToggle;
+  final TextEditingController? queryController;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,7 @@ class RelatedTasksSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: queryController,
           onChanged: onQueryChanged,
           decoration: InputDecoration(
             hintText: 'Search for a task...',

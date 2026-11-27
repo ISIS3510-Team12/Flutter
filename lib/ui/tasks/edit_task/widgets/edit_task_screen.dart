@@ -202,6 +202,7 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen>
                         const SizedBox(height: 8),
                         DropdownButtonFormField<String>(
                           initialValue: form.selectedProject,
+                          isExpanded: true,
                           hint: Text(
                             'Select a project',
                             style: taskHintStyle(theme),
@@ -218,7 +219,11 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen>
                               .map(
                                 (project) => DropdownMenuItem(
                                   value: project,
-                                  child: Text(project),
+                                  child: Text(
+                                    project,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               )
                               .toList(),
