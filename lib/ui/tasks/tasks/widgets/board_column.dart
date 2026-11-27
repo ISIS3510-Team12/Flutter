@@ -5,7 +5,7 @@ import 'package:team12_flutter_juggle/ui/core/themes/app_typography.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/view_models/task_list_entry.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/board_status.dart';
 
-class BoardColumn extends StatelessWidget {
+class BoardColumn extends StatefulWidget {
   const BoardColumn({
     super.key,
     required this.status,
@@ -22,11 +22,44 @@ class BoardColumn extends StatelessWidget {
   final Widget Function(TaskListEntry entry) cardBuilder;
 
   @override
+  State<BoardColumn> createState() => _BoardColumnState();
+}
+
+class _BoardColumnState extends State<BoardColumn> {
+  final _scrollController = ScrollController();
+
+  @override
+  void didUpdateWidget(BoardColumn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final firstId = widget.entries.firstOrNull?.task.id;
+    if (firstId == null) return;
+    if (oldWidget.entries.any((entry) => entry.task.id == firstId)) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToTop());
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToTop() {
+    if (!mounted || !_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final status = widget.status;
+    final entries = widget.entries;
     return DragTarget<Task>(
       onWillAcceptWithDetails: (details) => details.data.status != status,
-      onAcceptWithDetails: (details) => onMove(details.data, status),
+      onAcceptWithDetails: (details) => widget.onMove(details.data, status),
       builder: (context, candidates, _) => AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.all(8),
@@ -46,13 +79,20 @@ class BoardColumn extends StatelessWidget {
             const SizedBox(height: 8),
             Flexible(
               child: entries.isEmpty
-                  ? _EmptyColumn(status: status, unavailable: unavailable)
+                  ? SingleChildScrollView(
+                      child: _EmptyColumn(
+                        status: status,
+                        unavailable: widget.unavailable,
+                      ),
+                    )
                   : ListView.separated(
+                      controller: _scrollController,
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
                       itemCount: entries.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (_, index) => cardBuilder(entries[index]),
+                      itemBuilder: (_, index) =>
+                          widget.cardBuilder(entries[index]),
                     ),
             ),
           ],

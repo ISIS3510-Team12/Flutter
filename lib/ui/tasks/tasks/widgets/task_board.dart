@@ -149,7 +149,10 @@ class _TaskBoardState extends ConsumerState<TaskBoard> {
             itemBuilder: (context, index) {
               final status = statuses[index];
               return Padding(
-                padding: const EdgeInsetsDirectional.only(start: 16),
+                padding: EdgeInsetsDirectional.only(
+                  start: 16,
+                  end: index == statuses.length - 1 ? 16 : 0,
+                ),
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: BoardColumn(

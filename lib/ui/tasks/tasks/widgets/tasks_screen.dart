@@ -43,6 +43,7 @@ class TasksScreen extends ConsumerWidget {
       screen: ScreenNames.tasks,
       state: state,
       child: Scaffold(
+        resizeToAvoidBottomInset: !showBoard,
         appBar: const CustomAppBar(),
         drawer: const GroupDrawer(),
         bottomNavigationBar: const CustomNavigationBar(),

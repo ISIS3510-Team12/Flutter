@@ -39,6 +39,7 @@ abstract class TasksState with _$TasksState {
     @Default({}) Set<int> loadedGroupIds,
     @Default(true) bool groupLoaded,
     @Default(false) bool completedUnavailable,
+    @Default([]) List<String> movedTaskIds,
   }) = _TasksState;
 
   String get groupName => group?.name ?? 'No group';
@@ -55,10 +56,14 @@ abstract class TasksState with _$TasksState {
     (task) => !task.isMine && task.status != TaskStatus.done,
   );
 
-  List<TaskListEntry> boardEntries(
-    TaskStatus status,
-    List<PendingOp> pending,
-  ) => _entries(pending, (task) => task.status == status);
+  List<TaskListEntry> boardEntries(TaskStatus status, List<PendingOp> pending) {
+    final entries = _entries(pending, (task) => task.status == status);
+    return [
+      for (final id in movedTaskIds)
+        ...entries.where((entry) => entry.task.id == id),
+      ...entries.where((entry) => !movedTaskIds.contains(entry.task.id)),
+    ];
+  }
 
   List<TaskListEntry> _entries(
     List<PendingOp> pending,
@@ -248,6 +253,7 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
     state = AsyncData(
       next.copyWith(
         query: latest?.query ?? next.query,
+        movedTaskIds: latest?.movedTaskIds ?? next.movedTaskIds,
         tasks: _mergeTasks(latest?.tasks ?? const [], next.tasks),
       ),
     );
@@ -262,7 +268,10 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
     final repository = ref.read(taskRepositoryProvider);
     final cache = _tasksCache;
     final userId = _userId;
-    _replaceTask(task.copyWith(status: status));
+    _replaceTask(
+      task.copyWith(status: status),
+      movedTaskIds: [task.id, ..._movedTaskIdsWithout(task.id)],
+    );
     try {
       final updated = await repository.updateTaskStatus(task, status);
       final moved = updated.copyWith(isMine: task.isMine);
@@ -270,18 +279,20 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
         unawaited(saveQuietly(() => cache.saveDetail(userId, moved)));
       }
       if (!ref.mounted) return MoveTaskResult.moved;
-      _replaceTask(moved);
+      if (_hasStatus(task.id, status)) _replaceTask(moved);
       _refreshTaskSummaries();
       return MoveTaskResult.moved;
     } catch (error) {
-      if (ref.mounted) _replaceTask(task);
+      if (ref.mounted && _hasStatus(task.id, status)) {
+        _replaceTask(task, movedTaskIds: _movedTaskIdsWithout(task.id));
+      }
       return isOfflineFailure(error)
           ? MoveTaskResult.offline
           : MoveTaskResult.failed;
     }
   }
 
-  void _replaceTask(Task task) {
+  void _replaceTask(Task task, {List<String>? movedTaskIds}) {
     final current = state.value;
     if (current == null) return;
     state = AsyncData(
@@ -290,9 +301,21 @@ class TasksViewModel extends AsyncNotifier<TasksState> {
           for (final existing in current.tasks)
             existing.id == task.id ? task : existing,
         ],
+        movedTaskIds: movedTaskIds ?? current.movedTaskIds,
       ),
     );
   }
+
+  List<String> _movedTaskIdsWithout(String taskId) => [
+    for (final id in state.value?.movedTaskIds ?? const <String>[])
+      if (id != taskId) id,
+  ];
+
+  bool _hasStatus(String taskId, TaskStatus status) =>
+      state.value?.tasks.any(
+        (task) => task.id == taskId && task.status == status,
+      ) ??
+      false;
 
   void _refreshTaskSummaries() {
     ref.invalidate(tasksOverviewProvider);
