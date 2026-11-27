@@ -112,6 +112,7 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
   Future<void> _createGroup() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final drafts = _drafts;
     final success = await ref
         .read(newGroupViewModelProvider.notifier)
         .createGroup(
@@ -120,10 +121,10 @@ class _NewGroupScreenState extends ConsumerState<NewGroupScreen>
           selectedUserIds: selectedUserIds.toList(),
         );
 
+    if (success) drafts.clearGroupDraft();
     if (!mounted) return;
 
     if (success) {
-      _drafts.clearGroupDraft();
       markFeatureCompleted();
       context.pop(true);
     } else {
