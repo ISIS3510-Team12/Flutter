@@ -8,6 +8,7 @@ import 'package:team12_flutter_juggle/data/sync/sync_status.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/tools/widgets/decision_wheel/view_models/decision_wheel_view_model_provider.dart';
 
 import 'decision_wheel_painter.dart';
@@ -825,76 +826,10 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
       ),
     );
   }
-
- 
-  Widget _buildOfflineBanner(DateTime? lastSyncedAt) {
-    final localizations = MaterialLocalizations.of(context);
-
-    String syncMessage;
-
-    if (lastSyncedAt != null) {
-      final localDate = lastSyncedAt.toLocal();
-
-      final time = localizations.formatTimeOfDay(
-        TimeOfDay.fromDateTime(localDate),
-      );
-
-      syncMessage = 'Showing wheel options saved at $time';
-    } else {
-      syncMessage = 'Showing saved wheel options';
-    }
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0EFF5),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.wifi_off_rounded,
-            color: _secondaryText,
-            size: 22,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'No internet connection',
-                  style: TextStyle(
-                    color: _darkText,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  syncMessage,
-                  style: const TextStyle(
-                    color: _secondaryText,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   
   @override
   Widget build(BuildContext context) {
-    final isOnline = ref.watch(isOnlineProvider);
-    final syncStatus = ref.watch(syncStatusProvider);
-    final lastSyncedAt = syncStatus.asData?.value.lastSyncedAt;
-
+    
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -929,7 +864,7 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
       ),
       body: Column(
         children: [
-          if (!isOnline) _buildOfflineBanner(lastSyncedAt),
+          const OfflineBanner(),
           Expanded(
             child: _buildWheelContent(),
           ),

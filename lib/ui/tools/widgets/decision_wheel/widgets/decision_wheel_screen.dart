@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/data/db/app_database.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/tools/widgets/decision_wheel/view_models/decision_wheel_view_model_provider.dart';
@@ -55,96 +55,104 @@ class DecisionWheelScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: wheelsState.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: indigo),
-        ),
-        error: (error, stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 40,
-                  color: Colors.grey,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Could not load your wheels.',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  error.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () {
-                    ref.invalidate(decisionWheelViewModelProvider);
-                  },
-                  child: const Text('Try again'),
-                ),
-              ],
-            ),
-          ),
-        ),
-        data: (state) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Your wheels',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF25254A),
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: wheelsState.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: indigo),
+              ),
+              error: (error, stackTrace) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Could not load your wheels.',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        error.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () {
+                          ref.invalidate(decisionWheelViewModelProvider);
+                        },
+                        child: const Text('Try again'),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                if (state.wheels.isEmpty)
-                  const Expanded(
-                    child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          'Create your first wheel and let it decide for you.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
+              ),
+              data: (state) {
+                // Keep your existing data: (state) implementation unchanged.
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Your wheels',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF25254A),
                         ),
                       ),
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: state.wheels.length,
-                      separatorBuilder: (_, index) =>
-                          const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final wheel = state.wheels[index];
-
-                        return _WheelCard(
-                          key: ValueKey(wheel.id),
-                          wheel: wheel,
-                          onTap: () => _openWheel(
-                            context,
-                            ref,
-                            wheel,
+                      const SizedBox(height: 20),
+                      if (state.wheels.isEmpty)
+                        const Expanded(
+                          child: Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 24),
+                              child: Text(
+                                'Create your first wheel and let it decide for you.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            ),
                           ),
-                        );
-                      },
-                    ),
+                        )
+                      else
+                        Expanded(
+                          child: ListView.separated(
+                            itemCount: state.wheels.length,
+                            separatorBuilder: (_, index) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final wheel = state.wheels[index];
+
+                              return _WheelCard(
+                                key: ValueKey(wheel.id),
+                                wheel: wheel,
+                                onTap: () => _openWheel(
+                                  context,
+                                  ref,
+                                  wheel,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   ),
-              ],
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFFE4E2FA),

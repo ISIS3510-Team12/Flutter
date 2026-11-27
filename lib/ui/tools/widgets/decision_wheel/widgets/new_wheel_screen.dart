@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/tools/widgets/decision_wheel/view_models/decision_wheel_view_model_provider.dart';
 
 class NewWheelScreen extends ConsumerStatefulWidget {
@@ -114,149 +114,155 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
           ),
         ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _nameController,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Wheel name',
-                  hintText: 'e.g. What should I do?',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Options',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                  Text(
-                    '${_options.length} of $_maxOptions',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              Expanded(
-                child: _options.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Add at least two options to your wheel',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : ReorderableListView.builder(
-                        itemCount: _options.length,
-                        onReorderItem: (oldIndex, newIndex) {
-                          setState(() {
-                            if (newIndex > oldIndex) {
-                              newIndex--;
-                            }
-
-                            final option = _options.removeAt(oldIndex);
-                            _options.insert(newIndex, option);
-                          });
-                        },
-                        itemBuilder: (context, index) {
-                          final option = _options[index];
-
-                          return Card(
-                            key: ValueKey('option_$index'),
-                            elevation: 0,
-                            color: _background,
-                            margin: const EdgeInsets.only(bottom: 8),
-                            child: ListTile(
-                              leading: Container(
-                                width: 22,
-                                height: 22,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFF2E9D50),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.check_rounded,
-                                  color: Color(0xFF2E9D50),
-                                  size: 15,
-                                ),
-                              ),
-                              title: Text(
-                                option,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              trailing: IconButton(
-                                tooltip: 'Remove option',
-                                icon: const Icon(Icons.close),
-                                onPressed: () => _removeOption(index),
-                              ),
-                            ),
-                          );
-                        },
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _nameController,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        labelText: 'Wheel name',
+                        hintText: 'e.g. What should I do?',
+                        border: OutlineInputBorder(),
                       ),
-              ),
+                    ),
+                    const SizedBox(height: 24),
 
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _indigo,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed:
-                      _saving || _remainingOptions <= 0
-                          ? null
-                          : _addOption,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add option'),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _indigo,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                  onPressed: _saving ? null : _saveWheel,
-                  child: _saving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Options',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.normal,
                           ),
-                        )
-                      : const Text('Save wheel'),
+                        ),
+                        Text(
+                          '${_options.length} of $_maxOptions',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    Expanded(
+                      child: _options.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'Add at least two options to your wheel',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            )
+                          : ReorderableListView.builder(
+                              itemCount: _options.length,
+                              onReorderItem: (oldIndex, newIndex) {
+                                setState(() {
+                                  if (newIndex > oldIndex) {
+                                    newIndex--;
+                                  }
+
+                                  final option = _options.removeAt(oldIndex);
+                                  _options.insert(newIndex, option);
+                                });
+                              },
+                              itemBuilder: (context, index) {
+                                final option = _options[index];
+
+                                return Card(
+                                  key: ValueKey('option_$index'),
+                                  elevation: 0,
+                                  color: _background,
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  child: ListTile(
+                                    leading: Container(
+                                      width: 22,
+                                      height: 22,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: const Color(0xFF2E9D50),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.check_rounded,
+                                        color: Color(0xFF2E9D50),
+                                        size: 15,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      option,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    trailing: IconButton(
+                                      tooltip: 'Remove option',
+                                      icon: const Icon(Icons.close),
+                                      onPressed: () => _removeOption(index),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _indigo,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: _saving || _remainingOptions <= 0
+                            ? null
+                            : _addOption,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add option'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _indigo,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                        onPressed: _saving ? null : _saveWheel,
+                        child: _saving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Save wheel'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
