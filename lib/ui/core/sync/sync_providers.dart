@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:team12_flutter_juggle/data/local/hive_store.dart';
 import 'package:team12_flutter_juggle/data/local/pending_op.dart';
+import 'package:team12_flutter_juggle/data/repositories/gallery/gallery_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/location_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/sync/outbox_store.dart';
@@ -12,6 +13,7 @@ import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/calendar/view_models/calendar_view_model_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/app/service_locator.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/gallery/view_models/gallery_providers.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/home_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/home/view_models/next_task_viewmodel_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
@@ -35,6 +37,7 @@ final outboxSyncServiceProvider = Provider<OutboxSyncService>((ref) {
     store: ref.watch(outboxStoreProvider),
     repository: () => ref.read(taskRepositoryProvider),
     locationRepository: () => ref.read(locationRepositoryProvider),
+    galleryRepository: () => ref.read(galleryRepositoryProvider),
     userId: () => _currentUid(ref),
     isOnline: () => ref.read(isOnlineProvider),
     onSynced: (types) {
@@ -47,6 +50,9 @@ final outboxSyncServiceProvider = Provider<OutboxSyncService>((ref) {
       }
       if (types.contains(PendingOpType.saveLocation)) {
         ref.invalidate(locationViewModelProvider);
+      }
+      if (types.contains(PendingOpType.uploadProjectPhoto)) {
+        ref.invalidate(galleryViewModelProvider);
       }
     },
   );
@@ -65,6 +71,10 @@ final outboxSyncServiceProvider = Provider<OutboxSyncService>((ref) {
 
 final syncStatusProvider = StreamProvider<SyncStatus>(
   (ref) => ref.watch(outboxSyncServiceProvider).watch(),
+);
+
+final uploadProgressProvider = StreamProvider<Map<String, double>>(
+  (ref) => ref.watch(outboxSyncServiceProvider).watchUploadProgress(),
 );
 
 final pendingOpsProvider = StreamProvider<List<PendingOp>>((ref) {

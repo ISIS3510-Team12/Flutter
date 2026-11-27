@@ -37,14 +37,15 @@ class OutboxStore {
     await _box.delete(id);
     if (raw == null) return;
     try {
-      final path = PendingOp.fromJson(jsonDecode(raw) as Map<String, dynamic>)
-          .photoPath;
-      if (path != null) await _deleteFile(path);
+      final op = PendingOp.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      for (final path in op.filePaths) {
+        await _deleteFile(path);
+      }
     } catch (_) {}
   }
 
   Future<void> clear() async {
-    final paths = [for (final op in all()) ?op.photoPath];
+    final paths = [for (final op in all()) ...op.filePaths];
     await _box.clear();
     for (final path in paths) {
       await _deleteFile(path);

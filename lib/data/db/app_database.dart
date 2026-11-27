@@ -4,6 +4,8 @@ import 'package:team12_flutter_juggle/data/db/tables/cached_groups.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_notifications.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_projects.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_project_group_loads.dart';
+import 'package:team12_flutter_juggle/data/db/tables/cached_project_photo_loads.dart';
+import 'package:team12_flutter_juggle/data/db/tables/cached_project_photos.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_project_tasks.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_project_task_loads.dart';
 import 'package:team12_flutter_juggle/data/db/tables/cached_tasks.dart';
@@ -26,13 +28,15 @@ part 'app_database.g.dart';
     CachedProjectTasks,
     CachedProjectTaskLoads,
     CachedGroupListLoads,
+    CachedProjectPhotos,
+    CachedProjectPhotoLoads,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   Future<void> clearCache() {
     return transaction(() async {

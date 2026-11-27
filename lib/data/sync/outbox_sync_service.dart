@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:path_provider/path_provider.dart';
 import 'package:team12_flutter_juggle/data/local/pending_op.dart';
 import 'package:team12_flutter_juggle/data/local/task_codec.dart';
+import 'package:team12_flutter_juggle/data/repositories/gallery/gallery_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/location_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/tasks/task_repository.dart';
 import 'package:team12_flutter_juggle/data/sync/outbox_store.dart';
@@ -41,6 +42,7 @@ class OutboxSyncService {
     required OutboxStore store,
     required TaskRepository Function() repository,
     required LocationRepository Function() locationRepository,
+    required GalleryRepository Function() galleryRepository,
     required String? Function() userId,
     required bool Function() isOnline,
     required void Function(Set<PendingOpType> types) onSynced,
@@ -50,6 +52,7 @@ class OutboxSyncService {
   }) : _store = store,
        _repository = repository,
        _locationRepository = locationRepository,
+       _galleryRepository = galleryRepository,
        _userId = userId,
        _isOnline = isOnline,
        _onSynced = onSynced,
@@ -60,6 +63,7 @@ class OutboxSyncService {
   final OutboxStore _store;
   final TaskRepository Function() _repository;
   final LocationRepository Function() _locationRepository;
+  final GalleryRepository Function() _galleryRepository;
   final String? Function() _userId;
   final bool Function() _isOnline;
   final void Function(Set<PendingOpType> types) _onSynced;
@@ -68,9 +72,12 @@ class OutboxSyncService {
   final PhotoStager _stagePhoto;
 
   final _controller = StreamController<SyncStatus>.broadcast();
+  final _progressController = StreamController<Map<String, double>>.broadcast();
+  final _progress = <String, double>{};
   SyncStatus _status = const SyncStatus();
   Timer? _timer;
   bool _running = false;
+  bool _flushRequested = false;
   bool _disposed = false;
 
   SyncStatus get status => _status;
@@ -79,6 +86,35 @@ class OutboxSyncService {
     yield _status;
     yield* _controller.stream;
   }
+
+  Stream<Map<String, double>> watchUploadProgress() async* {
+    yield Map.of(_progress);
+    yield* _progressController.stream;
+  }
+
+  Future<PendingOp> enqueuePhotoUpload({
+    required String id,
+    required int projectId,
+    required String photoPath,
+    String? thumbnailPath,
+  }) async {
+    final uid = _userId();
+    if (uid == null) throw StateError('No signed in user');
+    final op = PendingOp(
+      id: id,
+      userId: uid,
+      type: PendingOpType.uploadProjectPhoto,
+      payload: {'projectId': projectId, 'thumbnailPath': thumbnailPath},
+      createdAt: _now(),
+      photoPath: photoPath,
+    );
+    await _store.put(op);
+    _publish();
+    if (_isOnline()) unawaited(flush());
+    return op;
+  }
+
+  String newOperationId() => _newId();
 
   Future<PendingOp> enqueueCreate(
     Task task, {
@@ -159,7 +195,11 @@ class OutboxSyncService {
   }
 
   Future<void> flush() async {
-    if (_running || _disposed) return;
+    if (_disposed) return;
+    if (_running) {
+      _flushRequested = true;
+      return;
+    }
     final uid = _userId();
     if (uid == null || !_isOnline()) {
       _publish();
@@ -188,13 +228,49 @@ class OutboxSyncService {
       _publish();
       _schedule();
       if (synced.isNotEmpty) _onSynced(synced);
+      if (_flushRequested) {
+        _flushRequested = false;
+        unawaited(flush());
+      }
     }
   }
 
   Future<bool> _process(PendingOp op) => switch (op.type) {
     PendingOpType.createTask => _processCreateTask(op),
     PendingOpType.saveLocation => _processSaveLocation(op),
+    PendingOpType.uploadProjectPhoto => _processPhotoUpload(op),
   };
+
+  Future<bool> _processPhotoUpload(PendingOp op) async {
+    try {
+      _setProgress(op.id, 0);
+      await _galleryRepository().uploadPhoto(
+        projectId: op.projectId,
+        clientUploadId: op.id,
+        path: op.photoPath!,
+        thumbnailPath: op.thumbnailPath,
+        onProgress: (value) => _setProgress(op.id, value),
+      );
+      await _store.remove(op.id);
+      return true;
+    } catch (error) {
+      await _fail(op, error);
+      return false;
+    } finally {
+      _setProgress(op.id, null);
+    }
+  }
+
+  void _setProgress(String id, double? value) {
+    if (value == null) {
+      _progress.remove(id);
+    } else {
+      _progress[id] = value;
+    }
+    if (!_progressController.isClosed) {
+      _progressController.add(Map.of(_progress));
+    }
+  }
 
   Future<bool> _processSaveLocation(PendingOp op) async {
     try {
@@ -262,6 +338,8 @@ class OutboxSyncService {
           "Couldn't upload '${op.task.title}'. Retry or discard it.",
         PendingOpType.saveLocation =>
           "Couldn't sync your saved place. Retry or discard it.",
+        PendingOpType.uploadProjectPhoto =>
+          "Couldn't upload a project photo. Retry or discard it.",
       },
     );
   }
@@ -337,5 +415,6 @@ class OutboxSyncService {
     _disposed = true;
     _timer?.cancel();
     _controller.close();
+    _progressController.close();
   }
 }
