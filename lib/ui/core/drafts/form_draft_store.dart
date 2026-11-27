@@ -61,6 +61,7 @@ final class FormDraftStore {
   GroupDraft? _group;
   final Map<int, ProjectDraft> _projects = {};
   final Map<int, TaskDraft> _tasks = {};
+  int? _lastTaskGroupId;
 
   void switchUser(String? userId) {
     if (userId == _userId) return;
@@ -68,6 +69,7 @@ final class FormDraftStore {
     _group = null;
     _projects.clear();
     _tasks.clear();
+    _lastTaskGroupId = null;
   }
 
   GroupDraft? get groupDraft => _group;
@@ -83,9 +85,14 @@ final class FormDraftStore {
 
   void clearProjectDraft(int groupId) => _projects.remove(groupId);
 
+  int? get lastTaskGroupId => _lastTaskGroupId;
+
   TaskDraft? taskDraft(int groupId) => _tasks[groupId];
 
-  void saveTaskDraft(int groupId, TaskDraft draft) => _tasks[groupId] = draft;
+  void saveTaskDraft(int groupId, TaskDraft draft) {
+    _tasks[groupId] = draft;
+    _lastTaskGroupId = groupId;
+  }
 
   void clearTaskDraft(int groupId) => _tasks.remove(groupId);
 }

@@ -123,6 +123,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
       return;
     }
 
+    final drafts = _drafts;
     final createdProject = await ref
         .read(projectCreateViewModelProvider.notifier)
         .createProject(
@@ -132,10 +133,10 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
           groupId: widget.groupId,
         );
 
+    if (createdProject != null) drafts.clearProjectDraft(widget.groupId);
     if (!mounted) return;
 
     if (createdProject != null) {
-      _drafts.clearProjectDraft(widget.groupId);
       markFeatureCompleted();
       context.pop(createdProject);
       return;

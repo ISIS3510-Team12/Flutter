@@ -208,7 +208,11 @@ class CreateTaskViewModel extends AsyncNotifier<CreateTaskFormState> {
       save: (groups) => _groupsCache.replaceForUser(userId, groups),
       fallback: () => _groupsCache.findAll(userId),
     );
-    final group = selectedGroup.resolve(groups.value);
+    final lastGroupId = _drafts.lastTaskGroupId;
+    final group = groups.value
+            .where((group) => group.id == lastGroupId)
+            .firstOrNull ??
+        selectedGroup.resolve(groups.value);
     final members = membersWithYou(group, me);
     final data = group == null ? null : await _groupData(userId, group);
     final loaded = CreateTaskFormState(
