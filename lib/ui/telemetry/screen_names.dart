@@ -10,6 +10,7 @@ abstract final class ScreenNames {
   static const groupDetail = 'group_detail';
   static const newGroup = 'new_group';
   static const editGroup = 'edit_group';
+  static const editProject = 'edit_project';
   static const projectDetail = 'project_detail';
   static const profile = 'profile';
   static const profileInformation = 'profile_information';
