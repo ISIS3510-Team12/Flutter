@@ -12,6 +12,7 @@ import 'package:team12_flutter_juggle/ui/core/themes/map_style.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/view_models/location_viewmodel_provider.dart';
+import 'package:team12_flutter_juggle/ui/profile/location/view_models/place_name_provider.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/widgets/location_map_picker.dart';
 import 'package:team12_flutter_juggle/ui/profile/location/widgets/offline_map_notice.dart';
 import 'package:team12_flutter_juggle/ui/profile/settings/widgets/settings_menu_tile.dart';
@@ -259,6 +260,9 @@ class _MapPreview extends ConsumerWidget {
     final theme = Theme.of(context);
     final selected = point;
     final offline = !ref.watch(isOnlineProvider);
+    final name = selected == null || !offline
+        ? null
+        : ref.watch(placeNameProvider(selected)).value;
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: SizedBox(
@@ -315,7 +319,7 @@ class _MapPreview extends ConsumerWidget {
                   child: OfflineMapNotice(
                     detail: selected == null
                         ? null
-                        : formatCoordinates(selected),
+                        : name ?? formatCoordinates(selected),
                   ),
                 ),
               ),

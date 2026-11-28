@@ -9,6 +9,8 @@ import 'package:team12_flutter_juggle/data/repositories/location/arrival_reminde
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/device_location_repository_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/location/location_repository_provider.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/place_key.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/recent_places_cache_provider.dart';
 import 'package:team12_flutter_juggle/domain/models/profile/user_location.dart';
 import 'package:team12_flutter_juggle/ui/auth/providers/auth_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/background/arrival_geofence_callback.dart';
@@ -121,6 +123,12 @@ class LocationViewModel extends AsyncNotifier<LocationState> {
     if (current == null) return;
     state = AsyncData(current.copyWith(notifyWithin: meters));
   }
+
+  List<LatLng> recentPlaces() =>
+      ref.read(recentPlacesCacheProvider).recentValues();
+
+  void rememberPlace(LatLng point) =>
+      ref.read(recentPlacesCacheProvider).put(placeKey(point), point);
 
   Future<CurrentLocation> locateMe() =>
       ref.read(deviceLocationRepositoryProvider).currentLocation();

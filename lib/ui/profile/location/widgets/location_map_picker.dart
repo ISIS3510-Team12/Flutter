@@ -15,6 +15,8 @@ import 'package:team12_flutter_juggle/ui/profile/location/widgets/offline_map_no
 
 const defaultMapCenter = LatLng(4.6014, -74.0661);
 const _panelHeight = 190.0;
+const _recentPlacesHeight = 76.0;
+const _recentLabelWidth = 180.0;
 const _markerSize = 44.0;
 
 Future<BitmapDescriptor> _buildMarker(Color color, double pixelRatio) async {
@@ -61,6 +63,9 @@ class _LocationMapPickerState extends ConsumerState<LocationMapPicker> {
   GoogleMapController? _controller;
   BitmapDescriptor? _marker;
   bool _locating = false;
+  late final List<LatLng> _recent = ref
+      .read(locationViewModelProvider.notifier)
+      .recentPlaces();
 
   @override
   void didChangeDependencies() {
@@ -70,6 +75,16 @@ class _LocationMapPickerState extends ConsumerState<LocationMapPicker> {
     _buildMarker(color, ratio).then((marker) {
       if (mounted) setState(() => _marker = marker);
     });
+  }
+
+  Future<void> _selectRecent(LatLng point) async {
+    setState(() => _selected = point);
+    await _controller?.animateCamera(CameraUpdate.newLatLngZoom(point, 16));
+  }
+
+  void _confirm(LatLng point) {
+    ref.read(locationViewModelProvider.notifier).rememberPlace(point);
+    context.pop(point);
   }
 
   Future<void> _useCurrentLocation() async {
@@ -135,7 +150,11 @@ class _LocationMapPickerState extends ConsumerState<LocationMapPicker> {
               zoom: 15,
             ),
             style: AppMapStyle.of(Theme.of(context).colorScheme),
-            padding: const EdgeInsets.only(bottom: _panelHeight),
+            padding: EdgeInsets.only(
+              bottom: _recent.isEmpty
+                  ? _panelHeight
+                  : _panelHeight + _recentPlacesHeight,
+            ),
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             mapToolbarEnabled: false,
@@ -164,11 +183,11 @@ class _LocationMapPickerState extends ConsumerState<LocationMapPicker> {
             child: SafeArea(
               child: _SelectionPanel(
                 point: selected,
+                recent: _recent,
+                onSelectRecent: _selectRecent,
                 locating: _locating,
                 onUseCurrent: _locating ? null : _useCurrentLocation,
-                onConfirm: selected == null
-                    ? null
-                    : () => context.pop(selected),
+                onConfirm: selected == null ? null : () => _confirm(selected),
               ),
             ),
           ),
@@ -181,12 +200,16 @@ class _LocationMapPickerState extends ConsumerState<LocationMapPicker> {
 class _SelectionPanel extends ConsumerWidget {
   const _SelectionPanel({
     required this.point,
+    required this.recent,
+    required this.onSelectRecent,
     required this.locating,
     required this.onUseCurrent,
     required this.onConfirm,
   });
 
   final LatLng? point;
+  final List<LatLng> recent;
+  final ValueChanged<LatLng> onSelectRecent;
   final bool locating;
   final VoidCallback? onUseCurrent;
   final VoidCallback? onConfirm;
@@ -196,7 +219,7 @@ class _SelectionPanel extends ConsumerWidget {
     final theme = Theme.of(context);
     final selected = point;
     final offline = !ref.watch(isOnlineProvider);
-    final name = selected == null || offline
+    final name = selected == null
         ? null
         : ref.watch(placeNameProvider(selected)).value;
     return Material(
@@ -209,6 +232,25 @@ class _SelectionPanel extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (recent.isNotEmpty) ...[
+              Text('Recent places', style: theme.textTheme.labelMedium),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  spacing: 8,
+                  children: [
+                    for (final place in recent)
+                      _RecentPlaceChip(
+                        key: ValueKey(place),
+                        point: place,
+                        selected: place == selected,
+                        onSelected: () => onSelectRecent(place),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             if (selected == null)
               Text(
                 'Tap the map to choose a place',
@@ -216,14 +258,13 @@ class _SelectionPanel extends ConsumerWidget {
               )
             else ...[
               Text(
-                offline
-                    ? formatCoordinates(selected)
-                    : name ?? 'Selected place',
+                name ??
+                    (offline ? formatCoordinates(selected) : 'Selected place'),
                 style: theme.textTheme.titleSmall,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (!offline) ...[
+              if (name != null || !offline) ...[
                 const SizedBox(height: 2),
                 Text(
                   formatCoordinates(selected),
@@ -259,6 +300,36 @@ class _SelectionPanel extends ConsumerWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentPlaceChip extends ConsumerWidget {
+  const _RecentPlaceChip({
+    super.key,
+    required this.point,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final LatLng point;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final name = ref.watch(placeNameProvider(point)).value;
+    return ChoiceChip(
+      selected: selected,
+      onSelected: (_) => onSelected(),
+      label: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _recentLabelWidth),
+        child: Text(
+          name ?? formatCoordinates(point),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

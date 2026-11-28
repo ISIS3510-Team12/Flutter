@@ -51,6 +51,12 @@ class LruCache<K, V extends Object> {
     }
   }
 
+  List<V> recentValues() {
+    final now = _clock.now();
+    _entries.removeWhere((_, entry) => now.difference(entry.storedAt) > ttl);
+    return [for (final entry in _entries.values) entry.value].reversed.toList();
+  }
+
   Future<V?> getOrLoad(K key, Future<V?> Function() loader) {
     final cached = get(key);
     if (cached != null) return Future.value(cached);
