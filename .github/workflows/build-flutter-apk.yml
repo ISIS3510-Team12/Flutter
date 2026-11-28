@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - chore/update-pubspec-lock-flutter-3.50
   workflow_dispatch:
 
 permissions:
