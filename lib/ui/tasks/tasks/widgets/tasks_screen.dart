@@ -202,34 +202,60 @@ class _ListBody extends ConsumerWidget {
     final sectionStyle = theme.textTheme.titleSmall?.copyWith(
       fontWeight: AppFontWeight.bold,
     );
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        header,
-        const SizedBox(height: 24),
-        if (!data.groupLoaded) ...[
-          _GroupNotLoadedMessage(
-            groupName: data.groupName,
-            onRetry: () => ref.invalidate(tasksViewModelProvider),
-          ),
-          const SizedBox(height: 96),
-        ] else ...[
-          Text('Your pending tasks', style: sectionStyle),
-          const SizedBox(height: 12),
-          for (final entry in data.myEntries(pending)) ...[
-            _ListEntryCard(entry: entry),
+    return CustomScrollView(
+      slivers: [
+        _box(
+          [header, const SizedBox(height: 24)],
+          top: 16,
+        ),
+        if (!data.groupLoaded)
+          _box([
+            _GroupNotLoadedMessage(
+              groupName: data.groupName,
+              onRetry: () => ref.invalidate(tasksViewModelProvider),
+            ),
+          ])
+        else ...[
+          _box([
+            Text('Your pending tasks', style: sectionStyle),
             const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 12),
-          Text('Pending group tasks', style: sectionStyle),
-          const SizedBox(height: 12),
-          for (final entry in data.groupEntries(pending)) ...[
-            _ListEntryCard(entry: entry),
+          ]),
+          _entryList(data.myEntries(pending)),
+          _box([
             const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 96),
+            Text('Pending group tasks', style: sectionStyle),
+            const SizedBox(height: 12),
+          ]),
+          _entryList(data.groupEntries(pending)),
         ],
+        // Leaves room for the floating button.
+        const SliverToBoxAdapter(child: SizedBox(height: 112)),
       ],
+    );
+  }
+
+  Widget _box(List<Widget> children, {double top = 0}) {
+    return SliverPadding(
+      padding: EdgeInsets.fromLTRB(16, top, 16, 0),
+      sliver: SliverToBoxAdapter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  Widget _entryList(List<TaskListEntry> entries) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverList.builder(
+        itemCount: entries.length,
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _ListEntryCard(entry: entries[index]),
+        ),
+      ),
     );
   }
 }

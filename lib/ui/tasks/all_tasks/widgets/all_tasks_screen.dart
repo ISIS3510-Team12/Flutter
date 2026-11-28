@@ -40,32 +40,53 @@ class AllTasksScreen extends ConsumerWidget {
           genericMessage: "We couldn't load your tasks.",
           onRetry: () => ref.invalidate(allTasksViewModelProvider),
         ),
-        data: (data) => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _FilterGroup(
-              selected: data.filter,
-              onSelected: (filter) => ref
-                  .read(allTasksViewModelProvider.notifier)
-                  .updateFilter(filter),
-            ),
-            const SizedBox(height: 16),
-            if (data.filteredTasks.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 32),
-                  child: Text(
-                    'No tasks here',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+        data: (data) => CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _FilterGroup(
+                      selected: data.filter,
+                      onSelected: (filter) => ref
+                          .read(allTasksViewModelProvider.notifier)
+                          .updateFilter(filter),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    if (data.filteredTasks.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 32),
+                          child: Text(
+                            'No tasks here',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-            for (final task in data.filteredTasks) ...[
-              TaskCard(task: task, onTap: () => _openTask(context, task.id)),
-              const SizedBox(height: 12),
-            ],
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverList.builder(
+                itemCount: data.filteredTasks.length,
+                itemBuilder: (context, index) {
+                  final task = data.filteredTasks[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TaskCard(
+                      task: task,
+                      onTap: () => _openTask(context, task.id),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
             ),
