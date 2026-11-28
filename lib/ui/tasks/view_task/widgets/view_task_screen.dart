@@ -10,6 +10,7 @@ import 'package:team12_flutter_juggle/ui/core/ui/load_error_view.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/network_exceptions.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/decode_size.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:team12_flutter_juggle/ui/tasks/view_task/view_models/view_task_viewmodel.dart';
 import 'package:team12_flutter_juggle/ui/tasks/tasks/widgets/task_card.dart';
@@ -287,11 +288,17 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
                           onTap: () => _openPhoto(context),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.memory(
-                              data.photo!,
-                              width: double.infinity,
-                              height: 220,
-                              fit: BoxFit.cover,
+                            child: LayoutBuilder(
+                              builder: (context, constraints) => Image.memory(
+                                data.photo!,
+                                width: double.infinity,
+                                height: 220,
+                                fit: BoxFit.cover,
+                                cacheWidth: decodeWidth(
+                                  context,
+                                  constraints.maxWidth,
+                                ),
+                              ),
                             ),
                           ),
                         ),

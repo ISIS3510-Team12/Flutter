@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -281,6 +283,7 @@ class _MapPreview extends ConsumerWidget {
                     target: selected,
                     zoom: 15,
                   ),
+                  liteModeEnabled: Platform.isAndroid,
                   zoomControlsEnabled: false,
                   mapToolbarEnabled: false,
                   myLocationButtonEnabled: false,

@@ -69,6 +69,7 @@ class PendingPhotoTile extends StatelessWidget {
           Image.file(
             File(op.thumbnailPath ?? op.photoPath!),
             fit: BoxFit.cover,
+            cacheWidth: 400,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
           ColoredBox(color: Colors.black.withValues(alpha: 0.45)),
