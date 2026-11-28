@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
@@ -35,9 +37,7 @@ class ToolsScreen extends StatelessWidget {
                   _ToolTile(
                     title: 'Pomodoro timer',
                     icon: Icons.alarm_outlined,
-                    onTap: () {
-                      // TODO: Navigate to Pomodoro screen.
-                    },
+                    onTap: () => context.push(Routes.pomodoro),
                   ),
 
                   const SizedBox(height: 12),
