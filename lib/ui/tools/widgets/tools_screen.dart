@@ -4,6 +4,7 @@ import 'package:team12_flutter_juggle/ui/core/routing/routes.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_app_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/custom_navigation_bar.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
+import 'package:team12_flutter_juggle/ui/tools/widgets/decision_wheel/widgets/decision_wheel_screen.dart';
 
 class ToolsScreen extends StatelessWidget {
   const ToolsScreen({super.key});
@@ -33,20 +34,21 @@ class ToolsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   _ToolTile(
                     title: 'Pomodoro timer',
                     icon: Icons.alarm_outlined,
                     onTap: () => context.push(Routes.pomodoro),
                   ),
-
                   const SizedBox(height: 12),
-
                   _ToolTile(
                     title: 'Decision Wheel',
                     icon: Icons.format_list_bulleted_rounded,
                     onTap: () {
-                      // TODO: Navigate to Decision Wheel screen.
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const DecisionWheelScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -82,10 +84,17 @@ class _ToolTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 18,
+          ),
           child: Row(
             children: [
-              Icon(icon, color: theme.colorScheme.primary, size: 26),
+              Icon(
+                icon,
+                color: theme.colorScheme.primary,
+                size: 26,
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
