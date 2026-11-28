@@ -23,6 +23,7 @@ import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/view_task_scree
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_viewer.dart';
 import 'package:team12_flutter_juggle/ui/projects/widgets/edit_project_screen.dart';
 import 'package:team12_flutter_juggle/ui/tools/widgets/tools_screen.dart';
+import 'package:team12_flutter_juggle/ui/tools/pomodoro/widgets/pomodoro_screen.dart';
 import 'package:team12_flutter_juggle/ui/gallery/widgets/gallery_screen.dart';
 import 'package:team12_flutter_juggle/ui/gallery/widgets/photo_viewer_screen.dart';
 
@@ -214,6 +215,11 @@ final routes = <RouteBase>[
   GoRoute(
     path: Routes.tools,
     builder: (context, state) => const ToolsScreen(),
+  ),
+  GoRoute(
+    path: Routes.pomodoro,
+    pageBuilder: (context, state) =>
+        sharedAxisPage(state: state, child: const PomodoroScreen()),
   ),
 
 ];

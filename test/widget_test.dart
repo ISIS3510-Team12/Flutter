@@ -19,6 +19,7 @@ void main() {
     await tester.runAsync(() async {
       Hive.init(directory.path);
       await Hive.openBox<String>(HiveBoxes.pendingOps);
+      await Hive.openBox<String>(HiveBoxes.pomodoro);
     });
     await tester.pumpWidget(const ProviderScope(child: App()));
 
