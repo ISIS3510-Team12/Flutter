@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:team12_flutter_juggle/ui/core/utils/decode_size.dart';
 
 const _maxPhotoBytes = 5 * 1024 * 1024;
 const _allowedExtensions = {'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'};
@@ -67,11 +68,24 @@ class TaskPhotoPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final Widget? preview = newPhotoPath != null
-        ? Image.file(File(newPhotoPath!), fit: BoxFit.cover)
-        : currentPhoto != null
-        ? Image.memory(currentPhoto!, fit: BoxFit.cover)
-        : null;
+    final Widget? preview = newPhotoPath == null && currentPhoto == null
+        ? null
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              final cacheWidth = decodeWidth(context, constraints.maxWidth);
+              return newPhotoPath != null
+                  ? Image.file(
+                      File(newPhotoPath!),
+                      fit: BoxFit.cover,
+                      cacheWidth: cacheWidth,
+                    )
+                  : Image.memory(
+                      currentPhoto!,
+                      fit: BoxFit.cover,
+                      cacheWidth: cacheWidth,
+                    );
+            },
+          );
     return Material(
       color: theme.colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(12),

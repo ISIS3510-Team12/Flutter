@@ -198,8 +198,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen>
             op.projectId == widget.projectId)
           op,
     ].reversed.toList();
-    final progress =
-        ref.watch(uploadProgressProvider).value ?? const <String, double>{};
     final processing =
         ref.watch(photoImportViewModelProvider)[widget.projectId] ?? 0;
     final weekAgo = DateTime.now().subtract(const Duration(days: 7));
@@ -219,11 +217,18 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen>
           child: Center(child: Text('Preparing...')),
         ),
       for (final op in pending)
-        PendingPhotoTile(
-          op: op,
-          progress: progress[op.id],
-          isOnline: online,
-          onFailedTap: () => _resolveFailed(op),
+        Consumer(
+          key: ValueKey(op.id),
+          builder: (context, ref, _) => PendingPhotoTile(
+            op: op,
+            progress: ref.watch(
+              uploadProgressProvider.select(
+                (progress) => progress.value?[op.id],
+              ),
+            ),
+            isOnline: online,
+            onFailedTap: () => _resolveFailed(op),
+          ),
         ),
     ];
 
