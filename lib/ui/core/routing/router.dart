@@ -23,6 +23,8 @@ import 'package:team12_flutter_juggle/ui/tasks/view_task/widgets/view_task_scree
 import 'package:team12_flutter_juggle/ui/tasks/widgets/task_photo_viewer.dart';
 import 'package:team12_flutter_juggle/ui/projects/widgets/edit_project_screen.dart';
 import 'package:team12_flutter_juggle/ui/tools/widgets/tools_screen.dart';
+import 'package:team12_flutter_juggle/ui/gallery/widgets/gallery_screen.dart';
+import 'package:team12_flutter_juggle/ui/gallery/widgets/photo_viewer_screen.dart';
 
 import 'package:team12_flutter_juggle/ui/groups/widgets/group_detail_screen.dart';
 import 'package:team12_flutter_juggle/ui/groups/widgets/new_group_screen.dart';
@@ -188,6 +190,26 @@ final routes = <RouteBase>[
         ),
       );
     },
+  ),
+  GoRoute(
+    path: Routes.projectGallery,
+    pageBuilder: (context, state) => sharedAxisPage(
+      state: state,
+      child: GalleryScreen(
+        projectId: int.parse(state.pathParameters['projectId']!),
+      ),
+    ),
+  ),
+  GoRoute(
+    path: Routes.projectPhoto,
+    pageBuilder: (context, state) => sharedAxisPage(
+      state: state,
+      child: PhotoViewerScreen(
+        projectId: int.parse(state.pathParameters['projectId']!),
+        photoId: int.parse(state.pathParameters['photoId']!),
+        savedOnly: state.uri.queryParameters['saved'] == 'true',
+      ),
+    ),
   ),
   GoRoute(
     path: Routes.tools,

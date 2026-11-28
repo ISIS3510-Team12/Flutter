@@ -18,6 +18,7 @@ import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 import 'package:team12_flutter_juggle/domain/models/project/project.dart';
+import 'package:team12_flutter_juggle/ui/gallery/widgets/project_photos_card.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   const ProjectDetailScreen({super.key, required this.projectId});
@@ -236,6 +237,16 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
+                        const SizedBox(height: 16),
+                        ProjectPhotosCard(
+                          projectId: widget.projectId,
+                          onOpen: () {
+                            markFeatureCompleted();
+                            context.push(
+                              Routes.projectGalleryPath(widget.projectId),
+                            );
+                          },
+                        ),
                         const SizedBox(height: 24),
                         Text(
                           'Tasks',

@@ -12,6 +12,7 @@ abstract final class ScreenNames {
   static const editGroup = 'edit_group';
   static const editProject = 'edit_project';
   static const projectDetail = 'project_detail';
+  static const projectGallery = 'project_gallery';
   static const profile = 'profile';
   static const profileInformation = 'profile_information';
   static const notifications = 'notifications';

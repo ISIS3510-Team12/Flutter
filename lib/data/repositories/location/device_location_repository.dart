@@ -3,6 +3,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/place_key.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/lru_cache.dart';
 
 enum LocationAccess { granted, denied, permanentlyDenied, serviceDisabled }
@@ -62,8 +63,7 @@ class DeviceLocationRepository {
   }
 
   Future<String?> placeName(LatLng point) {
-    final key =
-        '${point.latitude.toStringAsFixed(4)},${point.longitude.toStringAsFixed(4)}';
+    final key = placeKey(point);
     return _placeNameCache
         .getOrLoad(key, () {
           _log('geocoder call $key');

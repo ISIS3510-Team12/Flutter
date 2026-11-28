@@ -1,9 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:team12_flutter_juggle/data/cache/gallery_cache_manager.dart';
 import 'package:team12_flutter_juggle/data/db/app_database_provider.dart';
 import 'package:team12_flutter_juggle/data/repositories/auth/auth_repository.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/place_name_cache_provider.dart';
+import 'package:team12_flutter_juggle/data/repositories/location/recent_places_cache_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
+import 'package:team12_flutter_juggle/ui/core/network/network_first.dart';
 import 'package:team12_flutter_juggle/ui/core/sync/sync_providers.dart';
 import 'package:team12_flutter_juggle/ui/core/utils/auth_exceptions.dart';
 
@@ -37,8 +41,11 @@ class AuthViewModel extends AsyncNotifier<void> {
   Future<void> signInWithGoogle() => _run(_repository.signInWithGoogle);
 
   Future<void> signOut() => _run(() async {
+    ref.read(placeNameCacheProvider).clear();
+    ref.read(recentPlacesCacheProvider).clear();
     await ref.read(appDatabaseProvider).clearCache();
     await ref.read(outboxStoreProvider).clear();
+    await saveQuietly(() => ref.read(galleryCacheManagerProvider).emptyCache());
     await _repository.signOut();
   });
 
