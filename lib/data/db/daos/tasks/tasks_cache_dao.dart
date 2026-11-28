@@ -101,6 +101,14 @@ class TasksCacheDao extends DatabaseAccessor<AppDatabase>
     ];
   }
 
+  Future<List<Task>> findDoneForGroup(String userId, int groupId) async {
+    final tasks = await watchForGroup(userId, groupId).first;
+    return [
+      for (final task in tasks)
+        if (task.status == TaskStatus.done) task,
+    ];
+  }
+
   Future<Task?> findTask(String userId, String id) async {
     final query = select(cachedTasks)
       ..where((t) => t.userId.equals(userId) & t.id.equals(id));

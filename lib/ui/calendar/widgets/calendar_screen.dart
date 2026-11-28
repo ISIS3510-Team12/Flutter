@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +21,8 @@ import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
 
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
+
+  static const _minBodyHeight = 460.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,7 +54,11 @@ class CalendarScreen extends ConsumerWidget {
 
           final viewModel = ref.read(calendarViewModelProvider.notifier);
 
-          return Column(
+          return LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: SizedBox(
+                height: max(constraints.maxHeight, _minBodyHeight),
+                child: Column(
             children: [
               CalendarViewToggle(
                 selected: calendar.viewMode,
@@ -146,6 +154,9 @@ class CalendarScreen extends ConsumerWidget {
               ),
               ],
             ],
+                ),
+              ),
+            ),
           );
         },
             ),

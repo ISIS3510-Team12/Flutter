@@ -67,6 +67,20 @@ class TaskRepository {
     }
   }
 
+  Future<List<Task>> getGroupCompletedTasks(TaskGroup group) async {
+    try {
+      final response = await _dio.get<List<dynamic>>('/tasks/all');
+      return [
+        for (final json in response.data!.cast<Map<String, dynamic>>())
+          if (json['group_id'] == group.id &&
+              json['status'] == taskStatusToJson(TaskStatus.done))
+            Task.fromJson(json, groupName: group.name, isMine: false),
+      ];
+    } catch (e) {
+      throw repositoryError('load completed tasks', e);
+    }
+  }
+
   Future<List<Task>> getAllTasks({
     bool mine = false,
     bool priority = false,

@@ -37,6 +37,23 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
   final _titleController = TextEditingController();
   final _deadlineController = TextEditingController();
   final _timeController = TextEditingController();
+  final _relatedQueryController = TextEditingController();
+
+  void _syncControllers(CreateTaskFormState form) {
+    final deadline = form.deadline;
+    final time = form.time;
+    _setText(_titleController, form.title);
+    _setText(
+      _deadlineController,
+      deadline == null ? '' : deadlineDate(deadline),
+    );
+    _setText(_timeController, time == null ? '' : timeOfDayLabel(time));
+    _setText(_relatedQueryController, form.relatedQuery);
+  }
+
+  static void _setText(TextEditingController controller, String text) {
+    if (controller.text != text) controller.text = text;
+  }
 
   Future<void> _pickDeadline() async {
     final picked = await showDatePicker(
@@ -47,7 +64,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     );
     if (picked != null) {
       ref.read(createTaskViewModelProvider.notifier).updateDeadline(picked);
-      _deadlineController.text = deadlineDate(picked);
     }
   }
 
@@ -58,7 +74,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     );
     if (picked == null) return;
     ref.read(createTaskViewModelProvider.notifier).updateTime(picked);
-    _timeController.text = timeOfDayLabel(picked);
   }
 
   Future<void> _resetForm() async {
@@ -74,10 +89,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
       if (!mounted || shouldReset != true) return;
 
       ref.read(createTaskViewModelProvider.notifier).resetForm();
-
-      _titleController.clear();
-      _deadlineController.clear();
-      _timeController.clear();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -146,11 +157,15 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     _titleController.dispose();
     _deadlineController.dispose();
     _timeController.dispose();
+    _relatedQueryController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(createTaskViewModelProvider, (_, next) {
+      if (next.value case final form?) _syncControllers(form);
+    });
     final theme = Theme.of(context);
     final state = ref.watch(createTaskViewModelProvider);
     return ScreenLoadTracker(
@@ -186,6 +201,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                         DropdownButtonFormField<TaskGroup>(
                           key: ValueKey('group-${form.group?.id}'),
                           initialValue: form.group,
+                          isExpanded: true,
                           style: taskMenuTextStyle(theme),
                           icon: const Icon(Symbols.arrow_right, size: 20),
                           decoration: taskMenuDecoration(theme),
@@ -209,7 +225,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                               .map(
                                 (group) => DropdownMenuItem(
                                   value: group,
-                                  child: Text(group.name),
+                                  child: Text(
+                                    group.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -229,6 +249,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                         DropdownButtonFormField<String>(
                           key: ValueKey(form.group?.id),
                           initialValue: form.selectedProject,
+                          isExpanded: true,
                           hint: Text(
                             'Select a project',
                             style: taskHintStyle(theme),
@@ -245,7 +266,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                               .map(
                                 (project) => DropdownMenuItem(
                                   value: project,
-                                  child: Text(project),
+                                  child: Text(
+                                    project,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -349,6 +374,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                           RelatedTasksSection(
                             tasks: form.filteredCandidates,
                             selectedIds: form.relatedTaskIds,
+                            queryController: _relatedQueryController,
                             onQueryChanged: notifier.updateRelatedQuery,
                             onToggle: notifier.toggleRelatedTask,
                           ),
