@@ -26,7 +26,7 @@ class BottomAuthOptions extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      margin: .only(right: 25, left: 25),
+      margin: const .only(right: 25, left: 25),
       child: Column(
         spacing: 12,
         children: [

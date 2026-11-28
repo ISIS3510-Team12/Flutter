@@ -19,7 +19,7 @@ class CustomNavigationBar extends StatelessWidget {
     final theme = Theme.of(context);
     final currentLocation = GoRouter.of(context).state.matchedLocation;
     return Container(
-      margin: EdgeInsets.only(left: 26, right: 26, bottom: 16),
+      margin: const EdgeInsets.only(left: 26, right: 26, bottom: 16),
       height: 80,
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
@@ -61,7 +61,7 @@ class CustomNavigationBar extends StatelessWidget {
                       weight: 700,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     item.$2,
                     style: theme.textTheme.labelSmall?.copyWith(

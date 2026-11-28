@@ -28,7 +28,7 @@ class AppTheme {
       dragHandleColor: colorScheme.onSurfaceVariant,
       modalBarrierColor: Colors.transparent,
       showDragHandle: true,
-      dragHandleSize: Size(32, 4),
+      dragHandleSize: const Size(32, 4),
     ),
     datePickerTheme: DatePickerThemeData(
       headerHeadlineStyle: GoogleFonts.spaceGrotesk(

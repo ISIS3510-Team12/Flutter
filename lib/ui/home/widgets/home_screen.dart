@@ -27,7 +27,7 @@ class HomeScreen extends ConsumerWidget {
       screen: ScreenNames.home,
       state: state,
       child: Scaffold(
-        appBar: CustomAppBar(),
+        appBar: const CustomAppBar(),
         body: Column(
           children: [
             const OfflineBanner(),
@@ -68,7 +68,7 @@ class HomeScreen extends ConsumerWidget {
             ),
           ],
         ),
-        bottomNavigationBar: CustomNavigationBar(),
+        bottomNavigationBar: const CustomNavigationBar(),
         resizeToAvoidBottomInset: false,
       ),
     );
@@ -99,11 +99,11 @@ class UserSection extends ConsumerWidget {
             Expanded(
               child: Text(
                 today,
-                style: TextStyle(fontSize: 14),
+                style: const TextStyle(fontSize: 14),
                 softWrap: true,
               ),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             OutlinedButton(
               onPressed: () => _showBottomSheet(context),
               style: OutlinedButton.styleFrom(
@@ -134,7 +134,7 @@ class UserSection extends ConsumerWidget {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (context) {
-        return CustomBottomSheet();
+        return const CustomBottomSheet();
       },
     );
   }
@@ -160,7 +160,7 @@ class OverviewSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 15,
       children: [
-        Text(
+        const Text(
           'Overview',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
@@ -170,7 +170,7 @@ class OverviewSection extends StatelessWidget {
           recentActivity: recentActivity,
           dataUnavailable: numTasks == null,
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
       ],
     );
   }
