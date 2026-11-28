@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/offline_banner.dart';
@@ -11,7 +12,6 @@ class DecisionWheelScreen extends ConsumerWidget {
   const DecisionWheelScreen({super.key});
 
   static const Color indigo = Color(0xFF5455A9);
-  static const Color background = Color(0xFFFAFAFC);
 
   Future<void> _openNewWheel(
     BuildContext context,
@@ -43,10 +43,15 @@ class DecisionWheelScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final wheelsState = ref.watch(decisionWheelViewModelProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        foregroundColor: colorScheme.onSurface,
+        elevation: 0,
         title: const Text(
           'Decision Wheel',
           style: TextStyle(
@@ -69,21 +74,26 @@ class DecisionWheelScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
                         size: 40,
-                        color: Colors.grey,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'Could not load your wheels.',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         error.toString(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey),
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       FilledButton(
@@ -97,30 +107,33 @@ class DecisionWheelScreen extends ConsumerWidget {
                 ),
               ),
               data: (state) {
-                // Keep your existing data: (state) implementation unchanged.
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Your wheels',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF25254A),
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 20),
                       if (state.wheels.isEmpty)
-                        const Expanded(
+                        Expanded(
                           child: Center(
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: Text(
                                 'Create your first wheel and let it decide for you.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
                           ),
@@ -155,8 +168,8 @@ class DecisionWheelScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFFE4E2FA),
-        foregroundColor: indigo,
+        backgroundColor: colorScheme.primaryContainer,
+        foregroundColor: colorScheme.onPrimaryContainer,
         elevation: 2,
         onPressed: () => _openNewWheel(context, ref),
         icon: const Icon(Icons.add),
@@ -199,11 +212,12 @@ class _WheelCardState extends ConsumerState<_WheelCard> {
         .getOptions(widget.wheel.id);
   }
 
-  
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Material(
-      color: const Color(0xFFF0F0F2),
+      color: colorScheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: widget.onTap,
@@ -215,7 +229,6 @@ class _WheelCardState extends ConsumerState<_WheelCard> {
           ),
           child: Row(
             children: [
-    
               Container(
                 width: 48,
                 height: 48,
@@ -230,8 +243,6 @@ class _WheelCardState extends ConsumerState<_WheelCard> {
                 ),
               ),
               const SizedBox(width: 14),
-
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,8 +251,8 @@ class _WheelCardState extends ConsumerState<_WheelCard> {
                       widget.wheel.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF5455A9),
+                      style: TextStyle(
+                        color: colorScheme.primary,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                       ),
@@ -252,20 +263,20 @@ class _WheelCardState extends ConsumerState<_WheelCard> {
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Text(
+                          return Text(
                             'Loading options...',
                             style: TextStyle(
-                              color: Color(0xFF78767D),
+                              color: colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           );
                         }
 
                         if (snapshot.hasError) {
-                          return const Text(
+                          return Text(
                             'Could not load options',
                             style: TextStyle(
-                              color: Color(0xFF78767D),
+                              color: colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           );
@@ -275,8 +286,8 @@ class _WheelCardState extends ConsumerState<_WheelCard> {
 
                         return Text(
                           '$count ${count == 1 ? 'option' : 'options'}',
-                          style: const TextStyle(
-                            color: Color(0xFF78767D),
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
                             fontSize: 13,
                           ),
                         );
@@ -285,10 +296,9 @@ class _WheelCardState extends ConsumerState<_WheelCard> {
                   ],
                 ),
               ),
-
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: Color(0xFF5455A9),
+                color: colorScheme.primary,
                 size: 25,
               ),
             ],
@@ -297,5 +307,4 @@ class _WheelCardState extends ConsumerState<_WheelCard> {
       ),
     );
   }
-
 }

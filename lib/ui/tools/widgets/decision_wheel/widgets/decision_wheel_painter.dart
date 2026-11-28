@@ -1,4 +1,3 @@
-
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -8,10 +7,16 @@ class DecisionWheelPainter extends CustomPainter {
   DecisionWheelPainter({
     required this.options,
     required this.rotation,
+    required this.centerColor,
+    required this.borderColor,
+    required this.separatorColor,
   });
 
   final List<String> options;
   final double rotation;
+  final Color centerColor;
+  final Color borderColor;
+  final Color separatorColor;
 
   static const List<Color> segmentColors = [
     Color(0xFF5455A9),
@@ -40,7 +45,7 @@ class DecisionWheelPainter extends CustomPainter {
       ..isAntiAlias = true;
 
     final separatorPaint = Paint()
-      ..color = Colors.white
+      ..color = separatorColor
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke
       ..isAntiAlias = true;
@@ -81,7 +86,7 @@ class DecisionWheelPainter extends CustomPainter {
       center,
       radius,
       Paint()
-        ..color = Colors.white
+        ..color = borderColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3
         ..isAntiAlias = true,
@@ -91,7 +96,7 @@ class DecisionWheelPainter extends CustomPainter {
       center,
       radius * 0.13,
       Paint()
-        ..color = Colors.white
+        ..color = centerColor
         ..style = PaintingStyle.fill
         ..isAntiAlias = true,
     );
@@ -140,8 +145,8 @@ class DecisionWheelPainter extends CustomPainter {
 
     var textAngle = angle;
 
-    final normalizedAngle = (angle % (2 * math.pi) + 2 * math.pi) %
-        (2 * math.pi);
+    final normalizedAngle =
+        (angle % (2 * math.pi) + 2 * math.pi) % (2 * math.pi);
 
     if (normalizedAngle > math.pi / 2 &&
         normalizedAngle < 3 * math.pi / 2) {
@@ -166,6 +171,9 @@ class DecisionWheelPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant DecisionWheelPainter oldDelegate) {
     return !listEquals(oldDelegate.options, options) ||
-        oldDelegate.rotation != rotation;
+        oldDelegate.rotation != rotation ||
+        oldDelegate.centerColor != centerColor ||
+        oldDelegate.borderColor != borderColor ||
+        oldDelegate.separatorColor != separatorColor;
   }
 }

@@ -1,3 +1,4 @@
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -29,10 +30,6 @@ class WheelEditorScreen extends ConsumerStatefulWidget {
 class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
     with SingleTickerProviderStateMixin {
   static const Color _indigo = Color(0xFF5455A9);
-  static const Color _lightBackground = Color(0xFFF7F7FA);
-  static const Color _darkText = Color(0xFF29283D);
-  static const Color _secondaryText = Color(0xFF78767D);
-
   static const int _maxOptions = 12;
 
   late String wheelName;
@@ -116,7 +113,6 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
     });
   }
 
-  
   void _handleError(String message, Object error) {
     debugPrint('$message: $error');
 
@@ -132,21 +128,24 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
       );
   }
 
- 
   Future<void> _showResultSheet({
     required String title,
     required Future<void> Function() onSpinAgain,
     required Future<void> Function() onRemove,
   }) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: colorScheme.surface,
       builder: (sheetContext) {
+        final sheetColors = Theme.of(sheetContext).colorScheme;
+
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(
+          decoration: BoxDecoration(
+            color: sheetColors.surface,
+            borderRadius: const BorderRadius.vertical(
               top: Radius.circular(28),
             ),
           ),
@@ -162,17 +161,18 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
                     width: 42,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD8D8DE),
+                      color: sheetColors.onSurfaceVariant.withValues(
+                        alpha: 0.3,
+                      ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                 ),
                 const SizedBox(height: 28),
-                const Text(
+                Text(
                   'The wheel chose',
-                  textAlign: TextAlign.left,
                   style: TextStyle(
-                    color: _secondaryText,
+                    color: sheetColors.onSurfaceVariant,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -180,7 +180,6 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
                 const SizedBox(height: 12),
                 Text(
                   title,
-                  textAlign: TextAlign.left,
                   style: const TextStyle(
                     color: _indigo,
                     fontSize: 27,
@@ -188,8 +187,6 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
                   ),
                 ),
                 const SizedBox(height: 28),
-
-            
                 SizedBox(
                   height: 52,
                   child: FilledButton.icon(
@@ -209,8 +206,6 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
                   ),
                 ),
                 const SizedBox(height: 12),
-
-                
                 SizedBox(
                   height: 50,
                   child: OutlinedButton(
@@ -243,7 +238,6 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
       },
     );
   }
-
 
   Future<void> _animateWheelToOption({
     required List<String> options,
@@ -372,7 +366,6 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
     }
   }
 
- 
   Future<void> _showOptionDialog({
     WheelOptionRow? option,
   }) async {
@@ -464,8 +457,6 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
     }
   }
 
-  
-
   Future<void> _renameWheel() async {
     if (_isSpinning) return;
 
@@ -498,19 +489,25 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
 
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (sheetContext) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.edit_outlined, color: _indigo),
+                leading: const Icon(
+                  Icons.edit_outlined,
+                  color: _indigo,
+                ),
                 title: const Text('Rename wheel'),
                 onTap: () => Navigator.pop(sheetContext, 'rename'),
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                ),
                 title: const Text(
                   'Delete wheel',
                   style: TextStyle(color: Colors.red),
@@ -575,10 +572,11 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
     }
   }
 
- 
   Widget _buildWheel({
     required List<String> options,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: SizedBox(
         width: 320,
@@ -595,6 +593,9 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
                 painter: DecisionWheelPainter(
                   options: options,
                   rotation: _wheelRotation,
+                  centerColor: colorScheme.surface,
+                  borderColor: colorScheme.outline,
+                  separatorColor: colorScheme.surface,
                 ),
               ),
             ),
@@ -612,7 +613,7 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surface,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: _indigo.withValues(alpha: 0.15),
@@ -627,9 +628,9 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
     );
   }
 
- 
-  
   Widget _buildOptionChip(WheelOptionRow option) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: _isSpinning
           ? null
@@ -644,9 +645,9 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
           vertical: 12,
         ),
         decoration: BoxDecoration(
-          color: _lightBackground,
+          color: colorScheme.surfaceContainerHighest,
           border: Border.all(
-            color: const Color(0xFFD9D8E5),
+            color: colorScheme.outlineVariant,
           ),
           borderRadius: BorderRadius.circular(28),
         ),
@@ -676,9 +677,9 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
                 option.optionText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: _darkText,
+                  color: colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -689,11 +690,12 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
     );
   }
 
-  
   Widget _buildWheelContent() {
     return FutureBuilder<List<WheelOptionRow>>(
       future: optionsFuture,
       builder: (context, snapshot) {
+        final colorScheme = Theme.of(context).colorScheme;
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(),
@@ -706,6 +708,9 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
               padding: const EdgeInsets.all(24),
               child: Text(
                 'Could not load wheel options: ${snapshot.error}',
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                ),
               ),
             ),
           );
@@ -713,82 +718,108 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
 
         final options = snapshot.data ?? [];
 
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+        return Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 4),
-              child: Text(
-                '${options.length} of $_maxOptions options',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: _secondaryText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+            // Contenido desplazable. El padding inferior evita
+            // que los últimos chips queden detrás del botón flotante.
+            ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 4),
+                  child: Text(
+                    '${options.length} of $_maxOptions options',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
-              ),
-            ),
+                _buildWheel(
+                  options: options
+                      .map((option) => option.optionText)
+                      .toList(),
+                ),
+                const SizedBox(height: 8),
+                _buildSpinButton(
+                  enabled: options.length >= 2,
+                  onPressed: _spinWheel,
+                ),
+                const SizedBox(height: 20),
 
-            _buildWheel(
-              options: options
-                  .map((option) => option.optionText)
-                  .toList(),
-            ),
-
-            const SizedBox(height: 8),
-
-            _buildSpinButton(
-              enabled: options.length >= 2,
-              onPressed: _spinWheel,
-            ),
-
-            const SizedBox(height: 20),
-
-            if (options.isNotEmpty) ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final option in options)
-                    _buildOptionChip(option),
+                if (options.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final option in options)
+                        _buildOptionChip(option),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
                 ],
-              ),
-              const SizedBox(height: 16),
-            ],
 
-            if (options.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.casino_outlined,
-                      size: 48,
-                      color: _indigo,
+                if (options.isEmpty) ...[
+                  const Icon(
+                    Icons.casino_outlined,
+                    size: 48,
+                    color: _indigo,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Your wheel is empty',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
                     ),
-                    SizedBox(height: 12),
-                    Text(
-                      'Your wheel is empty',
-                      style: TextStyle(
-                        color: _darkText,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 17,
-                      ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Add some options to get started.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 13,
                     ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Add some options to get started.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _secondaryText,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ],
+            ),
+
+            // Botón flotante: conserva su posición y diseño.
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: ElevatedButton.icon(
+                onPressed: _isSpinning || options.length >= _maxOptions
+                    ? null
+                    : () => _showOptionDialog(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _indigo,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text(
+                  'Add Option',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-
-            
+            ),
           ],
         );
       },
@@ -826,27 +857,31 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
-    
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final backgroundColor = theme.scaffoldBackgroundColor;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: backgroundColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back,
-            color: _darkText,
+            color: colorScheme.onSurface,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           wheelName,
-          style: const TextStyle(
-            color: _darkText,
+          style: TextStyle(
+            color: colorScheme.onSurface,
             fontSize: 27,
             fontWeight: FontWeight.w700,
           ),
@@ -870,49 +905,10 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
           ),
         ],
       ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _isSpinning ? null : () => _showOptionDialog(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _indigo,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text(
-                      'Add Option',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const CustomNavigationBar(),
-        ],
-      ),
+      bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 }
-
 
 class _WheelOptionDialog extends StatefulWidget {
   final String initialText;
@@ -979,7 +975,6 @@ class _WheelOptionDialogState extends State<_WheelOptionDialog> {
     );
   }
 }
-
 
 class _RenameWheelDialog extends StatefulWidget {
   final String initialName;

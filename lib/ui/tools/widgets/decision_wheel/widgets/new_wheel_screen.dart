@@ -17,7 +17,6 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
   bool _saving = false;
 
   static const _indigo = Color(0xFF5455A9);
-  static const _background = Color(0xFFF5F5F7);
   static const int _maxOptions = 12;
 
   int get _remainingOptions => _maxOptions - _options.length;
@@ -104,8 +103,15 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        foregroundColor: colorScheme.onSurface,
+        elevation: 0,
         title: const Text(
           'New wheel',
           style: TextStyle(
@@ -127,10 +133,30 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
                     TextField(
                       controller: _nameController,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                      ),
+                      decoration: InputDecoration(
                         labelText: 'Wheel name',
                         hintText: 'e.g. What should I do?',
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        hintStyle: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        border: const OutlineInputBorder(),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: colorScheme.outlineVariant,
+                          ),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: _indigo,
+                            width: 2,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -138,17 +164,18 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Options',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.normal,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         Text(
                           '${_options.length} of $_maxOptions',
-                          style: const TextStyle(
-                            color: Colors.grey,
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -158,11 +185,13 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
 
                     Expanded(
                       child: _options.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Text(
                                 'Add at least two options to your wheel',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             )
                           : ReorderableListView.builder(
@@ -183,7 +212,7 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
                                 return Card(
                                   key: ValueKey('option_$index'),
                                   elevation: 0,
-                                  color: _background,
+                                  color: colorScheme.surfaceContainerHighest,
                                   margin: const EdgeInsets.only(bottom: 8),
                                   child: ListTile(
                                     leading: Container(
@@ -206,13 +235,17 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
                                       option,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w600,
+                                        color: colorScheme.onSurface,
                                       ),
                                     ),
                                     trailing: IconButton(
                                       tooltip: 'Remove option',
-                                      icon: const Icon(Icons.close),
+                                      icon: Icon(
+                                        Icons.close,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
                                       onPressed: () => _removeOption(index),
                                     ),
                                   ),
@@ -225,7 +258,10 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: _indigo,
+                          foregroundColor: colorScheme.primary,
+                          side: BorderSide(
+                            color: colorScheme.primary,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         onPressed: _saving || _remainingOptions <= 0
@@ -242,6 +278,7 @@ class _NewWheelScreenState extends ConsumerState<NewWheelScreen> {
                       child: FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: _indigo,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
                         onPressed: _saving ? null : _saveWheel,
@@ -294,14 +331,24 @@ class _OptionDialogState extends State<_OptionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return AlertDialog(
-      title: const Text('Add option'),
+      backgroundColor: colorScheme.surface,
+      title: Text(
+        'Add option',
+        style: TextStyle(color: colorScheme.onSurface),
+      ),
       content: TextField(
         controller: _controller,
         autofocus: true,
         textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(
+        style: TextStyle(color: colorScheme.onSurface),
+        decoration: InputDecoration(
           hintText: 'Enter an option',
+          hintStyle: TextStyle(
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
         onSubmitted: (_) => _addOption(),
       ),
