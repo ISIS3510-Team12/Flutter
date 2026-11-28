@@ -39,7 +39,7 @@ class _OverviewTabsState extends State<OverviewTabs> {
           spacing: 10,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            ColoredBox(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               child: TabBar(
                 onTap: _changeTab,
@@ -55,7 +55,7 @@ class _OverviewTabsState extends State<OverviewTabs> {
                 dividerColor: Theme.of(context)
                     .colorScheme
                     .surfaceContainerHighest,
-                tabs: [
+                tabs: const [
                   Tab(text: 'Upcoming tasks'),
                   Tab(text: 'Recent activity'),
                 ],
@@ -155,11 +155,11 @@ class CardItem extends StatelessWidget {
                 ),
               Text(
                 title,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          subtitle: Text(description, style: TextStyle(fontSize: 12)),
+          subtitle: Text(description, style: const TextStyle(fontSize: 12)),
         ),
       ),
     );

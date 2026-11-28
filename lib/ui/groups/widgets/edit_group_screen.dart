@@ -262,13 +262,11 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
     final directoryAvailable = usersState.asData != null;
     final availableUsers = filteredUsers(users);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return Form(
+      key: _formKey,
+      child: CustomScrollView(
+        slivers: [
+          _box(top: 12, [
             if (!isOnline) ...[
               Container(
                 width: double.infinity,
@@ -305,11 +303,20 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
             const SizedBox(height: 20),
             _buildDescriptionField(context),
             const SizedBox(height: 28),
-            _buildEditPeopleSection(
+            _buildEditPeopleHeader(
+              context,
+              directoryAvailable: directoryAvailable,
+            ),
+          ]),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: _buildPeopleSliver(
               context,
               availableUsers,
               directoryAvailable: directoryAvailable,
             ),
+          ),
+          _box(bottom: 24, [
             if (!directoryAvailable && usersState.hasError && isOnline) ...[
               const SizedBox(height: 12),
               Align(
@@ -330,7 +337,23 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
               users,
               isOnline,
             ),
-          ],
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _box(
+    List<Widget> children, {
+    double top = 0,
+    double bottom = 0,
+  }) {
+    return SliverPadding(
+      padding: EdgeInsets.fromLTRB(20, top, 20, bottom),
+      sliver: SliverToBoxAdapter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
         ),
       ),
     );
@@ -414,9 +437,8 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
     );
   }
 
-  Widget _buildEditPeopleSection(
-    BuildContext context,
-    List<User> users, {
+  Widget _buildEditPeopleHeader(
+    BuildContext context, {
     required bool directoryAvailable,
   }) {
     final theme = Theme.of(context);
@@ -457,61 +479,81 @@ class _GroupEditFormState extends ConsumerState<_GroupEditForm>
             },
           ),
           const SizedBox(height: 14),
-          if (users.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                child: Text('No users found.'),
-              ),
-            )
-          else
-            ...users.map(
-              (user) => CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                value: selectedUserIds.contains(user.userId),
-                onChanged: (value) {
-                  setState(() {
-                    if (value == true) {
-                      selectedUserIds.add(user.userId);
-                    } else {
-                      selectedUserIds.remove(user.userId);
-                    }
-                  });
-                },
-                secondary: CircleAvatar(
-                  backgroundColor:
-                      theme.colorScheme.secondaryContainer,
-                  child: Text(
-                    user.firstName.isNotEmpty
-                        ? user.firstName[0].toUpperCase()
-                        : 'A',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSecondaryContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                title: Text(
-                  '${user.firstName} ${user.lastName}',
-                ),
-                subtitle: Text(user.email),
-              ),
-            ),
         ] else ...[
           const Text(
             'The user directory is unavailable. You can still edit the group name and description. Current members are shown below.',
           ),
           const SizedBox(height: 12),
-          ...widget.group.members.map(
-            (member) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.lock_outline),
-              title: Text(member.name),
-              subtitle: const Text('Current member'),
-            ),
-          ),
         ],
       ],
+    );
+  }
+
+  Widget _buildPeopleSliver(
+    BuildContext context,
+    List<User> users, {
+    required bool directoryAvailable,
+  }) {
+    final theme = Theme.of(context);
+
+    if (!directoryAvailable) {
+      final members = widget.group.members;
+      return SliverList.builder(
+        itemCount: members.length,
+        itemBuilder: (context, index) => ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.lock_outline),
+          title: Text(members[index].name),
+          subtitle: const Text('Current member'),
+        ),
+      );
+    }
+
+    if (users.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Center(
+            child: Text('No users found.'),
+          ),
+        ),
+      );
+    }
+
+    return SliverList.builder(
+      itemCount: users.length,
+      itemBuilder: (context, index) {
+        final user = users[index];
+        return CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: selectedUserIds.contains(user.userId),
+          onChanged: (value) {
+            setState(() {
+              if (value == true) {
+                selectedUserIds.add(user.userId);
+              } else {
+                selectedUserIds.remove(user.userId);
+              }
+            });
+          },
+          secondary: CircleAvatar(
+            backgroundColor: theme.colorScheme.secondaryContainer,
+            child: Text(
+              user.firstName.isNotEmpty
+                  ? user.firstName[0].toUpperCase()
+                  : 'A',
+              style: TextStyle(
+                color: theme.colorScheme.onSecondaryContainer,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          title: Text(
+            '${user.firstName} ${user.lastName}',
+          ),
+          subtitle: Text(user.email),
+        );
+      },
     );
   }
 

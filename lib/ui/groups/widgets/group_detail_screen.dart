@@ -163,42 +163,54 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   ) {
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            group.name,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  group.name,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  'Members',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildMembers(context, group.members),
+                const SizedBox(height: 32),
+                Text(
+                  'Related projects',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
-          const SizedBox(height: 28),
-          Text(
-            'Members',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildMembers(context, group.members),
-          const SizedBox(height: 32),
-          Text(
-            'Related projects',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (projects.isEmpty)
-            const Text('No projects found.')
-          else
-            ...projects.map(
-              (project) => _buildProjectCard(context, project),
-            ),
-        ],
-      ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          sliver: projects.isEmpty
+              ? const SliverToBoxAdapter(
+                  child: Text('No projects found.'),
+                )
+              : SliverList.builder(
+                  itemCount: projects.length,
+                  itemBuilder: (context, index) =>
+                      _buildProjectCard(context, projects[index]),
+                ),
+        ),
+      ],
     );
   }
 

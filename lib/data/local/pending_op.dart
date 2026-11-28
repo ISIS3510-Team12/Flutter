@@ -5,7 +5,7 @@ import 'package:team12_flutter_juggle/domain/models/tasks/task.dart';
 
 part 'pending_op.freezed.dart';
 
-enum PendingOpType { createTask, saveLocation }
+enum PendingOpType { createTask, saveLocation, uploadProjectPhoto }
 
 enum PendingOpStatus { pending, failed }
 
@@ -51,6 +51,12 @@ abstract class PendingOp with _$PendingOp {
   Task get task => taskFromJson(payload);
 
   UserLocation get location => UserLocation.fromJson(payload);
+
+  int get projectId => payload['projectId'] as int;
+
+  String? get thumbnailPath => payload['thumbnailPath'] as String?;
+
+  List<String> get filePaths => [?photoPath, ?thumbnailPath];
 
   Map<String, dynamic> toJson() => {
     'id': id,

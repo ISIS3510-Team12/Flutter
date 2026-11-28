@@ -25,6 +25,7 @@ class Task {
     this.projectName,
     this.relatedTaskIds = const [],
     this.relatedTasks = const [],
+    this.updatedAt,
   });
 
   final String id;
@@ -46,6 +47,7 @@ class Task {
   final String? projectName;
   final List<String> relatedTaskIds;
   final List<Task> relatedTasks;
+  final DateTime? updatedAt;
 
   String get assigneeName => assignees.isEmpty ? '' : assignees.first;
 
@@ -89,6 +91,7 @@ class Task {
       projectName: projectName ?? this.projectName,
       relatedTaskIds: relatedTaskIds ?? this.relatedTaskIds,
       relatedTasks: relatedTasks,
+      updatedAt: updatedAt,
     );
   }
 
@@ -135,6 +138,10 @@ class Task {
             groupName: groupName,
           ),
       ],
+      updatedAt: switch (json['lastChangedAt']) {
+        final String value => parseServerDate(value),
+        _ => null,
+      },
     );
   }
 

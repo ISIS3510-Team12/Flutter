@@ -9,6 +9,7 @@ import 'package:team12_flutter_juggle/ui/projects/view_models/project_view_model
 import 'package:team12_flutter_juggle/ui/core/network/connectivity_provider.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_dialog.dart';
 import 'package:team12_flutter_juggle/ui/core/ui/shake_reset_mixin.dart';
+import 'package:team12_flutter_juggle/ui/core/drafts/form_draft_store.dart';
 
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
@@ -33,9 +34,37 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
   final _formKey = GlobalKey<FormState>();
   DateTime? selectedDeadline;
 
+  FormDraftStore get _drafts => ref.read(formDraftStoreProvider);
+
+  static String _formatDeadline(DateTime date) =>
+      '${date.day}/${date.month}/${date.year}';
+
+  void _restoreDraft() {
+    final draft = _drafts.projectDraft(widget.groupId);
+    if (draft == null) return;
+    nameController.text = draft.name;
+    descriptionController.text = draft.description;
+    selectedDeadline = draft.deadline;
+    deadlineController.text = switch (draft.deadline) {
+      final deadline? => _formatDeadline(deadline),
+      null => '',
+    };
+  }
+
+  void _saveDraft() => _drafts.saveProjectDraft(
+    widget.groupId,
+    ProjectDraft(
+      name: nameController.text,
+      description: descriptionController.text,
+      deadline: selectedDeadline,
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
+
+    _restoreDraft();
 
     startShakeDetector(_resetForm);
   }
@@ -62,6 +91,8 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
 
       if (!mounted || shouldClear != true) return;
 
+      _formKey.currentState?.reset();
+
       nameController.clear();
       descriptionController.clear();
       deadlineController.clear();
@@ -69,8 +100,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
       setState(() {
         selectedDeadline = null;
       });
-
-      _formKey.currentState?.reset();
+      _drafts.clearProjectDraft(widget.groupId);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -93,6 +123,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
       return;
     }
 
+    final drafts = _drafts;
     final createdProject = await ref
         .read(projectCreateViewModelProvider.notifier)
         .createProject(
@@ -102,6 +133,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
           groupId: widget.groupId,
         );
 
+    if (createdProject != null) drafts.clearProjectDraft(widget.groupId);
     if (!mounted) return;
 
     if (createdProject != null) {
@@ -135,7 +167,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
         ),
         title: const Text('Create project'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
         child: Form(
           key: _formKey,
@@ -189,6 +221,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
             const SizedBox(height: 24),
             TextFormField(
               controller: nameController,
+              onChanged: (_) => _saveDraft(),
               validator: Validators.name,
               inputFormatters: Validators.titleTextInputFormatters,
               maxLength: Validators.maxNameLength,
@@ -203,6 +236,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
             const SizedBox(height: 16),
             TextFormField(
               controller: descriptionController,
+              onChanged: (_) => _saveDraft(),
               inputFormatters: Validators.descriptionTextInputFormatters,
               maxLines: 2,
               maxLength: Validators.maxDescriptionLength,
@@ -251,8 +285,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen>
                         setState(() {
                           selectedDeadline = selectedDate;
                           deadlineController.text =
-                              '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}';
+                              _formatDeadline(selectedDate);
                         });
+                        _saveDraft();
                       }
                     },
               decoration: InputDecoration(

@@ -43,38 +43,61 @@ class ViewTaskViewModel extends AsyncNotifier<ViewTaskState> {
   @override
   Future<ViewTaskState> build() async {
     final repository = ref.watch(taskRepositoryProvider);
-    final Task task;
+
     try {
-      task = await repository.getTask(taskId);
+      final task = await repository.getTask(taskId);
+
+      final photoLoad = _loadPhoto(task, repository);
+
+      final (_, loaded) = await waitBoth(
+        _saveTask(task),
+        photoLoad,
+      );
+
+      return ViewTaskState(
+        task: task,
+        relatedTasks: task.relatedTasks,
+        reminderEnabled: true,
+        photo: loaded.bytes,
+        photoUnavailable: loaded.unavailable,
+      );
     } catch (error) {
       if (!isOfflineFailure(error)) rethrow;
+
       final cached = await _cachedTask();
       if (cached == null) rethrow;
+
+      final loaded = await _loadPhoto(cached, repository);
+
       return ViewTaskState(
         task: cached,
         relatedTasks: cached.relatedTasks,
         reminderEnabled: true,
-        photoUnavailable: cached.hasPhoto,
+        photo: loaded.bytes,
+        photoUnavailable: loaded.unavailable,
         fromCache: true,
       );
     }
-    final Future<({Uint8List? bytes, bool unavailable})> photoLoad =
-        task.hasPhoto
-        ? repository
-              .getTaskPhoto(taskId)
-              .then((bytes) => (bytes: bytes, unavailable: false))
-              .catchError((Object _) => (bytes: null, unavailable: true))
-        : Future.value((bytes: null, unavailable: false));
-    final (_, loaded) = await waitBoth(_saveTask(task), photoLoad);
-    final photo = loaded.bytes;
-    final photoUnavailable = loaded.unavailable;
-    return ViewTaskState(
-      task: task,
-      relatedTasks: task.relatedTasks,
-      reminderEnabled: true,
-      photo: photo,
-      photoUnavailable: photoUnavailable,
-    );
+  }
+
+  Future<({Uint8List? bytes, bool unavailable})> _loadPhoto(
+    Task task,
+    TaskRepository repository,
+  ) async {
+    if (!task.hasPhoto) {
+      return (bytes: null, unavailable: false);
+    }
+
+    try {
+      final bytes = await repository.getTaskPhoto(task.id);
+
+      return (
+        bytes: bytes,
+        unavailable: bytes == null,
+      );
+    } catch (_) {
+      return (bytes: null, unavailable: true);
+    }
   }
 
   String? _uid;

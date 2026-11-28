@@ -17,6 +17,8 @@ import 'package:team12_flutter_juggle/ui/telemetry/feature_names.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/feature_session_mixin.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_load_tracker.dart';
 import 'package:team12_flutter_juggle/ui/telemetry/screen_names.dart';
+import 'package:team12_flutter_juggle/domain/models/project/project.dart';
+import 'package:team12_flutter_juggle/ui/gallery/widgets/project_photos_card.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   const ProjectDetailScreen({super.key, required this.projectId});
@@ -58,6 +60,22 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
     return 'Due in $difference days';
   }
 
+  Future<void> _editProject(Project project) async {
+    markFeatureCompleted();
+
+    final updated = await context.push<bool>(
+      Routes.editProjectPath(project.id, project.groupId),
+    );
+
+    if (!mounted) return;
+
+    if (updated == true) {
+      ref.invalidate(
+        projectDetailViewModelProvider(widget.projectId),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -67,6 +85,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
     );
 
     final isOnline = ref.watch(isOnlineProvider);
+    final project = projectState.asData?.value.project;
 
     return ScreenLoadTracker(
       screen: ScreenNames.projectDetail,
@@ -83,6 +102,16 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
             'Project detail',
             style: theme.textTheme.titleMedium,
           ),
+          actions: [
+            IconButton(
+              tooltip: 'Edit project',
+              icon: const Icon(Symbols.edit),
+              onPressed: project != null && isOnline
+                  ? () => _editProject(project)
+                  : null,
+            ),
+            const SizedBox(width: 8),
+          ],
         ),
         body: Column(
           children: [
@@ -141,149 +170,178 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen>
                       .where((task) => task.status == TaskStatus.done)
                       .length;
 
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (projectStateData.fromCache)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            color: theme.colorScheme.secondaryContainer,
-                            child: Text(
-                              'Showing saved information. It may be outdated.',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color:
-                                    theme.colorScheme.onSecondaryContainer,
-                              ),
-                            ),
-                          ),
-                        Text(
-                          project.name,
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          project.description,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _InfoSection(
-                          title: 'Progress',
-                          subtitle:
-                              '$completedTasks of ${tasks.length} tasks complete',
-                        ),
-                        const SizedBox(height: 12),
-                        _ProgressBar(
-                          completed: completedTasks,
-                          total: tasks.length,
-                        ),
-                        const SizedBox(height: 16),
-                        _InfoSection(
-                          title: 'Deadline',
-                          subtitle: deadline,
-                        ),
-                        const SizedBox(height: 16),
-                        if (prediction != null) ...[
-                          _InfoSection(
-                            title: 'Current pace',
-                            subtitle:
-                                '${prediction.paceTasksPerDay.toStringAsFixed(2)} tasks per day',
-                          ),
-                          const SizedBox(height: 16),
-                          PaceWarningCard(
-                            prediction: prediction,
-                          ),
-                        ] else
-                          Text(
-                            'Current pace is currently unavailable.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Tasks',
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 12),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Row(
+                  // Slivers let the task cards be built only when they are
+                  // about to be visible, instead of all of them on open.
+                  return CustomScrollView(
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: TaskFilter(
-                                  text: 'In progress',
-                                  selected:
-                                      selectedFilter == 'In progress',
-                                  onTap: () {
-                                    markFeatureCompleted();
-                                    setState(() {
-                                      selectedFilter = 'In progress';
-                                    });
-                                  },
+                              if (projectStateData.fromCache)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  color: theme.colorScheme.secondaryContainer,
+                                  child: Text(
+                                    'Showing saved information. It may be outdated.',
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme
+                                          .colorScheme
+                                          .onSecondaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              Text(
+                                project.name,
+                                style: theme.textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                project.description,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
-                              const SizedBox(width: 2),
-                              Expanded(
-                                child: TaskFilter(
-                                  text: 'Upcoming',
-                                  selected: selectedFilter == 'Upcoming',
-                                  onTap: () {
-                                    markFeatureCompleted();
-                                    setState(() {
-                                      selectedFilter = 'Upcoming';
-                                    });
-                                  },
+                              const SizedBox(height: 16),
+                              _InfoSection(
+                                title: 'Progress',
+                                subtitle:
+                                    '$completedTasks of ${tasks.length} tasks complete',
+                              ),
+                              const SizedBox(height: 12),
+                              _ProgressBar(
+                                completed: completedTasks,
+                                total: tasks.length,
+                              ),
+                              const SizedBox(height: 16),
+                              _InfoSection(
+                                title: 'Deadline',
+                                subtitle: deadline,
+                              ),
+                              const SizedBox(height: 16),
+                              if (prediction != null) ...[
+                                _InfoSection(
+                                  title: 'Current pace',
+                                  subtitle:
+                                      '${prediction.paceTasksPerDay.toStringAsFixed(2)} tasks per day',
+                                ),
+                                const SizedBox(height: 16),
+                                PaceWarningCard(
+                                  prediction: prediction,
+                                ),
+                              ] else
+                                Text(
+                                  'Current pace is currently unavailable.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              const SizedBox(height: 16),
+                              ProjectPhotosCard(
+                                projectId: widget.projectId,
+                                onOpen: () {
+                                  markFeatureCompleted();
+                                  context.push(
+                                    Routes.projectGalleryPath(
+                                      widget.projectId,
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                'Tasks',
+                                style: theme.textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 12),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TaskFilter(
+                                        text: 'In progress',
+                                        selected:
+                                            selectedFilter == 'In progress',
+                                        onTap: () {
+                                          markFeatureCompleted();
+                                          setState(() {
+                                            selectedFilter = 'In progress';
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Expanded(
+                                      child: TaskFilter(
+                                        text: 'Upcoming',
+                                        selected: selectedFilter == 'Upcoming',
+                                        onTap: () {
+                                          markFeatureCompleted();
+                                          setState(() {
+                                            selectedFilter = 'Upcoming';
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Expanded(
+                                      child: TaskFilter(
+                                        text: 'Completed',
+                                        selected: selectedFilter == 'Completed',
+                                        onTap: () {
+                                          markFeatureCompleted();
+                                          setState(() {
+                                            selectedFilter = 'Completed';
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 2),
-                              Expanded(
-                                child: TaskFilter(
-                                  text: 'Completed',
-                                  selected: selectedFilter == 'Completed',
-                                  onTap: () {
-                                    markFeatureCompleted();
-                                    setState(() {
-                                      selectedFilter = 'Completed';
-                                    });
-                                  },
-                                ),
-                              ),
+                              const SizedBox(height: 12),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        if (filteredTasks.isEmpty)
-                          const ProjectTaskCard(
-                            title: 'No tasks',
-                            assigneeName:
-                                'There are no tasks for this filter.',
-                          )
-                        else
-                          ...filteredTasks.map(
-                            (task) => ProjectTaskCard(
-                              title: task.title,
-                              assigneeName: task.assigneeName.isEmpty
-                                  ? null
-                                  : task.assigneeName,
-                              dueText: _getDueText(task.deadline),
-                              assigneeInitial: task.assigneeInitial,
-                              onTap: () {
-                                markFeatureCompleted();
-                                context.push(Routes.taskPath(task.id));
-                              },
-                            ),
-                          ),
-                      ],
-                    ),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                        sliver: filteredTasks.isEmpty
+                            ? const SliverToBoxAdapter(
+                                child: ProjectTaskCard(
+                                  title: 'No tasks',
+                                  assigneeName:
+                                      'There are no tasks for this filter.',
+                                ),
+                              )
+                            : SliverList.builder(
+                                itemCount: filteredTasks.length,
+                                itemBuilder: (context, index) {
+                                  final task = filteredTasks[index];
+                                  return ProjectTaskCard(
+                                    title: task.title,
+                                    assigneeName: task.assigneeName.isEmpty
+                                        ? null
+                                        : task.assigneeName,
+                                    dueText: _getDueText(task.deadline),
+                                    assigneeInitial: task.assigneeInitial,
+                                    onTap: () {
+                                      markFeatureCompleted();
+                                      context.push(Routes.taskPath(task.id));
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
                   );
                 },
               ),
