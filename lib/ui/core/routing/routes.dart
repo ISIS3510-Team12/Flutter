@@ -24,6 +24,15 @@ abstract final class Routes {
   static const editGroup = '/groups/:groupId/edit';
   static const editProject = '/projects/:projectId/edit';
   static const tools = '/tools';
+  static const projectGallery = '/projects/:projectId/photos';
+  static const projectPhoto = '/projects/:projectId/photos/:photoId';
+  static String projectGalleryPath(int projectId) =>
+      '/projects/$projectId/photos';
+  static String projectPhotoViewerPath(
+    int projectId,
+    int photoId, {
+    bool saved = false,
+  }) => '/projects/$projectId/photos/$photoId${saved ? '?saved=true' : ''}';
   static String taskPath(String taskId) => '/tasks/$taskId';
   static String editTaskPath(String taskId) => '/tasks/$taskId/edit';
   static String taskPhotoPath(String taskId) => '/tasks/$taskId/photo';
