@@ -1,4 +1,3 @@
-
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -796,9 +795,21 @@ class _WheelEditorScreenState extends ConsumerState<WheelEditorScreen>
               right: 16,
               bottom: 16,
               child: ElevatedButton.icon(
-                onPressed: _isSpinning || options.length >= _maxOptions
-                    ? null
-                    : () => _showOptionDialog(),
+                onPressed: _isSpinning
+                ? null
+                : () async {
+                    if (options.length >= _maxOptions) {
+                      _handleError(
+                        'Maximum number of options reached',
+                        StateError(
+                          'A wheel can have up to $_maxOptions options.',
+                        ),
+                      );
+                      return;
+                    }
+
+                    await _showOptionDialog();
+                  },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _indigo,
                   foregroundColor: Colors.white,
