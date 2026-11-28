@@ -31,5 +31,16 @@ linter:
 
     prefer_initializing_formals: false
 
+    # Performance rules: const widgets are canonicalized at compile time, so
+    # Flutter can skip rebuilding them.
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    avoid_unnecessary_containers: true
+    sized_box_for_whitespace: true
+    use_colored_box: true
+    use_decorated_box: true
+
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

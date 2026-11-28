@@ -66,7 +66,7 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
               onPressed: () => _onPressed(context, item.id),
             );
           }),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
         ],
       ),
     );
@@ -122,7 +122,7 @@ class BottomSheetItem extends StatelessWidget {
                 ),
               ],
             ),
-            Spacer(),
+            const Spacer(),
             Icon(
               Icons.arrow_forward,
               color: Theme.of(context).colorScheme.primary,

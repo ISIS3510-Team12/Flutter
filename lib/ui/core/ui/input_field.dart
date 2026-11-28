@@ -39,7 +39,7 @@ class InputField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: labelText,
         labelStyle: theme.textTheme.bodyMedium,
-        border: OutlineInputBorder(),
+        border: const OutlineInputBorder(),
         prefixIcon: icon != null ? Icon(icon) : null,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         suffixIcon: onTogglePasswordVisibility != null
